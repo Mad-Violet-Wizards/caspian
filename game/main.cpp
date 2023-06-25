@@ -1,13 +1,15 @@
+#include "game/pch.hpp"
+
 #include <iostream>
 
-#include "../engine/Animations/A.hpp"
+#include "Game.hpp"
 
 int main()
 {
-  std::cout << "Hello World!\n";
+	Game game;
 
-  A a;
-
-  std::cin.get();
-  return a.foo();
+	while (game.IsRunning())
+	{
+		game.GameLoop();
+	}
 }

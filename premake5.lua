@@ -4,59 +4,72 @@ workspace "Caspian"
 project "GameEngine"
   kind "StaticLib"
   language "C++"
-  targetdir "bin/%{cfg.buildcfg}"
+  targetdir "build/%{cfg.buildcfg}"
+
+  pchheader "engine/pch.hpp"
+  includedirs { "." }
+  pchsource "engine/pch.cpp"
 
   files { "engine/**.hpp", "engine/**.cpp" }
 
-  includedirs { "vendor/include/" }
-  libdirs { "vendor/lib/" }
+  filter "configurations:*"
+    includedirs { "vendor/include/" }
+    libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"
     defines { "DEBUG" }
     symbols "On"
-    links { "sfml-graphics-d", "sfml-window-d", "sfml-system-d" }
+    links { "sfml-system-d", "sfml-window-d", "sfml-graphics-d", "sfml-network-d", "sfml-audio-d"}
+    postbuildcommands { "{COPY} %{wks.location}/vendor/bin/*.dll %{cfg.targetdir}"}
 
   filter "configurations:Release"
     defines { "RELEASE" }
     optimize "On"
-    links { "sfml-graphics", "sfml-window", "sfml-system" }
+    links { "sfml-system", "sfml-window", "sfml-graphics", "sfml-network", "sfml-audio"}
+    postbuildcommands { "{COPY} %{wks.location}/vendor/bin/*.dll %{cfg.targetdir}"}
 
 project "GameEngineTests"
   kind "ConsoleApp"
   language "C++"
-  targetdir "bin/%{cfg.buildcfg}"
+  targetdir "build/%{cfg.buildcfg}"
 
   files { "tests/**.hpp", "tests/**.cpp" }
 
-  includedirs { "vendor/include/" }
-  libdirs { "vendor/lib/" }
+  filter "configurations:*"
+    includedirs { "vendor/include/" }
+    libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"
     defines { "DEBUG" }
     symbols "On"
-    links { "sfml-graphics-d", "sfml-window-d", "sfml-system-d", "GameEngine" }
+    links { "GameEngine" }
 
   filter "configurations:Release"
     defines { "RELEASE" }
     optimize "On"
-    links { "sfml-graphics", "sfml-window", "sfml-system", "GameEngine" }
+    links { "GameEngine" }
 
 project "Game"
   kind "ConsoleApp"
   language "C++"
-  targetdir "bin/%{cfg.buildcfg}"
+  targetdir "build/%{cfg.buildcfg}"
+
+  pchheader "game/pch.hpp"
+  includedirs { "." }
+  pchsource "game/pch.cpp"
 
   files { "game/**.hpp", "game/**.cpp" }
 
-  includedirs { "vendor/include/" }
-  libdirs { "vendor/lib/" }
+  filter "configurations:*"
+    includedirs { "vendor/include/" }
+    libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"
     defines { "DEBUG" }
     symbols "On"
-    links { "sfml-graphics-d", "sfml-window-d", "sfml-system-d", "GameEngine" }
+    links { "GameEngine" }
 
   filter "configurations:Release"
     defines { "RELEASE" }
     optimize "On"
-    links { "sfml-graphics", "sfml-window", "sfml-system", "GameEngine" }
+    links { "GameEngine" }
