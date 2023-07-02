@@ -3,7 +3,7 @@
 #include "../catch.hpp"
 
 #include "engine/Scenes/IScene.hpp"
-#include "engine/Scenes/SceneStateMachine.hpp"
+#include "engine/Scenes/StateMachine.hpp"
 
 namespace moc
 {
