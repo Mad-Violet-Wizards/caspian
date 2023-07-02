@@ -1,6 +1,6 @@
 #include "../catch.hpp"
 
-#include "../../engine/Design-Patterns/Singleton.hpp"
+#include "engine/Design-Patterns/Singleton.hpp"
 
 struct ExampleData
 {

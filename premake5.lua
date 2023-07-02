@@ -36,7 +36,7 @@ project "GameEngineTests"
   files { "tests/**.hpp", "tests/**.cpp" }
 
   filter "configurations:*"
-    includedirs { "vendor/include/" }
+    includedirs { "vendor/include/", "." }
     libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"
