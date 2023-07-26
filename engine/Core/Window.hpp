@@ -14,6 +14,8 @@ class Window
 
 		bool IsOpen() const;
 		void Exit();
+		
+		[[nodiscard]] sf::RenderWindow& GetRenderWindow() { return m_renderWindow; }
 
 	private:
 

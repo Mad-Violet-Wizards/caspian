@@ -40,7 +40,7 @@ class GameObject
 		{
 			for (const auto& existingComponent : m_components)
 				if (std::dynamic_pointer_cast<T>(existingComponent))
-					return component;
+					return existingComponent;
 
 			return nullptr;
 		}
