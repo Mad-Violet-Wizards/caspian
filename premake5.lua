@@ -7,13 +7,12 @@ project "GameEngine"
   targetdir "build/%{cfg.buildcfg}"
 
   pchheader "engine/pch.hpp"
-  includedirs { "." }
   pchsource "engine/pch.cpp"
 
   files { "engine/**.hpp", "engine/**.cpp" }
 
   filter "configurations:*"
-    includedirs { "vendor/include/" }
+    includedirs { "vendor/include/", "." }
     libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"
@@ -55,13 +54,12 @@ project "Game"
   targetdir "build/%{cfg.buildcfg}"
 
   pchheader "game/pch.hpp"
-  includedirs { "." }
   pchsource "game/pch.cpp"
 
   files { "game/**.hpp", "game/**.cpp" }
 
   filter "configurations:*"
-    includedirs { "vendor/include/" }
+    includedirs { "vendor/include/", "." }
     libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"

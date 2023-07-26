@@ -1,6 +1,6 @@
 #include "engine/pch.hpp"
 
-#include "SceneStateMachine.hpp"
+#include "StateMachine.hpp"
 
 using namespace Scenes;
 
