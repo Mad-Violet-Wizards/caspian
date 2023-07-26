@@ -1,5 +1,8 @@
 #pragma once
 
+// Singleton provides global access to static instance of class and the instance is unique.
+// Example usage of Singleton design pattern in tests.
+
 template<class C>
 class Singleton
 {
@@ -35,7 +38,7 @@ public:
   {
     SingletonData& data = GetData();
 
-    // Tricky, as we don't know if the user provided an default ctor.
+    // TODO: Delete this - we don't want shit to get weird.
     if (!data.m_valid)
       Create();
 
