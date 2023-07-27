@@ -18,12 +18,15 @@ void Window::Update()
 	while (m_renderWindow.pollEvent(event))
 	{
 		ImGui::SFML::ProcessEvent(event);
-
+		
 		if (Game::MainSingleton::IsValid())
 		{
-			auto& main_singleton = Game::MainSingleton::Instance();
+			auto& main_instance = Game::MainSingleton::Instance();
 
-			// Get the EventDispatcher from main_singleton here and process SFML event.
+			EventDispatcher* event_dispatcher = main_instance.GetEventDispatcher();
+
+			if (event_dispatcher)
+				event_dispatcher->ProcessEvent(event);
 		}
 
 		if (event.type == sf::Event::Closed)

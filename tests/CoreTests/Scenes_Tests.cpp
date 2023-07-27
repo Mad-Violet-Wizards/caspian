@@ -1,6 +1,6 @@
 #include "engine/pch.hpp"
 
-#include "../catch.hpp"
+#include "tests/catch.hpp"
 
 #include "engine/Scenes/IScene.hpp"
 #include "engine/Scenes/StateMachine.hpp"
