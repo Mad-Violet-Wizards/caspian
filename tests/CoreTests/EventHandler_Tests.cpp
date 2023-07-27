@@ -21,7 +21,7 @@ namespace moc
 
 TEST_CASE("Event Listener event type", "[EventListenerTests]")
 {
-	EventListener listener;
+	Events::Listener listener;
 	listener.NotifyOn(sf::Event::Closed);
 
 	REQUIRE(listener.GetEventType() == sf::Event::Closed);
@@ -29,11 +29,11 @@ TEST_CASE("Event Listener event type", "[EventListenerTests]")
 
 TEST_CASE("Event Dispatcher managment of EventListeners - Add & Remove", "[EventListenerTests]")
 {
-	EventListener listenerA;
-	EventListener listenerB;
+	Events::Listener listenerA;
+	Events::Listener listenerB;
 
-	EventDispatcher dispatcher;
-	EventDispatcherTestsWrapper dispatcher_helper(&dispatcher);
+	Events::Dispatcher dispatcher;
+	Events::DispatcherTestsWrapper dispatcher_helper(&dispatcher);
 
 	SECTION("EventListener add to the list")
 	{
@@ -60,7 +60,7 @@ TEST_CASE("Event Dispatcher managment of EventListeners - Add & Remove", "[Event
 
 TEST_CASE("Events are dispatched correctly to listeners.", "[EventListener]")
 {
-	EventListener listenerA;
+	Events::Listener listenerA;
 	listenerA.NotifyOn(sf::Event::Closed);
 
 	moc::Toggle listener_a_toggle;
@@ -69,7 +69,7 @@ TEST_CASE("Events are dispatched correctly to listeners.", "[EventListener]")
 			listener_a_toggle.Switch();
 		});
 
-	EventListener listenerB;
+	Events::Listener listenerB;
 	listenerB.NotifyOn(sf::Event::Resized);
 	moc::Toggle listener_b_toggle;
 	listenerB.SetCallback([&listener_b_toggle](const sf::Event& event) {
@@ -77,7 +77,7 @@ TEST_CASE("Events are dispatched correctly to listeners.", "[EventListener]")
 		});
 
 
-	EventDispatcher dispatcher;
+	Events::Dispatcher dispatcher;
 	dispatcher.AddObserver(&listenerA);
 	dispatcher.AddObserver(&listenerB);
 	

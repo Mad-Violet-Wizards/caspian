@@ -28,6 +28,6 @@ namespace Tools
 
 			ImGuiManager m_imGuiManager;
 
-			std::unique_ptr<EventListener> m_keyReleasedListener;
+			std::unique_ptr<Events::Listener> m_keyReleasedListener;
 	};
 };

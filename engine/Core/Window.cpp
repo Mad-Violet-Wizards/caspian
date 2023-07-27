@@ -23,7 +23,7 @@ void Window::Update()
 		{
 			auto& main_instance = Game::MainSingleton::Instance();
 
-			EventDispatcher* event_dispatcher = main_instance.GetEventDispatcher();
+			Events::Dispatcher* event_dispatcher = main_instance.GetEventDispatcher();
 
 			if (event_dispatcher)
 				event_dispatcher->ProcessEvent(event);

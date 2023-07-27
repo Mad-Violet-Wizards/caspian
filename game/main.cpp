@@ -11,7 +11,7 @@ int main()
 
 	auto& main_instance = Game::MainSingleton::Instance();
 
-	std::unique_ptr<EventDispatcher> event_dispatcher_system = std::make_unique<EventDispatcher>();
+	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
 	main_instance.SetEventDispatcher(std::move(event_dispatcher_system));
 
 	#if defined(DEBUG)

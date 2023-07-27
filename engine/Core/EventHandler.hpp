@@ -2,9 +2,11 @@
 
 #include <functional>
 
-////////////////////////////////////////////////////////////////////////////////////////////
-class Observer
+namespace Events
 {
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  class Observer
+  {
   public:
 
     Observer() = default;
@@ -18,38 +20,38 @@ class Observer
   protected:
 
     sf::Event::EventType m_eventType;
-};
+  };
 
-////////////////////////////////////////////////////////////////////////////////////////////
-class EventListener : public Observer
-{
-
-public:
-
-  EventListener() = default;
-  ~EventListener() = default;
-
-  void OnNotify(const sf::Event& event) override
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  class Listener : public Observer
   {
-    if (m_callback)
-      m_callback(event);
-  }
-
-  void SetCallback(std::function<void(const sf::Event&)> callback) { m_callback = callback; }
-
-private:
-
-  std::function<void(const sf::Event&)> m_callback;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////
-class EventDispatcher
-{
 
   public:
 
-    EventDispatcher() = default;
-    ~EventDispatcher() = default;
+    Listener() = default;
+    ~Listener() = default;
+
+    void OnNotify(const sf::Event& event) override
+    {
+      if (m_callback)
+        m_callback(event);
+    }
+
+    void SetCallback(std::function<void(const sf::Event&)> callback) { m_callback = callback; }
+
+  private:
+
+    std::function<void(const sf::Event&)> m_callback;
+  };
+
+  ////////////////////////////////////////////////////////////////////////////////////////////
+  class Dispatcher
+  {
+
+  public:
+
+    Dispatcher() = default;
+    ~Dispatcher() = default;
 
     void AddObserver(Observer* observer) { m_observers.push_back(observer); }
     void RemoveObserver(Observer* observer) { m_observers.erase(std::remove(m_observers.begin(), m_observers.end(), observer), m_observers.end()); }
@@ -70,35 +72,36 @@ class EventDispatcher
     std::vector<Observer*> m_observers;
 
   public:
-    
+
     #if (defined TESTS)
-      friend class EventDispatcherTestsWrapper;
+    friend class DispatcherTestsWrapper;
     #endif
-};
-
-#if (defined TESTS)
-  class EventDispatcherTestsWrapper
-  {
-    public:
-
-      EventDispatcherTestsWrapper(EventDispatcher* dispatcher)
-        : m_dispatcher(dispatcher)
-        {}
-
-      size_t GetObserversVecSize() const
-      {
-        return m_dispatcher->m_observers.size();
-      }
-
-      bool IsListenerAdded(EventListener* _listener) const
-      {
-        auto observers_vec = m_dispatcher->m_observers;
-
-        return std::find(observers_vec.cbegin(), observers_vec.cend(), _listener) != observers_vec.cend();
-      }
-
-    private:
-
-      EventDispatcher* m_dispatcher;
   };
-#endif
+
+  #if (defined TESTS)
+  class DispatcherTestsWrapper
+  {
+  public:
+
+    DispatcherTestsWrapper(Dispatcher* _dispatcher)
+      : m_dispatcher(_dispatcher)
+    {}
+
+    size_t GetObserversVecSize() const
+    {
+      return m_dispatcher->m_observers.size();
+    }
+
+    bool IsListenerAdded(Listener* _listener) const
+    {
+      auto observers_vec = m_dispatcher->m_observers;
+
+      return std::find(observers_vec.cbegin(), observers_vec.cend(), _listener) != observers_vec.cend();
+    }
+
+  private:
+
+    Dispatcher* m_dispatcher;
+  };
+  #endif
+};

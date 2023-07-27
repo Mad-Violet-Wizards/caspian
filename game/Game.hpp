@@ -20,7 +20,7 @@ namespace Game
 
 		private:
 
-			std::unique_ptr<EventListener> m_keyReleasedListener = nullptr;
+			std::unique_ptr<Events::Listener> m_keyReleasedListener = nullptr;
 	};
 	#endif
 
@@ -40,8 +40,8 @@ namespace Game
 		void CalculateDeltaTime();
 		bool IsRunning() const;
 
-		void SetEventDispatcher(std::unique_ptr<EventDispatcher> _event_dispatcher) { m_eventDispatcher = std::move(_event_dispatcher); }
-		EventDispatcher* const GetEventDispatcher() { return m_eventDispatcher.get(); }
+		void SetEventDispatcher(std::unique_ptr<Events::Dispatcher> _event_dispatcher) { m_eventDispatcher = std::move(_event_dispatcher); }
+		Events::Dispatcher* const GetEventDispatcher() { return m_eventDispatcher.get(); }
 
 		void SetToolsManager(std::unique_ptr<Tools::Manager> _tools_mgr) { m_toolsManager = std::move(_tools_mgr); }
 		Tools::Manager* const GetToolsManager() { return m_toolsManager.get(); }
@@ -50,7 +50,7 @@ namespace Game
 
 		Window m_window;
 
-		std::unique_ptr<EventDispatcher> m_eventDispatcher = nullptr;
+		std::unique_ptr<Events::Dispatcher> m_eventDispatcher = nullptr;
 		std::unique_ptr<Tools::Manager> m_toolsManager = nullptr;
 
 		sf::Clock m_clock;

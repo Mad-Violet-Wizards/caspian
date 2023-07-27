@@ -27,7 +27,7 @@ void Manager::Render(EToolsSystem _tools_system)
 
 void Manager::InitializeEventListeners()
 {
-	m_keyReleasedListener = std::make_unique<EventListener>();
+	m_keyReleasedListener = std::make_unique<Events::Listener>();
 	m_keyReleasedListener->NotifyOn(sf::Event::KeyReleased);
 
 	m_keyReleasedListener->SetCallback([&](const sf::Event& event)
