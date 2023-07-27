@@ -39,6 +39,7 @@ namespace Game
 		void CalculateDeltaTime();
 		bool IsRunning() const;
 
+		void SetEventDispatcher(std::unique_ptr<EventDispatcher> _event_dispatcher) { m_eventDispatcher = std::move(_event_dispatcher); }
 		EventDispatcher* const GetEventDispatcher() { return m_eventDispatcher.get(); }
 
 	private:

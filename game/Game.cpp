@@ -15,9 +15,6 @@ Main::Main()
 {
 	m_deltaTime = m_clock.restart().asSeconds();
 
-	// Event dispatcher must be allocated almost immadietly as it's core system.
-	m_eventDispatcher = std::make_unique<EventDispatcher>();
-
 	#if defined(DEBUG)
 	ImGui::SFML::Init(m_window.GetRenderWindow());
 	#endif
