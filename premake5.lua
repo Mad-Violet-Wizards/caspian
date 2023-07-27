@@ -45,12 +45,12 @@ project "GameEngineTests"
     libdirs { "vendor/lib/" }
 
   filter "configurations:Debug"
-    defines { "DEBUG" }
+    defines { "DEBUG", "TESTS" }
     symbols "On"
     links { "GameEngine" }
 
   filter "configurations:Release"
-    defines { "RELEASE" }
+    defines { "RELEASE", "TESTS" }
     optimize "On"
     links { "GameEngine" }
 

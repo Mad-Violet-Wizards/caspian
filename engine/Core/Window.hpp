@@ -19,5 +19,6 @@ class Window
 
 	private:
 
+		EventDispatcher* m_eventDispatcher = nullptr;
 		sf::RenderWindow m_renderWindow;
 };

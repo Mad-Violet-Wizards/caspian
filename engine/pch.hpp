@@ -18,6 +18,12 @@
 #include <memory>
 #include <algorithm>
 
+// ENGINE //
+
+#include "engine/Core/IComponent.hpp"
+#include "engine/Core/EventHandler.hpp"
+#include "engine/Core/GameObject.hpp"
+
 // WARNING C4603.
 #if(defined DEBUG)
 	#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
