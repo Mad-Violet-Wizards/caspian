@@ -40,18 +40,21 @@ void Main::Update()
 	m_window.Update();
 
 	#if defined(DEBUG)
-		ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
+	ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
+
+	if (m_toolsManager) 
+	{ 
+		m_toolsManager->Update(m_deltaTime, Tools::EToolsSystem::ImGui); 
+	}
 	#endif
 }
 
 void Main::LateUpdate()
 {
-	#if defined(DEBUG)
-	// Draw debug imGui shit.
+ #if defined(DEBUG)
+	if (m_toolsManager)
 	{
-		ImGui::Begin("Hello, world!");
-		ImGui::Button("Some debug button.");
-		ImGui::End();
+		m_toolsManager->Render(Tools::EToolsSystem::ImGui);
 	}
 	#endif
 }
@@ -61,9 +64,7 @@ void Main::Draw()
 	m_window.BeginDraw();
 
 	#if defined(DEBUG)
-	{
-		ImGui::SFML::Render(m_window.GetRenderWindow());
-	}
+	ImGui::SFML::Render(m_window.GetRenderWindow());
 	#endif
 
 	m_window.EndDraw();
