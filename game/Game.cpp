@@ -5,7 +5,9 @@
 #include <imgui/imgui.h>
 #include <imgui-SFML/imgui-SFML.h>
 
-Game::Game()
+using namespace Game;
+
+Main::Main()
 	: m_window("Caspian Game")
 {
 	m_deltaTime = m_clock.restart().asSeconds();
@@ -16,7 +18,7 @@ Game::Game()
 	}
 }
 
-Game::~Game()
+Main::~Main()
 {
 	if constexpr(DEBUG)
 	{
@@ -24,7 +26,7 @@ Game::~Game()
 	}
 }
 
-void Game::GameLoop()
+void Main::MainLoop()
 {
 	Update();
 	LateUpdate();
@@ -32,7 +34,7 @@ void Game::GameLoop()
 	CalculateDeltaTime();
 }
 
-void Game::Update()
+void Main::Update()
 {
 	m_window.Update();
 
@@ -42,7 +44,7 @@ void Game::Update()
 	}
 }
 
-void Game::LateUpdate()
+void Main::LateUpdate()
 {
 	// Draw debug imGui shit.
 	if constexpr (DEBUG) {
@@ -52,7 +54,7 @@ void Game::LateUpdate()
 	}
 }
 
-void Game::Draw()
+void Main::Draw()
 {
 	m_window.BeginDraw();
 
@@ -64,12 +66,12 @@ void Game::Draw()
 	m_window.EndDraw();
 }
 
-void Game::CalculateDeltaTime()
+void Main::CalculateDeltaTime()
 {
 	m_deltaTime = m_clock.restart().asSeconds();
 }
 
-bool Game::IsRunning() const
+bool Main::IsRunning() const
 {
 	return m_window.IsOpen();
 }

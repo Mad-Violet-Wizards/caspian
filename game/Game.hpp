@@ -1,15 +1,18 @@
 #pragma once
 
 #include "engine/Core/Window.hpp"
+#include "engine/Design-Patterns/Singleton.hpp"
 
-class Game
+namespace Game
 {
+	class Main
+	{
 	public:
 
-		Game();
-		~Game();
+		Main();
+		~Main();
 
-		void GameLoop();
+		void MainLoop();
 
 		void Update();
 		void LateUpdate();
@@ -23,4 +26,7 @@ class Game
 
 		sf::Clock m_clock;
 		float m_deltaTime;
+	};
+
+	using MainSingleton = Singleton<Main>;
 };

@@ -3,13 +3,16 @@
 #include <iostream>
 
 #include "Game.hpp"
+#include "engine/Design-Patterns/Singleton.hpp"
 
 int main()
 {
-	Game game;
+	Game::MainSingleton::Create();
 
-	while (game.IsRunning())
+	auto& main_instance = Game::MainSingleton::Instance();
+
+	while (main_instance.IsRunning())
 	{
-		game.GameLoop();
+		main_instance.MainLoop();
 	}
 }
