@@ -1,9 +1,9 @@
 #include "engine/pch.hpp"
 
-#include <imgui-file-dialog/ImGuiFileDialog.h>
 #include <iostream>
 
 #include "engine/Tools/ImGuiTools.hpp"
+#include "engine/Tools/ImGuiAssetsTools.hpp"
 
 using namespace Tools;
 
@@ -12,12 +12,6 @@ using namespace Tools;
 ImGuiToolbar::ImGuiToolbar(ImGuiManager* _mgr)
 	: m_Manager(_mgr)
 {
-}
-
-void ImGuiToolbar::Update(float _dt)
-{
-	if (!m_Active)
-		return;
 }
 
 void ImGuiToolbar::Render()
@@ -30,7 +24,7 @@ void ImGuiToolbar::Render()
 	ImGui::Begin("Toolbar", &m_Active, flags.toolbar_window_flags);
 	{
 		ImGui::SetWindowPos(ImVec2(0, 0));
-		ImGui::SetWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 60));
+		ImGui::SetWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, 32));
 
 		static auto styles = utils::styles();
 
@@ -52,7 +46,7 @@ void ImGuiToolbar::Render()
 
 				if (ImGui::Selectable("View Assets List"))
 				{
-					// Action.
+					m_Manager->m_AssetListWindow.m_Active = true;
 				}
 
 				ImGui::EndPopup();
@@ -71,7 +65,7 @@ void ImGuiToolbar::Render()
 		}
 
 		{
-			const char* npc_popup_name = "NPCPopup";
+			constexpr auto npc_popup_name = "NPCPopup";
 
 			ImGui::SameLine();
 			if (ImGui::Button("NPC", styles.toolbar_button_size))
@@ -92,6 +86,29 @@ void ImGuiToolbar::Render()
 				ImGui::EndPopup();
 		}
 
+		{
+			constexpr auto project_popup_name = "ProjectPopup";
+
+			ImGui::SameLine();
+			if (ImGui::Button("Project", styles.toolbar_button_size))
+				ImGui::OpenPopup(project_popup_name);
+
+			if (ImGui::BeginPopup(project_popup_name))
+			{
+				if (ImGui::Selectable("New..."))
+				{
+					m_Manager->m_NewProjectWindow.m_Active = true;
+				}
+
+				if (ImGui::Selectable("Load..."))
+				{
+					// Action.
+				}
+
+				ImGui::EndPopup();
+			}
+		}
+
 		styles.toolbar_pop_combobox_style();
 		styles.toolbar_pop_button_style();
 
@@ -99,48 +116,11 @@ void ImGuiToolbar::Render()
 	ImGui::End();
 }
 
-/////////////////////////////////////////////////////////
-/* ImGuiImportAssetWindow */
-void ImGuiImportAssetWindow::Update(float _dt)
-{
-
-}
-
-void ImGuiImportAssetWindow::Render()
-{
-	if (!m_Active)
-		return;
-
-	if (ImGui::Begin("Import Asset Window", &m_Active))
-	{
-		constexpr auto dialog_name = "ImportAssetFileDialog";
-		if (ImGui::Button("Select file"))
-		{
-			ImGuiFileDialog::Instance()->OpenDialog(dialog_name, "Choose File", ".cpp,.h,.hpp", ".");
-		}
-
-		if (ImGuiFileDialog::Instance()->Display(dialog_name))
-		{
-			if (ImGuiFileDialog::Instance()->IsOk())
-			{
-				const std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-				const std::string filePath = ImGuiFileDialog::Instance()->GetCurrentPath();
-
-				std::cout << "[ImGuiImportAssetWindow] File path name: " << filePathName << "\n";
-				std::cout << "[ImGuiImportAssetWindow] File path: " << filePath << "\n";
-			}
-
-			ImGuiFileDialog::Instance()->Close();
-		}
-	}
-
-	ImGui::End();
-}
-
 ////////////////////////////////////////////////////////
 /* ImGuiManager */
 ImGuiManager::ImGuiManager()
 	: m_Toolbar(this)
+	, m_NewProjectWindow(this)
 {
 
 }
@@ -156,8 +136,9 @@ void ImGuiManager::Update(float _dt)
 	if (!m_Active)
 		return;
 
-	m_Toolbar.Update(_dt);
-	m_ImportAssetWindow.Update(_dt);
+	//m_Toolbar.Update(_dt);
+	//m_ImportAssetWindow.Update(_dt);
+	//m_AssetListWindow.Update(_dt);
 }
 
 void ImGuiManager::Render()
@@ -167,4 +148,11 @@ void ImGuiManager::Render()
 	
 	m_Toolbar.Render();
 	m_ImportAssetWindow.Render();
+	m_AssetListWindow.Render();
+	m_NewProjectWindow.Render();
+}
+
+void ImGuiManager::OnCreateNewProject(const std::string_view _project_name, const std::string_view _project_path)
+{
+	std::cout << "Creating new project: " << _project_name << " at " << _project_path << "\n";
 }
