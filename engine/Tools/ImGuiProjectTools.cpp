@@ -1,26 +1,26 @@
 #include "engine/pch.hpp"
 
 #include "ImGuiProjectTools.hpp"
+#include "ImGuiUtils.hpp"
+#include "ImGuiTools.hpp"
+#include "ImGuiValidators.hpp"
 
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
-#include "engine/Tools/ImGuiUtils.hpp"
-#include "engine/Tools/ImGuiTools.hpp"
 
 using namespace Tools;
 
 /////////////////////////////////////////////////////////
 /* ImGuiNewProjectWindow*/
-
 ImGuiNewProjectWindow::ImGuiNewProjectWindow(ImGuiManager* _mgr)
-	: m_Manager(_mgr) {}
+	: ImGuiIWindow(_mgr) { }
 
 void ImGuiNewProjectWindow::Render()
 {
 	if (!m_Active)
 		return;
 
-	if (ImGui::Begin("New Project ", &m_Active, ImGuiWindowFlags_AlwaysAutoResize))
+	if (ImGui::Begin("New Project ", &m_Active, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
 		constexpr auto max_input_sizes = 128;
 		m_projectName.resize(max_input_sizes);
@@ -57,10 +57,24 @@ void ImGuiNewProjectWindow::Render()
 			ImGui::Dummy(ImVec2(0.f, 10.f));
 			if (ImGui::Button("Create"))
 			{
-				if (m_Manager)
-					m_Manager->OnCreateNewProject(m_projectName, m_projectPath);
+				const bool project_name_valid = validate_input::is_valid_project_name(m_projectName);
+				const bool project_path_valid = validate_input::is_valid_project_path(m_projectPath);
 
-				m_Active = false;
+				std::string error_msg;
+
+				if (!project_name_valid)
+					error_msg += "Invalid project name.\n";
+
+				if (!project_path_valid)
+					error_msg += "Invalid project path.\n";
+
+				if (!project_name_valid || !project_path_valid)
+					m_Manager->ShowNotification(ENotificationType::Error, error_msg);
+
+				if (project_name_valid && project_path_valid)
+				{
+					m_Manager->OnCreateNewProject(m_projectName, m_projectPath);
+				}
 			}
 
 			styles.pop_accept_button_style();

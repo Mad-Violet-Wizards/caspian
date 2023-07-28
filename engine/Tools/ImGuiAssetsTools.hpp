@@ -1,26 +1,26 @@
 #pragma once
 
-#include "IImGuiWidget.hpp"
+#include "ImGuiIWindow.hpp"
 
 namespace Tools
 {
 	/////////////////////////////////////////////////////////
-	class ImGuiImportAssetWindow : public IImGuiWidget
+	class ImGuiImportAssetWindow : public ImGuiIWindow
 	{
 	public:
 
-		ImGuiImportAssetWindow() = default;
+		ImGuiImportAssetWindow(ImGuiManager* _mgr) : ImGuiIWindow(_mgr) {}
 		~ImGuiImportAssetWindow() = default;
 
 		void Render() override;
 	};
 
 	/////////////////////////////////////////////////////////
-	class ImGuiAssetListWindow : public IImGuiWidget
+	class ImGuiAssetListWindow : public ImGuiIWindow
 	{
 	public:
 
-		ImGuiAssetListWindow() = default;
+		ImGuiAssetListWindow(ImGuiManager* _mgr) : ImGuiIWindow(_mgr) {}
 		~ImGuiAssetListWindow() = default;
 
 		void Render() override;

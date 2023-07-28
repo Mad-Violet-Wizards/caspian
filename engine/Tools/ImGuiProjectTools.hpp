@@ -1,8 +1,8 @@
 #pragma once
 
-#include "engine/Tools/IImGuiWidget.hpp"
+#include "ImGuiIWindow.hpp"
 
-#include "engine/Tools/ImGuiUtils.hpp"
+#include "ImGuiUtils.hpp"
 
 
 namespace Tools
@@ -10,7 +10,7 @@ namespace Tools
 	/////////////////////////////////////////////////////////
 
 	class ImGuiManager;
-	class ImGuiNewProjectWindow : public IImGuiWidget
+	class ImGuiNewProjectWindow : public ImGuiIWindow
 	{
 		public:
 			ImGuiNewProjectWindow(ImGuiManager* _mgr);
@@ -23,7 +23,6 @@ namespace Tools
 			std::string m_projectName;
 			std::string m_projectPath;
 
-			ImGuiManager* m_Manager;
 			// TODO: UUID
 			// TODO: Type
 	};

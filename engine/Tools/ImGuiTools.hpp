@@ -2,17 +2,16 @@
 
 #include <imgui/imgui.h>
 
-#include "engine/Tools/IImGuiWidget.hpp"
-#include "engine/Tools/ImGuiUtils.hpp"
-
-#include "engine/Tools/ImGuiAssetsTools.hpp"
-#include "engine/Tools/ImGuiProjectTools.hpp"
+#include "ImGuiIWindow.hpp"
+#include "ImGuiUtils.hpp"
+#include "ImGuiAssetsTools.hpp"
+#include "ImGuiProjectTools.hpp"
+#include "ImGuiNotificationWindows.hpp"
 
 namespace Tools
 {
 	/////////////////////////////////////////////////////////
-	class ImGuiManager;
-	class ImGuiToolbar : public IImGuiWidget
+	class ImGuiToolbar : public ImGuiIWindow
 	{
 		public:
 
@@ -20,14 +19,43 @@ namespace Tools
 			~ImGuiToolbar() = default;
 
 			void Render() override;
+	};
+	
+/////////////////////////////////////////////////////////
+	enum class ENotificationType
+	{
+		None,
+		Warning,
+		Error,
+		COUNT
+	};
+
+	/////////////////////////////////////////////////////////
+	class ImGuiNotificationManager
+	{
+		public:
+
+			ImGuiNotificationManager(ImGuiManager* _mgr);
+			~ImGuiNotificationManager() = default;
+
+			void Update(float _dt);
+			void Render();
+
+			void ShowNotification(ENotificationType _type, std::string_view _msg);
+			void ClearNotifications();
+
+			void OnNotificationHidden();
 
 		private:
+
+			// ImGuiNotificationWindows.h
+			std::unique_ptr<notifications::WarningWindow> m_WarningWindow;
+			std::unique_ptr<notifications::ErrorWindow>		m_ErrorWindow;
 
 			ImGuiManager* m_Manager = nullptr;
 	};
 	
 	/////////////////////////////////////////////////////////
-
 	class ImGuiManager
 	{
 		public:
@@ -40,9 +68,9 @@ namespace Tools
 			void Update(float _dt);
 			void Render();
 
-		public:
-			
-			void OnCreateNewProject(const std::string_view _project_name, const std::string_view _project_path);
+			void ShowNotification(ENotificationType _type, std::string_view _msg);
+
+			void OnCreateNewProject(std::string_view _project_name, std::string_view _project_path);
 
 		public:
 
@@ -53,10 +81,13 @@ namespace Tools
 			// ImGuiProjectTools.h
 			ImGuiNewProjectWindow m_NewProjectWindow;
 
+			// ImGuiTools.h
+			ImGuiNotificationManager m_NotificationManager;
+
 		private:
 
 			ImGuiToolbar m_Toolbar;
 
-			bool m_Active = false;
+			bool m_Active = utils::TOOLS_INIT_ACTIVE_STATE;
 	};
 };

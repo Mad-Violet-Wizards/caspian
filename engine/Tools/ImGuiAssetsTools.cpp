@@ -1,6 +1,7 @@
 #include "engine/pch.hpp"
 
 #include "ImGuiAssetsTools.hpp"
+#include "ImGuiTools.hpp"
 
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
@@ -34,6 +35,11 @@ void ImGuiImportAssetWindow::Render()
 			}
 
 			ImGuiFileDialog::Instance()->Close();
+		}
+
+		if (ImGui::Button("Finish"))
+		{
+			m_Manager->ShowNotification(ENotificationType::Warning, "Not implemented yet");
 		}
 	}
 
