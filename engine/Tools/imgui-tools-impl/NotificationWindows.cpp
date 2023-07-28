@@ -9,10 +9,10 @@ namespace Tools_Impl
 {
 	namespace notifications
 	{
-		WarningWindow::WarningWindow(Manager* _mgr)
+		WarningNotificationWindow::WarningNotificationWindow(Manager* _mgr)
 			: INotificationWindow(_mgr) {}
 
-		void WarningWindow::Render()
+		void WarningNotificationWindow::Render()
 		{
 			if (!m_Active)
 				return;
@@ -36,10 +36,10 @@ namespace Tools_Impl
 		}
 
 		////////////////////////////////////////////////////////////
-		ErrorWindow::ErrorWindow(Manager* _mgr) 
+		ErrorNotificationWindow::ErrorNotificationWindow(Manager* _mgr)
 			: INotificationWindow(_mgr) {}
 
-		void ErrorWindow::Render()
+		void ErrorNotificationWindow::Render()
 		{
 			if (!m_Active)
 				return;

@@ -49,8 +49,8 @@ namespace Tools_Impl
 		private:
 
 			// ImGuiNotificationWindows.h
-			std::unique_ptr<notifications::WarningWindow> m_WarningWindow;
-			std::unique_ptr<notifications::ErrorWindow>		m_ErrorWindow;
+			std::unique_ptr<notifications::WarningNotificationWindow> m_WarningWindow;
+			std::unique_ptr<notifications::ErrorNotificationWindow>		m_ErrorWindow;
 
 			Manager* m_Manager = nullptr;
 	};

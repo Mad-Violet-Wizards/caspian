@@ -26,10 +26,17 @@ void NewProjectWindow::Render()
 		m_projectName.resize(max_input_sizes);
 		m_projectPath.resize(max_input_sizes);
 
-		ImGui::InputText("Name", &m_projectName[0], max_input_sizes);
-		ImGui::InputText("Path", &m_projectPath[0], max_input_sizes);
+		if (ImGui::InputText("Name", &m_projectName[0], max_input_sizes))
+		{
+			m_projectName.resize(strlen(&m_projectName[0]));
+		}
+
+		if (ImGui::InputText("Path", &m_projectPath[0], max_input_sizes))
+		{
+			m_projectPath.resize(strlen(&m_projectPath[0]));
+		}
 		
-		ImGui::Text("Select the directory where project files are going to be initialized.");
+		ImGui::Text("Select the directory where project files are going to be initialized. Name of project = name of project resources dir.");
 		ImGui::Text("TIP: Create a new project folder in ROOT directory - where the Caspian.sln lays.\nEnter the folder and create new directory here with the same name as the project name.");
 
 		constexpr auto dialog_name = "ProjectPathDialog";
@@ -63,10 +70,10 @@ void NewProjectWindow::Render()
 				std::string error_msg;
 
 				if (!project_name_valid)
-					error_msg += "Invalid project name.\n";
+					error_msg += "Invalid project name. \nEmpty, or invalid character used.\n";
 
 				if (!project_path_valid)
-					error_msg += "Invalid project path.\n";
+					error_msg += "Invalid project path. \nPlease use caspian/projects/ dir.\n";
 
 				if (!project_name_valid || !project_path_valid)
 					m_Manager->ShowNotification(ENotificationType::Error, error_msg);

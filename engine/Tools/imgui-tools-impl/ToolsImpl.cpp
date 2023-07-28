@@ -118,8 +118,8 @@ void Toolbar::Render()
 /* ImGuiNotificationManager */
 NotificationsManager::NotificationsManager(Manager* _mgr)
 	: m_Manager(_mgr)
-	, m_ErrorWindow(std::make_unique<notifications::ErrorWindow>(_mgr))
-	, m_WarningWindow(std::make_unique<notifications::WarningWindow>(_mgr))
+	, m_ErrorWindow(std::make_unique<notifications::ErrorNotificationWindow>(_mgr))
+	, m_WarningWindow(std::make_unique<notifications::WarningNotificationWindow>(_mgr))
 {
 }
 
@@ -246,4 +246,14 @@ void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 void Manager::OnCreateNewProject(std::string_view _project_name, std::string_view _project_path)
 {
 	std::cout << "Creating new project: " << _project_name << " at " << _project_path << "\n";
+
+	// TODO: Call low API to create new project.
+	// We need some kind of callback to show the user that the project was created successfully.
+
+	const bool project_created_successfully = true;
+
+	if (project_created_successfully)
+	{
+		// Show info notification.
+	}
 }

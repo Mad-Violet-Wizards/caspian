@@ -12,7 +12,7 @@ namespace Tools_Impl
 		constexpr float TOOLS_NOTIFICATION_MAX_DISPLAY_TIME = 5.0f;
 
 		constexpr ImVec2 TOOLS_NOTIFICATION_START_POSITION{ 5.f, 32.f };
-		constexpr ImVec2 TOOLS_NOTIFICATION_SIZE{ 200.f, 72.f };
+		constexpr ImVec2 TOOLS_NOTIFICATION_SIZE{ 250.f, 72.f };
 
 
 		/////////////////////////////////////////////////////////

@@ -8,22 +8,22 @@ namespace Tools_Impl
 
 	namespace notifications
 	{
-		class WarningWindow : public INotificationWindow
+		class WarningNotificationWindow : public INotificationWindow
 		{
 			public:
 				
-				WarningWindow(Manager* _mgr);
-				~WarningWindow() = default;
+				WarningNotificationWindow(Manager* _mgr);
+				~WarningNotificationWindow() = default;
 
 				void Render() override;
 		};
 
-		class ErrorWindow : public INotificationWindow
+		class ErrorNotificationWindow : public INotificationWindow
 		{
 			public:
 
-				ErrorWindow(Manager* _mgr);
-				~ErrorWindow() = default;
+				ErrorNotificationWindow(Manager* _mgr);
+				~ErrorNotificationWindow() = default;
 
 				void Render() override;
 		};
