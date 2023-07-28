@@ -1,20 +1,20 @@
 #pragma once
 
-#include "ImGuiUtils.hpp"
+#include "Utils.hpp"
 
 // TODO: Later move to IImGuiMessageWindow.cpp and include engine/pch.hpp.
 #include <string>
 #include <string_view>
 
-namespace Tools
+namespace Tools_Impl
 {
-	class ImGuiINotificationWindow
+	class INotificationWindow
 	{
 	public:
 
-		ImGuiINotificationWindow(ImGuiManager* _mgr)
+		INotificationWindow(Manager* _mgr)
 			: m_Manager(_mgr) {}
-		virtual ~ImGuiINotificationWindow() = default;
+		virtual ~INotificationWindow() = default;
 
 		ImVec2 CalculatePosition(int _active_notifications) const;
 
@@ -39,7 +39,7 @@ namespace Tools
 
 		std::string m_message;
 
-		ImGuiManager* m_Manager = nullptr;
+		Manager* m_Manager = nullptr;
 
 	};
 };

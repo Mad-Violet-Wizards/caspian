@@ -1,10 +1,10 @@
 #include "engine/pch.hpp"
 
-#include "ImGuiValidators.hpp"
+#include "Validators.hpp"
 
 #include <regex>
 
-namespace Tools
+namespace Tools_Impl
 {
 	namespace validate_input
 	{

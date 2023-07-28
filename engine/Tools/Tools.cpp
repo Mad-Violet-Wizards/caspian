@@ -13,7 +13,7 @@ void Manager::Update(float _dt, EToolsSystem _tools_system)
 		return;
 
 	if (_tools_system == EToolsSystem::ImGui)
-		m_imGuiManager.Update(_dt);
+		m_ImplManager.Update(_dt);
 }
 
 void Manager::Render(EToolsSystem _tools_system)
@@ -22,7 +22,7 @@ void Manager::Render(EToolsSystem _tools_system)
 		return;
 
 	if (_tools_system == EToolsSystem::ImGui)
-		m_imGuiManager.Render();
+		m_ImplManager.Render();
 }
 
 void Manager::InitializeEventListeners()
@@ -36,7 +36,7 @@ void Manager::InitializeEventListeners()
 			sf::Keyboard::Key key = keyboard.localize(event.key.scancode);
 
 			if (key == sf::Keyboard::Key::Grave)
-				m_imGuiManager.ToggleActiveState();
+				m_ImplManager.ToggleActiveState();
 		});
 
 	if (Game::MainSingleton::IsValid())

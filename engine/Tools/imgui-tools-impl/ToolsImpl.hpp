@@ -2,21 +2,21 @@
 
 #include <imgui/imgui.h>
 
-#include "ImGuiIWindow.hpp"
-#include "ImGuiUtils.hpp"
-#include "ImGuiAssetsTools.hpp"
-#include "ImGuiProjectTools.hpp"
-#include "ImGuiNotificationWindows.hpp"
+#include "IWindow.hpp"
+#include "Utils.hpp"
+#include "AssetWindows.hpp"
+#include "ProjectWindows.hpp"
+#include "NotificationWindows.hpp"
 
-namespace Tools
+namespace Tools_Impl
 {
 	/////////////////////////////////////////////////////////
-	class ImGuiToolbar : public ImGuiIWindow
+	class Toolbar : public IWindow
 	{
 		public:
 
-			ImGuiToolbar(ImGuiManager* _mgr);
-			~ImGuiToolbar() = default;
+			Toolbar(Manager* _mgr);
+			~Toolbar() = default;
 
 			void Render() override;
 	};
@@ -31,12 +31,12 @@ namespace Tools
 	};
 
 	/////////////////////////////////////////////////////////
-	class ImGuiNotificationManager
+	class NotificationsManager
 	{
 		public:
 
-			ImGuiNotificationManager(ImGuiManager* _mgr);
-			~ImGuiNotificationManager() = default;
+			NotificationsManager(Manager* _mgr);
+			~NotificationsManager() = default;
 
 			void Update(float _dt);
 			void Render();
@@ -52,16 +52,16 @@ namespace Tools
 			std::unique_ptr<notifications::WarningWindow> m_WarningWindow;
 			std::unique_ptr<notifications::ErrorWindow>		m_ErrorWindow;
 
-			ImGuiManager* m_Manager = nullptr;
+			Manager* m_Manager = nullptr;
 	};
 	
 	/////////////////////////////////////////////////////////
-	class ImGuiManager
+	class Manager
 	{
 		public:
 
-			ImGuiManager();
-			~ImGuiManager() = default;
+			Manager();
+			~Manager() = default;
 
 			void ToggleActiveState();
 
@@ -75,18 +75,18 @@ namespace Tools
 		public:
 
 			// ImGuiAssetsTools.h
-			ImGuiImportAssetWindow m_ImportAssetWindow;
-			ImGuiAssetListWindow m_AssetListWindow;
+			ImportAssetWindow m_ImportAssetWindow;
+			AssetsListWindow m_AssetListWindow;
 
 			// ImGuiProjectTools.h
-			ImGuiNewProjectWindow m_NewProjectWindow;
+			NewProjectWindow m_NewProjectWindow;
 
 			// ImGuiTools.h
-			ImGuiNotificationManager m_NotificationManager;
+			NotificationsManager m_NotificationManager;
 
 		private:
 
-			ImGuiToolbar m_Toolbar;
+			Toolbar m_Toolbar;
 
 			bool m_Active = utils::TOOLS_INIT_ACTIVE_STATE;
 	};

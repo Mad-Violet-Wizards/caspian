@@ -1,21 +1,21 @@
 #include "engine/pch.hpp"
 
-#include "ImGuiProjectTools.hpp"
-#include "ImGuiUtils.hpp"
-#include "ImGuiTools.hpp"
-#include "ImGuiValidators.hpp"
+#include "ProjectWindows.hpp"
+#include "Utils.hpp"
+#include "ToolsImpl.hpp"
+#include "Validators.hpp"
 
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
 
-using namespace Tools;
+using namespace Tools_Impl;
 
 /////////////////////////////////////////////////////////
-/* ImGuiNewProjectWindow*/
-ImGuiNewProjectWindow::ImGuiNewProjectWindow(ImGuiManager* _mgr)
-	: ImGuiIWindow(_mgr) { }
+/* NewProjectWindow*/
+NewProjectWindow::NewProjectWindow(Manager* _mgr)
+	: IWindow(_mgr) { }
 
-void ImGuiNewProjectWindow::Render()
+void NewProjectWindow::Render()
 {
 	if (!m_Active)
 		return;
@@ -92,6 +92,6 @@ void ImGuiNewProjectWindow::Render()
 
 /////////////////////////////////////////////////////////
 /* ImGuiOpenProjectWindow*/
-void ImGuiLoadProjectAction::operator()()
-{
-}
+//void ImGuiLoadProjectAction::operator()()
+//{
+//}

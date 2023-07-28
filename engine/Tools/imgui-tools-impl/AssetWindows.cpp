@@ -1,16 +1,16 @@
 #include "engine/pch.hpp"
 
-#include "ImGuiAssetsTools.hpp"
-#include "ImGuiTools.hpp"
+#include "AssetWindows.hpp"
+#include "ToolsImpl.hpp"
 
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
 
-using namespace Tools;
+using namespace Tools_Impl;
 
 /////////////////////////////////////////////////////////
-/* ImGuiImportAssetWindow */
-void ImGuiImportAssetWindow::Render()
+/* ImportAssetWindow */
+void ImportAssetWindow::Render()
 {
 	if (!m_Active)
 		return;
@@ -47,8 +47,8 @@ void ImGuiImportAssetWindow::Render()
 }
 
 ////////////////////////////////////////////////////////
-/* ImGuiAssetListWindow */
-void ImGuiAssetListWindow::Render()
+/* AssetListWindow */
+void AssetsListWindow::Render()
 {
 	if (!m_Active)
 		return;

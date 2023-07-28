@@ -2,15 +2,15 @@
 
 #include <imgui/imgui.h>
 
-#include "ImGuiTools.hpp"
-#include "ImGuiNotificationWindows.hpp"
+#include "ToolsImpl.hpp"
+#include "NotificationWindows.hpp"
 
-namespace Tools
+namespace Tools_Impl
 {
 	namespace notifications
 	{
-		WarningWindow::WarningWindow(ImGuiManager* _mgr)
-			: ImGuiINotificationWindow(_mgr) {}
+		WarningWindow::WarningWindow(Manager* _mgr)
+			: INotificationWindow(_mgr) {}
 
 		void WarningWindow::Render()
 		{
@@ -36,8 +36,8 @@ namespace Tools
 		}
 
 		////////////////////////////////////////////////////////////
-		ErrorWindow::ErrorWindow(ImGuiManager* _mgr) 
-			: ImGuiINotificationWindow(_mgr) {}
+		ErrorWindow::ErrorWindow(Manager* _mgr) 
+			: INotificationWindow(_mgr) {}
 
 		void ErrorWindow::Render()
 		{

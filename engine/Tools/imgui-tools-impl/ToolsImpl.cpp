@@ -2,17 +2,17 @@
 
 #include <iostream>
 
-#include "ImGuiTools.hpp"
-#include "ImGuiAssetsTools.hpp"
+#include "ToolsImpl.hpp"
+#include "AssetWindows.hpp"
 
-using namespace Tools;
+using namespace Tools_Impl;
 
 ////////////////////////////////////////////////////////
-/* ImGuiToolbar */
-ImGuiToolbar::ImGuiToolbar(ImGuiManager* _mgr)
-	: ImGuiIWindow(_mgr) { }
+/* Toolbar */
+Toolbar::Toolbar(Manager* _mgr)
+	: IWindow(_mgr) { }
 
-void ImGuiToolbar::Render()
+void Toolbar::Render()
 {
 	if (!m_Active)
 		return;
@@ -116,26 +116,26 @@ void ImGuiToolbar::Render()
 
 ////////////////////////////////////////////////////////
 /* ImGuiNotificationManager */
-ImGuiNotificationManager::ImGuiNotificationManager(ImGuiManager* _mgr)
+NotificationsManager::NotificationsManager(Manager* _mgr)
 	: m_Manager(_mgr)
 	, m_ErrorWindow(std::make_unique<notifications::ErrorWindow>(_mgr))
 	, m_WarningWindow(std::make_unique<notifications::WarningWindow>(_mgr))
 {
 }
 
-void ImGuiNotificationManager::Update(float _dt)
+void NotificationsManager::Update(float _dt)
 {
 	m_ErrorWindow->Update(_dt);
 	m_WarningWindow->Update(_dt);
 }
 
-void ImGuiNotificationManager::Render()
+void NotificationsManager::Render()
 {
 	m_ErrorWindow->Render();
 	m_WarningWindow->Render();
 }
 
-void ImGuiNotificationManager::ShowNotification(ENotificationType _type, std::string_view _msg)
+void NotificationsManager::ShowNotification(ENotificationType _type, std::string_view _msg)
 {
 	int active_notifications = 0;
 
@@ -163,15 +163,15 @@ void ImGuiNotificationManager::ShowNotification(ENotificationType _type, std::st
 	}
 }
 
-void ImGuiNotificationManager::ClearNotifications()
+void NotificationsManager::ClearNotifications()
 {
 	m_ErrorWindow->Hide();
 	m_WarningWindow->Hide();
 }
 
-void ImGuiNotificationManager::OnNotificationHidden()
+void NotificationsManager::OnNotificationHidden()
 {
-	std::vector<ImGuiINotificationWindow*> active_notification_vec;
+	std::vector<INotificationWindow*> active_notification_vec;
 
 	if (m_ErrorWindow->m_Active)
 		active_notification_vec.push_back(m_ErrorWindow.get());
@@ -195,8 +195,8 @@ void ImGuiNotificationManager::OnNotificationHidden()
 }
 
 ////////////////////////////////////////////////////////
-/* ImGuiManager */
-ImGuiManager::ImGuiManager()
+/* Manager */
+Manager::Manager()
 	: m_Toolbar(this)
 	, m_ImportAssetWindow(this)
 	, m_AssetListWindow(this)
@@ -206,13 +206,13 @@ ImGuiManager::ImGuiManager()
 
 }
 
-void ImGuiManager::ToggleActiveState()
+void Manager::ToggleActiveState()
 {
 	m_Active					 = !m_Active;
 	m_Toolbar.m_Active = !m_Toolbar.m_Active;
 }
 
-void ImGuiManager::Update(float _dt)
+void Manager::Update(float _dt)
 {
 	if (!m_Active)
 		return;
@@ -224,7 +224,7 @@ void ImGuiManager::Update(float _dt)
 	//m_AssetListWindow.Update(_dt);
 }
 
-void ImGuiManager::Render()
+void Manager::Render()
 {
 	if (!m_Active)
 		return;
@@ -238,12 +238,12 @@ void ImGuiManager::Render()
 	m_NewProjectWindow.Render();
 }
 
-void ImGuiManager::ShowNotification(ENotificationType _type, std::string_view _msg)
+void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 {
 	m_NotificationManager.ShowNotification(_type, _msg);
 }
 
-void ImGuiManager::OnCreateNewProject(std::string_view _project_name, std::string_view _project_path)
+void Manager::OnCreateNewProject(std::string_view _project_name, std::string_view _project_path)
 {
 	std::cout << "Creating new project: " << _project_name << " at " << _project_path << "\n";
 }

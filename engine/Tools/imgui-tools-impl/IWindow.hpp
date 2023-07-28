@@ -1,18 +1,19 @@
 #pragma once
 
-#include "ImGuiUtils.hpp"
+#include "Utils.hpp"
 
-namespace Tools
+namespace Tools_Impl
 {
-	class ImGuiManager;
-	class ImGuiIWindow
+	class Manager;
+
+	class IWindow
 	{
 	public:
 
-		ImGuiIWindow(ImGuiManager* _mgr)
+		IWindow(Manager* _mgr)
 			: m_Manager(_mgr) {}
 
-		virtual ~ImGuiIWindow() = default;
+		virtual ~IWindow() = default;
 
 		virtual void Update(float _dt) = delete;
 		virtual void Render() = 0;
@@ -23,6 +24,6 @@ namespace Tools
 
 	protected:
 
-		ImGuiManager* m_Manager = nullptr;
+		Manager* m_Manager = nullptr;
 	};
 };

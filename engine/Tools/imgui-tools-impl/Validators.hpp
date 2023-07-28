@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Tools
+namespace Tools_Impl
 {
 	namespace validate_input
 	{

@@ -1,12 +1,12 @@
 #include "engine/pch.hpp"
 
-#include "ImGuiTools.hpp"
+#include "ToolsImpl.hpp"
 
-#include "ImGuiINotificationWindow.hpp"
+#include "INotificationWindow.hpp"
 
-using namespace Tools;
+using namespace Tools_Impl;
 
-ImVec2 ImGuiINotificationWindow::CalculatePosition(int _active_notifications) const
+ImVec2 INotificationWindow::CalculatePosition(int _active_notifications) const
 {
 	ImVec2 pos{ utils::TOOLS_NOTIFICATION_START_POSITION };
 
@@ -22,7 +22,7 @@ ImVec2 ImGuiINotificationWindow::CalculatePosition(int _active_notifications) co
 	return pos;
 }
 
-void ImGuiINotificationWindow::Update(float _dt)
+void INotificationWindow::Update(float _dt)
 {
 	if (m_Active)
 		m_DisplayTime += _dt;
@@ -31,7 +31,7 @@ void ImGuiINotificationWindow::Update(float _dt)
 		Hide();
 }
 
-void ImGuiINotificationWindow::Show(int _active_notifications)
+void INotificationWindow::Show(int _active_notifications)
 {
 	if (m_Active)
 	{
@@ -45,7 +45,7 @@ void ImGuiINotificationWindow::Show(int _active_notifications)
 	m_Active = true;
 }
 
-void ImGuiINotificationWindow::Hide()
+void INotificationWindow::Hide()
 {
 	m_DisplayTime = 0.f;
 	m_Active = false;
