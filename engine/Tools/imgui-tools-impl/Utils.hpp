@@ -34,7 +34,7 @@ namespace Tools_Impl
 		{
 			const std::string project_root_path_substr = "caspian";
 
-			std::string TrimToRootPath(const std::string& _path)
+			std::string TrimToProjectRootPath(const std::string& _path)
 			{
 				std::string path = _path;
 

@@ -50,9 +50,7 @@ void NewProjectWindow::Render()
 		{
 			if (ImGuiFileDialog::Instance()->IsOk())
 			{
-				static auto paths_helpers = utils::paths();
-
-				m_projectPath = paths_helpers.TrimToRootPath(ImGuiFileDialog::Instance()->GetCurrentPath());
+				m_projectPath = ImGuiFileDialog::Instance()->GetCurrentPath();
 			}
 
 			ImGuiFileDialog::Instance()->Close();
