@@ -16,14 +16,12 @@ namespace Tools_Impl
 			if (null_terminator_count == project_name_size)
 				return false;
 
-			const std::string& project_name = std::string(_project_name);
-
 			// TODO: Those invalid chars are valid only on Windows.
 			const std::string invalid_chars = "<>:\"/\\|?*";
 
 			for (const char& c : invalid_chars)
 			{
-				if (project_name.find(c) != std::string::npos)
+				if (_project_name.find(c) != std::string::npos)
 					return false;
 			}
 
@@ -37,10 +35,8 @@ namespace Tools_Impl
 
 			if (null_terminator_count == project_name_size)
 				return false;
-
-			const std::string& project_path = std::string(_project_path);
 			
-			return std::filesystem::exists(project_path) || project_path.starts_with("caspian\\");
+			return std::filesystem::exists(_project_path);
 		}
 	};
 };
