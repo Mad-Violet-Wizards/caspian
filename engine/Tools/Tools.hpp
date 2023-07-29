@@ -1,6 +1,6 @@
 #pragma once
 
-#include "engine/Tools/ImGuiTools.hpp"
+#include "imgui-tools-impl/ToolsImpl.hpp"
 
 namespace Tools
 {
@@ -26,7 +26,7 @@ namespace Tools
 
 		private:
 
-			ImGuiManager m_imGuiManager;
+			Tools_Impl::Manager m_ImplManager;
 
 			std::unique_ptr<Events::Listener> m_keyReleasedListener;
 	};
