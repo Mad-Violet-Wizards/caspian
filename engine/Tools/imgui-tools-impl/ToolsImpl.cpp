@@ -120,6 +120,7 @@ NotificationsManager::NotificationsManager(Manager* _mgr)
 	: m_Manager(_mgr)
 	, m_ErrorWindow(std::make_unique<notifications::ErrorNotificationWindow>(_mgr))
 	, m_WarningWindow(std::make_unique<notifications::WarningNotificationWindow>(_mgr))
+	, m_SuccessWindow(std::make_unique<notifications::SuccessNotificationWindow>(_mgr))
 {
 }
 
@@ -127,12 +128,14 @@ void NotificationsManager::Update(float _dt)
 {
 	m_ErrorWindow->Update(_dt);
 	m_WarningWindow->Update(_dt);
+	m_SuccessWindow->Update(_dt);
 }
 
 void NotificationsManager::Render()
 {
 	m_ErrorWindow->Render();
 	m_WarningWindow->Render();
+	m_SuccessWindow->Render();
 }
 
 void NotificationsManager::ShowNotification(ENotificationType _type, std::string_view _msg)
@@ -141,6 +144,7 @@ void NotificationsManager::ShowNotification(ENotificationType _type, std::string
 
 	active_notifications += m_ErrorWindow->m_Active ? 1 : 0;
 	active_notifications += m_WarningWindow->m_Active ? 1 : 0;
+	active_notifications += m_SuccessWindow->m_Active ? 1 : 0;
 
 	switch (_type)
 	{
@@ -159,6 +163,13 @@ void NotificationsManager::ShowNotification(ENotificationType _type, std::string
 		{
 			m_ErrorWindow->SetMessage(_msg);
 			m_ErrorWindow->Show(active_notifications);
+			break;
+		}
+		case ENotificationType::Success:
+		{
+			m_SuccessWindow->SetMessage(_msg);
+			m_SuccessWindow->Show(active_notifications);
+			break;
 		}
 	}
 }
@@ -167,6 +178,7 @@ void NotificationsManager::ClearNotifications()
 {
 	m_ErrorWindow->Hide();
 	m_WarningWindow->Hide();
+	m_SuccessWindow->Hide();
 }
 
 void NotificationsManager::OnNotificationHidden()
@@ -178,6 +190,9 @@ void NotificationsManager::OnNotificationHidden()
 
 	if (m_WarningWindow->m_Active)
 		active_notification_vec.push_back(m_WarningWindow.get());
+
+	if (m_SuccessWindow->m_Active)
+		active_notification_vec.push_back(m_SuccessWindow.get());
 
 	// Sort vector by descending m_DisplayTime value.
 	std::sort(active_notification_vec.begin(), active_notification_vec.end(), [](const auto& _lhs, const auto& _rhs)
@@ -254,6 +269,7 @@ void Manager::OnCreateNewProject(std::string_view _project_name, std::string_vie
 
 	if (project_created_successfully)
 	{
+		ShowNotification(ENotificationType::Success, "Project created succesfully! :)");
 		// Show info notification.
 	}
 }

@@ -50,6 +50,7 @@ void INotificationWindow::Hide()
 	m_DisplayTime = 0.f;
 	m_Active = false;
 	m_Pos = utils::TOOLS_NOTIFICATION_START_POSITION;
+	m_message.clear();
 
 	m_Manager->m_NotificationManager.OnNotificationHidden();
 }

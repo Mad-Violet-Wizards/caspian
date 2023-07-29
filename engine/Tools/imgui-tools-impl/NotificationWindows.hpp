@@ -27,5 +27,15 @@ namespace Tools_Impl
 
 				void Render() override;
 		};
+
+		class SuccessNotificationWindow : public INotificationWindow
+		{
+			public:
+
+				SuccessNotificationWindow(Manager* _mgr);
+				~SuccessNotificationWindow() = default;
+
+				void Render() override;
+		};
 	}
 }

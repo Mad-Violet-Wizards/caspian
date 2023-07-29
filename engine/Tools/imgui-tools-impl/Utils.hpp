@@ -10,8 +10,8 @@ namespace Tools_Impl
 		constexpr bool TOOLS_INIT_ACTIVE_STATE = false;
 
 		constexpr float TOOLS_NOTIFICATION_MAX_DISPLAY_TIME = 5.0f;
-
-		constexpr ImVec2 TOOLS_NOTIFICATION_START_POSITION{ 5.f, 32.f };
+		constexpr float TOOLS_NOTIFICATION_MIN_ALPHA = 0.5f;
+		constexpr ImVec2 TOOLS_NOTIFICATION_START_POSITION{ 5.f, 42.f };
 		constexpr ImVec2 TOOLS_NOTIFICATION_SIZE{ 250.f, 72.f };
 
 

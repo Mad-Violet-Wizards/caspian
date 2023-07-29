@@ -10,8 +10,8 @@ namespace Tools_Impl
 	{
 		bool is_valid_project_name(std::string_view _project_name)
 		{
-			auto null_terminator_count = std::count(_project_name.begin(), _project_name.end(), '\0');
-			auto project_name_size = _project_name.size();
+			const auto null_terminator_count = std::count(_project_name.cbegin(), _project_name.cend(), '\0');
+			const auto project_name_size = _project_name.size();
 
 			if (null_terminator_count == project_name_size)
 				return false;
@@ -27,20 +27,20 @@ namespace Tools_Impl
 					return false;
 			}
 
+			return true;
 		}
 
 		bool is_valid_project_path(std::string_view _project_path)
 		{
+			const auto null_terminator_count = std::count(_project_path.cbegin(), _project_path.cend(), '\0');
+			const auto project_name_size = _project_path.size();
+
+			if (null_terminator_count == project_name_size)
+				return false;
+
 			const std::string& project_path = std::string(_project_path);
-
-			if (project_path.empty())
-				return false;
-
-			if (!project_path.starts_with("caspian\\"))
-				return false;
-
-			if (!project_path.find("projects"))
-				return false;
+			
+			return std::filesystem::exists(project_path) || project_path.starts_with("caspian\\");
 		}
 	};
 };

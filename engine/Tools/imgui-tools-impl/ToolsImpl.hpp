@@ -27,6 +27,7 @@ namespace Tools_Impl
 		None,
 		Warning,
 		Error,
+		Success,
 		COUNT
 	};
 
@@ -51,6 +52,7 @@ namespace Tools_Impl
 			// ImGuiNotificationWindows.h
 			std::unique_ptr<notifications::WarningNotificationWindow> m_WarningWindow;
 			std::unique_ptr<notifications::ErrorNotificationWindow>		m_ErrorWindow;
+			std::unique_ptr<notifications::SuccessNotificationWindow> m_SuccessWindow;
 
 			Manager* m_Manager = nullptr;
 	};

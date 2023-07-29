@@ -39,6 +39,7 @@ void NewProjectWindow::Render()
 		ImGui::Text("Select the directory where project files are going to be initialized. Name of project = name of project resources dir.");
 		ImGui::Text("TIP: Create a new project folder in ROOT directory - where the Caspian.sln lays.\nEnter the folder and create new directory here with the same name as the project name.");
 
+		// TODO: Project path should be secured to be only in caspian/projects/ dir.
 		constexpr auto dialog_name = "ProjectPathDialog";
 		if (ImGui::Button("Browse"))
 		{
