@@ -13,7 +13,7 @@ ImVec2 INotificationWindow::CalculatePosition(int _active_notifications) const
 	if (_active_notifications < 1)
 		return pos;
 
-	ImVec2 size{ utils::TOOLS_NOTIFICATION_SIZE };
+	constexpr ImVec2 size{ utils::TOOLS_NOTIFICATION_SIZE };
 
 	constexpr float margin_top = 10;
 
