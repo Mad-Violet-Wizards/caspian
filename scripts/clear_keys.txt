@@ -5,3 +5,4 @@ build
 .vcxproj
 .vcxproj.filters
 .vcxproj.user
+.ini
