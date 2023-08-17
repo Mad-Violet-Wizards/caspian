@@ -13,9 +13,6 @@ namespace fs
 	{
 		std::vector<std::string> files;
 
-		auto files_in_dir = std::distance(std::filesystem::directory_iterator(_path), std::filesystem::directory_iterator{});
-		files.reserve(files_in_dir);
-
 		if (std::filesystem::exists(_path))
 			for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(_path))
 				files.push_back(dir_entry.path().string());

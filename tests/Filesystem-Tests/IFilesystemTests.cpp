@@ -24,7 +24,7 @@ namespace mock
 		}
 
 		bool IsOpen() const override { return true; }
-		bool Close() override { return true; }
+		void Close() override { }
 		bool Open(fs::io::OpenMode _open_mode) override { return true; }
 		size_t Seek(size_t _offset, fs::io::Origin _origin) override { return 0;  }
 		size_t Tell() override { return 0; }
@@ -43,13 +43,13 @@ TEST_CASE("IFile - Read and Write.", "[IFilesystemTests]")
 	auto* tmp_file = new mock::MockFile("temp.txt");
 
 	const char data[] = "Ala ma kota";
-	bool write_res = tmp_file->Write(data);
+	bool write_res = tmp_file->Write(data, sizeof(data));
 	REQUIRE(write_res == true);
 	REQUIRE(tmp_file->m_Data.size() == 12);
 
 	// Reading.
 	char read_data[12];
-	bool read_res = tmp_file->Read(read_data);
+	bool read_res = tmp_file->Read(read_data, 12);
 	REQUIRE(read_res == true);
 	REQUIRE(std::memcmp(read_data, data, 12) == 0);
 

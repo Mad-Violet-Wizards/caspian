@@ -14,7 +14,7 @@ namespace fs
 			~NativeFile();
 
 			virtual bool Open(io::OpenMode _open_mode) override;
-			virtual bool Close() override;
+			virtual void Close() override;
 
 			virtual size_t Seek(size_t _offset, io::Origin _origin) override;;
 			virtual size_t Tell() override;

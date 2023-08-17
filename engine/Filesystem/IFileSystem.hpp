@@ -30,7 +30,7 @@ namespace fs
 
 	protected:
 
-			std::unordered_map<std::string_view, std::shared_ptr<IFile>> m_Files;
+			std::unordered_map<std::string, std::shared_ptr<IFile>> m_Files;
 			std::vector<std::shared_ptr<IFile>> m_OpenedFiles;
 
 			bool m_IsInitialized;

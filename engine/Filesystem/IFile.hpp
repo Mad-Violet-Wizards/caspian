@@ -48,6 +48,8 @@ namespace fs
 				Shader,
 				Lua,
 				JSON,
+				Text,
+				Data,
 				Directory
 			};
 
@@ -62,7 +64,8 @@ namespace fs
 					case EType::Shader:    return ".glsl";
 					case EType::Lua:       return ".lua";
 					case EType::JSON:      return ".json";
-					case EType::Directory: return "/";
+					case EType::Text:      return ".txt";
+					case EType::Data:      return ".pak";
 					default:							 return S_UNKNOWN_ETYPE_STR;
 				}
 			}
@@ -73,7 +76,7 @@ namespace fs
 			virtual ~IFile() = default;
 
 			virtual bool Open(io::OpenMode _open_mode) = 0;
-			virtual bool Close() = 0;
+			virtual void Close() = 0;
 
 			virtual size_t Seek(size_t _offset, io::Origin _origin) = 0;
 			virtual size_t Tell() = 0;
@@ -86,36 +89,37 @@ namespace fs
 			virtual std::string_view GetPath() const { return m_Path; };
 
 			template<typename T>
-			bool Read(T& _target)
+			bool Read(T& _target, size_t _size)
 			{
-				// Make sure user provided POD type.
 				static_assert(std::is_trivially_copyable<T>::value, "T must be trivially copyable");
-				static_assert(std::is_pod<T>::value, "T must be POD");
 
 				if (!IsOpen())
 					return false;
 
-				std::vector<uint8_t> buffer(sizeof(T));
+				std::vector<uint8_t> buffer;
+				buffer.resize(_size);
+
 				size_t read_bytes = Read_Impl(buffer);
 
-				if (read_bytes != sizeof(T))
+				if (read_bytes != _size)
 					return false;
 
-				std::memcpy(&_target, buffer.data(), sizeof(T));
+				std::memcpy(_target, buffer.data(), _size);
 				return true;
 			}
 
 			template<typename T>
-			bool Write(const T& _source)
+			bool Write(const T& _source, size_t _size)
 			{
 				if (!IsOpen() || IsReadOnly())
 					return false;
 
-				std::vector<uint8_t> buffer(sizeof(T));
-				std::memcpy(buffer.data(), &_source, sizeof(T));
-				size_t written_bytes = Write_Impl(buffer);
+				std::vector<uint8_t> buffer;
+				buffer.resize(_size);
+				std::memcpy(buffer.data(), _source, _size);
 
-				return written_bytes == sizeof(T);
+				size_t written_bytes = Write_Impl(buffer);
+				return written_bytes == _size;
 			}
 
 		protected:

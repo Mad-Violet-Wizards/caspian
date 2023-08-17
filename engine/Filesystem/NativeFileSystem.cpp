@@ -22,7 +22,10 @@ namespace fs
 			std::string_view relative_path = path;
 			relative_path.remove_prefix(m_Path.size());
 
-			std::shared_ptr<IFile> file = std::make_shared<NativeFile>(relative_path);
+			std::shared_ptr<IFile> file = std::make_shared<NativeFile>(path);
+
+			if (relative_path[0] == '\\' || relative_path[0] == '/')
+				relative_path.remove_prefix(1);
 
 			m_Files.emplace(relative_path, file);
 		}
@@ -34,6 +37,9 @@ namespace fs
 
 	bool NativeFileSystem::Shutdown()
 	{
+		for (auto& file : m_OpenedFiles)
+			file->Close();
+
 		m_Files.clear();
 		m_OpenedFiles.clear();
 		m_Path.clear();
@@ -48,7 +54,9 @@ namespace fs
 
 	std::shared_ptr<IFile> NativeFileSystem::OpenFile(std::string_view _path, io::OpenMode _mode)
 	{
-		if (!m_Files.count(_path))
+		const std::string path{ _path };
+
+		if (!m_Files.count(path))
 			return nullptr;
 
 		for (const auto file : m_OpenedFiles)
@@ -57,10 +65,11 @@ namespace fs
 				return file;
 		}
 
-		std::shared_ptr<IFile> file = m_Files.at(_path);
+		std::shared_ptr<IFile> file = m_Files.at({ _path.cbegin(), _path.cend() });
 		file->Open(_mode);
+		m_OpenedFiles.push_back(file);
 
-		// TODO: Extra check if file exists on the disk & we've privaledges to open it.
+		// TODO: Extra check if file exists on the disk & we've privaleges to operate on it with current mode.
 
 		return file;
 	}
@@ -82,52 +91,96 @@ namespace fs
 
 	bool NativeFileSystem::CreateFile(std::string_view _file_path, IFile::EType _file_type)
 	{
-		const std::string_view file_extension_from_etype = IFile::TypeToFileExtension(_file_type);
-		
-		if (file_extension_from_etype == IFile::S_UNKNOWN_ETYPE_STR)
-			return false;
+		std::filesystem::path file_path{ m_Path };
+		file_path /= _file_path;
 
-		std::filesystem::path file_path { _file_path };
+		// Validate extensions.
+		if (_file_type != IFile::EType::Directory)
+		{
+			const std::string& extension = file_path.extension().string();
+			const std::string_view supported_extensions = IFile::TypeToFileExtension(_file_type);
 
-		if (file_path.extension() != file_extension_from_etype)
-			return false;
+			if (supported_extensions != extension)
+				return false;
+		}
 
-		return std::filesystem::create_directories(file_path.parent_path());
+		bool os_file_operation_result = false;
+		switch (_file_type)
+		{
+			// TODO: Add other file types.
+			case IFile::EType::Text:
+			{
+				std::ofstream file(file_path);
+				os_file_operation_result = file.good();
+				break;
+			}
+			case IFile::EType::Directory:
+				os_file_operation_result = std::filesystem::create_directory(file_path);
+				break;
+			default:
+				return false;
+		}
+
+		if (os_file_operation_result)
+		{
+			std::string_view relative_path = _file_path;
+
+			std::shared_ptr<IFile> file = std::make_shared<NativeFile>(file_path.string());
+
+			if (relative_path[0] == '\\' || relative_path[0] == '/')
+				relative_path.remove_prefix(1);
+
+			m_Files.emplace(relative_path, file);
+		}
+
+		return os_file_operation_result;
 	}
 
 	bool NativeFileSystem::RemoveFile(std::string_view _file_path)
 	{
-		if (!std::filesystem::exists(_file_path))
+		if (!FileExists(_file_path))
 			return false;
 
-		return std::filesystem::remove(_file_path);
+		std::filesystem::path file_path{ m_Path };
+		file_path /= _file_path;
+
+		return std::filesystem::remove(file_path);
 	}
 
 	bool NativeFileSystem::CopyFile(std::string_view _src_path, std::string_view _dest_path)
 	{
-		const bool src_file_exists = std::filesystem::exists(_src_path);
-		const bool dest_exists = std::filesystem::exists(_dest_path);
+		const std::filesystem::path path{ m_Path };
+		const std::filesystem::path src_path = path / _src_path;
+		const std::filesystem::path dest_path = path / _dest_path;
 
-		if (!src_file_exists || !dest_exists)
+		if (!std::filesystem::exists(src_path))
 			return false;
 
-		return std::filesystem::copy_file(_src_path, _dest_path);
+		std::filesystem::copy(src_path, dest_path);
+
+		return std::filesystem::exists(dest_path);
 	}
 
 	bool NativeFileSystem::RenameFile(std::string_view _src_path, std::string_view _dest_path)
 	{
-	const bool src_file_exists = std::filesystem::exists(_src_path);
-		const bool dest_exists = std::filesystem::exists(_dest_path);
+		const std::filesystem::path path{ m_Path };
+		const std::filesystem::path src_path = path / _src_path;
+		const std::filesystem::path dest_path = path / _dest_path;
 
-		if (!src_file_exists || dest_exists)
+		if (!std::filesystem::exists(src_path))
 			return false;
 
-		std::filesystem::rename(_src_path, _dest_path);
-		return true;
+		std::filesystem::rename(src_path, dest_path);
+		
+		return std::filesystem::exists(dest_path);
 	}
+
 
 	bool NativeFileSystem::FileExists(std::string_view _file_path) const
 	{
-		return std::filesystem::exists(_file_path);
+		std::filesystem::path file_path{ m_Path };
+		file_path /= _file_path;
+
+		return std::filesystem::exists(file_path);
 	}
 }

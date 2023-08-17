@@ -49,10 +49,9 @@ namespace fs
 		return true;
 	}
 
-	bool NativeFile::Close()
+	void NativeFile::Close()
 	{
 		m_FileStream.close();
-		return true;
 	}
 
 	size_t NativeFile::Seek(size_t _offset, io::Origin _origin)
@@ -115,7 +114,7 @@ namespace fs
 		if (!IsOpen())
 			return 0;
 
-		m_FileStream.read(reinterpret_cast<char*>(_buffer.data()), _buffer.size());
+		m_FileStream.read(reinterpret_cast<char*>(_buffer.data()), static_cast<std::streamsize>(_buffer.size()));
 
 		if (m_FileStream)
 			return _buffer.size();
@@ -128,7 +127,7 @@ namespace fs
 		if (!IsOpen() || IsReadOnly())
 			return 0;
 
-		m_FileStream.write(reinterpret_cast<const char*>(_buffer.data()), _buffer.size());
+		m_FileStream.write(reinterpret_cast<const char*>(_buffer.data()), static_cast<std::streamsize>(_buffer.size()));
 
 		if (m_FileStream)
 			return _buffer.size();
