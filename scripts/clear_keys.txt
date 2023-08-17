@@ -3,6 +3,6 @@ build
 .sln
 .user
 .vcxproj
-.vcxproj.filters
-.vcxproj.user
+.filters
+.user
 .ini

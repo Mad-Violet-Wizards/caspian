@@ -18,7 +18,7 @@ foreach($key in $keysToDelete)
     # Detect keys with filextensions.
     if ($key -match "^\.")
     {
-        $filesToDelete = Get-ChildItem -Path $directoryToClean -Recurse -File | Where-Object { $_.FullName.Substring($_.FullName.IndexOf(("."))) -eq $key }
+        $filesToDelete = Get-ChildItem -Path $directoryToClean -Recurse -File | Where-Object { $_.Extension -eq $key }
         
         if ($filesToDelete)
         {
