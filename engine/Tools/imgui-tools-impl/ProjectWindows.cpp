@@ -77,7 +77,7 @@ void NewProjectWindow::Render()
 
 				if (project_name_valid && project_path_valid)
 				{
-					m_Manager->OnCreateNewProject(m_projectName, m_projectPath);
+					m_Manager->CreateNewProjectRequest(m_projectName, m_projectPath);
 				}
 			}
 

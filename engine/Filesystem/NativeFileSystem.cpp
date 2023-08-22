@@ -2,6 +2,7 @@
 
 #include "NativeFileSystem.hpp"
 #include "NativeFile.hpp"
+#include <iostream>
 
 namespace fs
 {
@@ -15,7 +16,18 @@ namespace fs
 		if (m_IsInitialized)
 			return true;
 
+		// Check if path exists.
+		std::filesystem::path path(m_Path);
+		if (!std::filesystem::exists(path))
+		{
+			std::filesystem::create_directories(path);
+		}
+
+
+		// Build files list.
 		std::vector<std::string> paths = BuildFilesList(m_Path);
+		auto files_count = paths.size();
+		std::cout << "DEBUG: [NativeFileSystem] Initialized: " << m_Path << " with: " << files_count << " files\n";
 
 		for (const std::string_view path : paths)
 		{

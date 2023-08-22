@@ -258,7 +258,7 @@ void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 	m_NotificationManager.ShowNotification(_type, _msg);
 }
 
-void Manager::OnCreateNewProject(std::string_view _project_name, std::string_view _project_path)
+void Manager::CreateNewProjectRequest(std::string_view _project_name, std::string_view _project_path)
 {
 	std::cout << "Creating new project: " << _project_name << " at " << _project_path << "\n";
 
