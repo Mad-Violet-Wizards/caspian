@@ -121,6 +121,7 @@ namespace fs
 		{
 			// TODO: Add other file types.
 			case IFile::EType::Text:
+			case IFile::EType::JSON:
 			{
 				std::ofstream file(file_path);
 				os_file_operation_result = file.good();

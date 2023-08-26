@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
 
 using namespace Tools_Impl;
 
@@ -22,19 +23,8 @@ void NewProjectWindow::Render()
 
 	if (ImGui::Begin("New Project ", &m_Active, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBringToFrontOnFocus))
 	{
-		constexpr auto max_input_sizes = 128;
-		m_projectName.resize(max_input_sizes);
-		m_projectPath.resize(max_input_sizes);
-
-		if (ImGui::InputText("Name", &m_projectName[0], max_input_sizes))
-		{
-			m_projectName.resize(strlen(&m_projectName[0]));
-		}
-
-		if (ImGui::InputText("Path", &m_projectPath[0], max_input_sizes))
-		{
-			m_projectPath.resize(strlen(&m_projectPath[0]));
-		}
+		ImGui::InputText("Name", &m_projectName);
+		ImGui::InputText("Path", &m_projectPath);
 		
 		ImGui::Text("Engine will create new directory under path you provided.\nName of directory is equals to name of project.");
 

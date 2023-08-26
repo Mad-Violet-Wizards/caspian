@@ -28,6 +28,9 @@ namespace fs
 			virtual size_t Read_Impl(std::vector<uint8_t>& _buffer) override;
 			virtual size_t Write_Impl(const std::vector<uint8_t>& _buffer) override;
 
+			virtual bool ReadJson_Impl(nlohmann::json& _json, [[maybe_unused]] size_t _size) override;
+			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) override;
+
 		private:
 
 			std::fstream m_FileStream;

@@ -72,7 +72,7 @@ namespace Tools_Impl
 
 			void ShowNotification(ENotificationType _type, std::string_view _msg);
 
-			void CreateNewProjectRequest(std::string_view _project_name, std::string_view _project_path);
+			void CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path);
 
 		public:
 

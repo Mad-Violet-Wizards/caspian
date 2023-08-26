@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vendor/include/nlohmann/json.hpp>
+
 namespace fs
 {
 	namespace io
@@ -32,7 +34,9 @@ namespace fs
 			Current,
 			End
 		};
-	}
+	};
+
+
 
 	/////////////////////////////////////////////////////////
 	class IFile
@@ -108,6 +112,18 @@ namespace fs
 				return true;
 			}
 
+			template<>
+			bool Read(nlohmann::json& _json, size_t _size)
+			{
+				if (!IsOpen())
+					return false;
+
+				bool success = ReadJson_Impl(_json, _size);
+
+				return success;
+			}
+
+			/////////////////////////////////////////////////////////
 			template<typename T>
 			bool Write(const T& _source, size_t _size)
 			{
@@ -122,10 +138,24 @@ namespace fs
 				return written_bytes == _size;
 			}
 
+			template<>
+			bool Write(const nlohmann::json& json, size_t _size)
+			{
+				if (!IsOpen() || IsReadOnly())
+					return false;
+
+				bool success = WriteJson_Impl(json, _size);
+
+				return success;
+			}
+
 		protected:
 
 			virtual size_t Read_Impl(std::vector<uint8_t>& _buffer) = 0;
 			virtual size_t Write_Impl(const std::vector<uint8_t>& _buffer) = 0;
+
+			virtual bool ReadJson_Impl(nlohmann::json& _json,  [[maybe_unused]] size_t _size) = 0;
+			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) = 0;
 
 			bool m_IsReadOnly;
 			io::OpenMode m_OpenMode;

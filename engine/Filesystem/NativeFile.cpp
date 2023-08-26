@@ -135,4 +135,26 @@ namespace fs
 		return m_FileStream.gcount();
 	}
 
+	bool NativeFile::ReadJson_Impl(nlohmann::json& _json, [[maybe_unused]] size_t _size)
+	{
+		if (!IsOpen())
+			return false;
+
+		m_FileStream >> _json;
+
+		if (m_FileStream.good())
+			return true;
+	}
+
+	bool NativeFile::WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size)
+	{
+		if (!IsOpen() || IsReadOnly())
+			return false;
+
+		m_FileStream << _json;
+
+		if (m_FileStream.good())
+			return true;
+	}
+
 }

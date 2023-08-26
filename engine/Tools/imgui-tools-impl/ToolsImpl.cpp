@@ -4,6 +4,10 @@
 
 #include "ToolsImpl.hpp"
 #include "AssetWindows.hpp"
+#include "game/Game.hpp"
+#include "engine/Filesystem/NativeFileSystem.hpp"
+#include "engine/Filesystem/NativeFile.hpp"
+#include "vendor/include/nlohmann/json.hpp"
 
 using namespace Tools_Impl;
 
@@ -258,18 +262,59 @@ void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 	m_NotificationManager.ShowNotification(_type, _msg);
 }
 
-void Manager::CreateNewProjectRequest(std::string_view _project_name, std::string_view _project_path)
-{
-	std::cout << "Creating new project: " << _project_name << " at " << _project_path << "\n";
+void Manager::CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path)
+{	
+	// JSON PART:
+	bool data_packed_in_json = false;
+	bool file_closed_successfully = false;
 
-	// TODO: Call low API to create new project.
-	// We need some kind of callback to show the user that the project was created successfully.
+	auto& main_instance = Game::MainSingleton::Instance();
 
-	const bool project_created_successfully = true;
+	fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Game::Windows::S_ENGINE_APPDATA_ALIAS);
 
-	if (project_created_successfully)
+	if (!appdata_fs->FileExists("projects.json"))
+	{
+		bool projects_json_created = appdata_fs->CreateFile("projects.json", fs::IFile::EType::JSON);
+
+		if (!projects_json_created)
+		{
+			std::cout << "DEBUG: [ToolsImpl] Failed to create projects.json file.\n";
+			return;
+		}
+	}
+
+	if (std::shared_ptr<fs::IFile> projects_json_file = appdata_fs->OpenFile("projects.json", fs::io::OpenMode::ReadWrite))
+	{
+		nlohmann::json projects_json;
+
+		if (projects_json_file->Size() > 0)
+			projects_json_file->Read(projects_json, projects_json_file->Size());
+
+		nlohmann::json project_obj = {
+			{ "name", _project_name },
+			{ "path", _project_path }
+		};
+
+		projects_json["projects"].push_back(project_obj);
+
+		projects_json_file->Seek(0, fs::io::Origin::Begin);
+		data_packed_in_json = projects_json_file->Write(projects_json, 0);
+
+		file_closed_successfully = appdata_fs->CloseFile(projects_json_file);
+	}
+
+	// TODO: FILESYSTEM PART:
+	// Create project folder.
+	// Create source/ subfolder.
+	// Create data/ subfolder.
+	// Create magic number file.
+
+	if (file_closed_successfully && data_packed_in_json)
 	{
 		ShowNotification(ENotificationType::Success, "Project created succesfully! :)");
-		// Show info notification.
+	}
+	else
+	{
+		ShowNotification(ENotificationType::Error, "Failed to create project! :(");
 	}
 }
