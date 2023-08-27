@@ -23,6 +23,9 @@ namespace mock
 			return _buffer.size();
 		}
 
+		bool ReadJson_Impl(nlohmann::json& _json, size_t _size) override { return false; }
+		bool WriteJson_Impl(const nlohmann::json& _json, size_t _size) override { return false; }
+
 		bool IsOpen() const override { return true; }
 		void Close() override { }
 		bool Open(fs::io::OpenMode _open_mode) override { return true; }
