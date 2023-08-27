@@ -36,7 +36,7 @@ jobs:
 
     - name: Build solution
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: .\premake.exe vs2022
+      run: .\${{env.SOLUTION_FILE_PATH}}\premake5.exe vs2022
 
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
