@@ -4,7 +4,7 @@
 
 #include <imgui-SFML/imgui-SFML.h>
 
-#include "game/Game.hpp"
+#include "game/Application.hpp"
 
 Window::Window(const std::string& windowName)
 	: m_renderWindow(sf::VideoMode(800, 600), windowName)
@@ -19,9 +19,9 @@ void Window::Update()
 	{
 		ImGui::SFML::ProcessEvent(event);
 		
-		if (Game::MainSingleton::IsValid())
+		if (ApplicationSingleton::IsValid())
 		{
-			auto& main_instance = Game::MainSingleton::Instance();
+			auto& main_instance = ApplicationSingleton::Instance();
 
 			Events::Dispatcher* event_dispatcher = main_instance.GetEventDispatcher();
 

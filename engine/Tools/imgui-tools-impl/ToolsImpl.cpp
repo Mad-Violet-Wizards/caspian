@@ -4,7 +4,7 @@
 
 #include "ToolsImpl.hpp"
 #include "AssetWindows.hpp"
-#include "game/Game.hpp"
+#include "game/Application.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/NativeFile.hpp"
 #include "vendor/include/nlohmann/json.hpp"
@@ -268,9 +268,9 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 	bool data_packed_in_json = false;
 	bool file_closed_successfully = false;
 
-	auto& main_instance = Game::MainSingleton::Instance();
+	auto& main_instance = ApplicationSingleton::Instance();
 
-	fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Game::Windows::S_ENGINE_APPDATA_ALIAS);
+	fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
 
 	if (!appdata_fs->FileExists("projects.json"))
 	{
@@ -304,12 +304,52 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 	}
 
 	// TODO: FILESYSTEM PART:
-	// Create project folder.
-	// Create source/ subfolder.
-	// Create data/ subfolder.
-	// Create magic number file.
+	bool project_folder_created = false;
+	bool resource_folder_created = false;
+	bool data_folder_created = false;
+	bool magic_number_file_created = false;
 
-	if (file_closed_successfully && data_packed_in_json)
+	if (std::filesystem::exists(_project_path))
+	{
+		std::filesystem::path project_path{ _project_path };
+		project_path /= _project_name;
+
+		project_folder_created = std::filesystem::create_directories(project_path);
+
+		if (project_folder_created)
+		{
+			std::filesystem::path resource_path{ project_path };
+			resource_path /= "resources";
+			resource_folder_created = std::filesystem::create_directories(resource_path);
+
+			std::filesystem::path data_path{ project_path };
+			data_path /= "data";
+			data_folder_created = std::filesystem::create_directories(data_path);
+
+			const std::array<unsigned char, 4> magic_number_bytes = { 0x43, 0x41, 0x53, 0x50 };
+			const std::array<unsigned char, 4> engine_version = ApplicationSingleton::Instance().GetEngineModule().GetEngineVersion();
+
+			// We do not have the project loaded yet, so no access to resource & data filesystems.
+			std::filesystem::path magic_number_path{ project_path };
+			magic_number_path /= _project_name + ".casp";
+
+			std::fstream magic_number_file;
+			magic_number_file.open(magic_number_path, std::fstream::out);
+
+			magic_number_file_created = magic_number_file.is_open();
+
+			if (magic_number_file_created)
+			{
+				magic_number_file.write(reinterpret_cast<const char*>(magic_number_bytes.data()), magic_number_bytes.size());
+				magic_number_file.write(reinterpret_cast<const char*>(engine_version.data()), engine_version.size());
+				magic_number_file.close();
+			}
+		}
+	}
+
+	const bool success = data_packed_in_json && file_closed_successfully && project_folder_created && resource_folder_created && data_folder_created && magic_number_file_created;
+
+	if (success)
 	{
 		ShowNotification(ENotificationType::Success, "Project created succesfully! :)");
 	}

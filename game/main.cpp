@@ -2,15 +2,15 @@
 
 #include <iostream>
 
-#include "Game.hpp"
+#include "Application.hpp"
 #include "engine/Design-Patterns/Singleton.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 
 int main()
 {
-	Game::MainSingleton::Create();
+	ApplicationSingleton::Create();
 
-	auto& main_instance = Game::MainSingleton::Instance();
+	auto& main_instance = ApplicationSingleton::Instance();
 
 	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
 	main_instance.SetEventDispatcher(std::move(event_dispatcher_system));
@@ -19,7 +19,7 @@ int main()
 	main_instance.SetFilesystemManager(std::move(filesystem_manager));
 
 	#if defined(DEBUG)
-	std::unique_ptr<Game::DebugHelper> game_debug_helper = std::make_unique<Game::DebugHelper>();
+	std::unique_ptr<DebugHelper> game_debug_helper = std::make_unique<DebugHelper>();
 	game_debug_helper->InitializeDebugEventListeners();
 
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
@@ -47,13 +47,13 @@ int main()
 	std::string engine_appdata_path{ appdata + "\\caspian\\engine\\" };
 
 	std::cout << "DEBUG: [Main] Engine appdata path: " << engine_appdata_path << "\n"
-						<< "DEBUG: [Main] Engine appdata alias: " << Game::Windows::S_ENGINE_APPDATA_ALIAS << "\n";
+						<< "DEBUG: [Main] Engine appdata alias: " << Windows::S_ENGINE_APPDATA_ALIAS << "\n";
 
 	// INITIALIZE FS HERE.
 	std::unique_ptr<fs::NativeFileSystem> engine_appdata_fs = std::make_unique<fs::NativeFileSystem>(engine_appdata_path);
 	engine_appdata_fs->Initialize();
 
-	main_instance.GetFilesystemManager()->Mount(Game::Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
+	main_instance.GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
 	#endif
 	
 

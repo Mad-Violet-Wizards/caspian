@@ -1,7 +1,7 @@
 #include "engine/pch.hpp"
 
 #include "Tools.hpp"
-#include "game/Game.hpp"
+#include "game/Application.hpp"
 
 using namespace Tools;
 
@@ -39,9 +39,9 @@ void Manager::InitializeEventListeners()
 				m_ImplManager.ToggleActiveState();
 		});
 
-	if (Game::MainSingleton::IsValid())
+	if (ApplicationSingleton::IsValid())
 	{
-		auto& main_instance = Game::MainSingleton::Instance();
+		auto& main_instance = ApplicationSingleton::Instance();
 
 		main_instance.GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
 	}
