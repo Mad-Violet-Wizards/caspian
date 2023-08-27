@@ -22,6 +22,7 @@ class EngineModule
 		fs::Manager* const GetFilesystemManager() { return m_filesystemManager.get(); }
 
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
+		static std::string GetEngineVersionString();
 
 	private:
 
