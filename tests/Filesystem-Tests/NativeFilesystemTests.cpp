@@ -5,7 +5,7 @@
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/IFile.hpp"
 
-const char* moc_native_path = "./tests/Filesystem-Tests/moc_native_path";
+const char* moc_native_path = ".\\tests\\Filesystem-Tests\\moc_native_path";
 
 TEST_CASE("Initialization and shutdown", "[NativeFilesystem]")
 {
@@ -79,16 +79,16 @@ TEST_CASE("File ops", "[NativeFilesystem]")
 	SECTION("Copy & rename file.")
 	{
 		std::string_view tmp_data_file = "tmp_data_file.txt";
-		std::string_view tmp_data_file_copy = "dir1/tmp_data_file_copy.txt";
+		std::string_view tmp_data_file_copy = "dir1\\tmp_data_file_copy.txt";
 
 		REQUIRE(test_fs->CopyFile(tmp_data_file, tmp_data_file_copy) == true);
-		REQUIRE(test_fs->RenameFile(tmp_data_file_copy, "dir1/tmp_data_file_copy_renamed.txt") == true);
+		REQUIRE(test_fs->RenameFile(tmp_data_file_copy, "dir1\\tmp_data_file_copy_renamed.txt") == true);
 	}
 
 	SECTION("Cleanup")
 	{
 		test_fs->RemoveFile("tmp_data_file.txt");
-		test_fs->RemoveFile("dir1/tmp_data_file_copy_renamed.txt");
+		test_fs->RemoveFile("dir1\\tmp_data_file_copy_renamed.txt");
 
 		test_fs->Shutdown();
 		delete test_fs;
