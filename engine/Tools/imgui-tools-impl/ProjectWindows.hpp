@@ -26,6 +26,15 @@ namespace Tools_Impl
 			// TODO: Type
 	};
 
+	class LoadProjectWindow : public IWindow
+	{
+		public:
+			LoadProjectWindow(Manager* _mgr);
+			~LoadProjectWindow() = default;
+
+			void Render() override;
+	};
+
 	/////////////////////////////////////////////////////////
 	//class LoadProjectAction
 	//{

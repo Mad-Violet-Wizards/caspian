@@ -4,6 +4,20 @@
 #include "engine/Filesystem/FsManager.hpp"
 #include "EventHandler.hpp"
 
+////////////////////////////////////////////////////////////////////////////////
+struct Project
+{
+	std::string m_ProjectName;
+	std::string m_ProjectPath;
+
+	[[nodiscard]] bool operator==(const Project& _other) const
+	{
+		return m_ProjectName == _other.m_ProjectName && 
+					 m_ProjectPath == _other.m_ProjectPath;
+	}
+};
+
+////////////////////////////////////////////////////////////////////////////////
 class EngineModule
 {
 
@@ -24,10 +38,17 @@ class EngineModule
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
 		static std::string GetEngineVersionString();
 
+		void SetCurrentProject(const Project& _project) { m_CurrentProject = _project; }
+		const Project& GetCurrentProject() const { return m_CurrentProject.value(); }
+		bool IsAnyProjectLoaded() const { return m_CurrentProject.has_value(); }
+		void UnloadCurrentProject() { m_CurrentProject.reset(); }
+
 	private:
 
 		std::unique_ptr<Events::Dispatcher> m_eventDispatcher = nullptr;
 		std::unique_ptr<Tools::Manager> m_toolsManager = nullptr;
 		std::unique_ptr<fs::Manager> m_filesystemManager = nullptr;
+
+		std::optional<Project> m_CurrentProject = std::nullopt;
 
 };

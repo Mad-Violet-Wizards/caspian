@@ -5,6 +5,11 @@
 #include "ToolsImpl.hpp"
 #include "Validators.hpp"
 
+#include "game/Application.hpp"
+#include "engine/Filesystem/NativeFileSystem.hpp"
+#include "engine/Filesystem/NativeFile.hpp"
+#include "vendor/include/nlohmann/json.hpp"
+
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
@@ -89,3 +94,62 @@ void NewProjectWindow::Render()
 //void ImGuiLoadProjectAction::operator()()
 //{
 //}
+
+LoadProjectWindow::LoadProjectWindow(Manager* _mgr)
+: IWindow(_mgr)
+{
+
+}
+
+void LoadProjectWindow::Render()
+{
+	if (!m_Active)
+		return;
+
+	if (ImGui::Begin("Load Project", &m_Active, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBringToFrontOnFocus))
+	{
+		ImGui::Text("Select from cache...");
+
+		auto& main_instance = ApplicationSingleton::Instance();
+
+		fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
+
+		// TODO: If JSON is too big we'll get freeze. 
+		// Add pagination of data or pre-loading of the file.
+		if (appdata_fs)
+		{
+			if (auto projects_json_file = appdata_fs->OpenFile("projects.json", fs::io::OpenMode::In))
+			{
+				nlohmann::json projects_json;
+
+				if (projects_json_file->Size() > 0)
+				{
+					projects_json_file->Read(projects_json, projects_json_file->Size());
+				}
+
+				for (auto& project : projects_json["projects"])
+				{
+					const std::string project_name = project["name"].get<std::string>();
+					const std::string project_path = project["path"].get<std::string>();
+
+					if (ImGui::Button(project_name.c_str()))
+						m_Manager->LoadProjectRequest(project_name, project_path);
+
+					ImGui::SameLine();
+					ImGui::Text(project_path.c_str());
+				}
+
+				appdata_fs->CloseFile(projects_json_file);
+			}
+			else
+			{
+				ImGui::Text("No cached projects found...");
+			}
+		}
+		
+		ImGui::Separator();
+		ImGui::Text("Select from disc...");
+		// TODO: Add support for loading project from disc.
+	}
+	ImGui::End();
+}
