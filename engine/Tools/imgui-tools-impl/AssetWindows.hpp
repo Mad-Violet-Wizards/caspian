@@ -13,6 +13,11 @@ namespace Tools_Impl
 		~ImportAssetWindow() = default;
 
 		void Render() override;
+
+	private:
+
+		std::string m_srcPath;
+		std::string m_destPath;
 	};
 
 	/////////////////////////////////////////////////////////

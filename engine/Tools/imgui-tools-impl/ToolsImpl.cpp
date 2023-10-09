@@ -52,26 +52,16 @@ void Toolbar::Render()
 					m_Manager->m_LoadProjectWindow.m_Active = true;
 				}
 
-				ImGui::EndPopup();
-			}
-		}
-
-		{
-			constexpr auto assets_popup_name = "AssetsPopup";
-
-			if (ImGui::Button("Assets", styles.toolbar_button_size))
-				ImGui::OpenPopup(assets_popup_name);
-
-			if (ImGui::BeginPopup(assets_popup_name))
-			{
-				if (ImGui::Selectable("Import Asset"))
+				if (ImGui::Selectable("Import asset..."))
 				{
-					m_Manager->m_ImportAssetWindow.m_Active = true;
-				}
-
-				if (ImGui::Selectable("View Assets List"))
-				{
-					m_Manager->m_AssetListWindow.m_Active = true;
+					if (!ApplicationSingleton::Instance().GetEngineModule().IsAnyProjectLoaded())
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot import asset\nwithout loading project first!");
+					}
+					else
+					{
+						m_Manager->m_ImportAssetWindow.m_Active = true;
+					}
 				}
 
 				ImGui::EndPopup();

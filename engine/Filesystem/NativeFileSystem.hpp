@@ -18,6 +18,7 @@ namespace fs
 			virtual bool Shutdown() override;
 
 			virtual bool IsInitialized() const override;
+
 			virtual std::shared_ptr<IFile> OpenFile(std::string_view _path, io::OpenMode _mode) override;
 			virtual bool CloseFile(std::shared_ptr<IFile> _file) override;
 
