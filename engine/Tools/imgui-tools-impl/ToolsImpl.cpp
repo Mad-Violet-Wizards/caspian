@@ -370,6 +370,7 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 		{
 			auto msg = std::format("Project {} parsed successfully. Loading systems.", _project_name);
 			ShowNotification(ENotificationType::Success, msg);
+			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
 		}
 	}
 }

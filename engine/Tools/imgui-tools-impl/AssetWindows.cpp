@@ -66,7 +66,7 @@ void ImportAssetWindow::Render()
 
 	auto copy_file_async = [](const std::string& _src, const std::string& _dest, std::function<void(bool)> _callback)
 	{
-			std::async(std::launch::async, [_src, _dest, _callback]()
+			auto future_result = std::async(std::launch::async, [_src, _dest, _callback]()
 			{
 					bool success = false;
 					try

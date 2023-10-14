@@ -12,6 +12,8 @@ namespace Tools
 	};
 
 	/////////////////////////////////////////////////////////
+	enum class Tools_Impl::ENotificationType;
+
 	class Manager
 	{
 		public:
@@ -22,6 +24,7 @@ namespace Tools
 			void Update(float _dt, EToolsSystem _tools_system);
 			void Render(EToolsSystem _tools_system);
 
+			void ShowNotification(Tools_Impl::ENotificationType _type, std::string_view _msg);
 			void InitializeEventListeners();
 
 		private:

@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 /* APPLICATION */
 Application::Application()
-	: m_window("Caspian Game")
+	: m_window("Caspian Engine | Empty Project")
 {
 	m_deltaTime = m_clock.restart().asSeconds();
 
@@ -38,7 +38,10 @@ void Application::Update()
 	m_window.Update();
 
 #if defined(DEBUG)
+
 	ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
+
+	m_engineModule.Update();
 
 	if (auto tools_mgr = m_engineModule.GetToolsManager())
 	{

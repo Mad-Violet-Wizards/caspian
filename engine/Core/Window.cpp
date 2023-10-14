@@ -58,3 +58,8 @@ void Window::Exit()
 {
 	m_renderWindow.close();
 }
+
+void Window::UpdateTitle(const std::string& _title)
+{
+	m_renderWindow.setTitle(_title);
+}

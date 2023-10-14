@@ -6,6 +6,8 @@
 
 namespace fs
 {
+	sf::Mutex NativeFileSystem::m_Mutex;
+
 	NativeFileSystem::NativeFileSystem(std::string_view _path)
 		: IFileSystem(_path)
 	{
@@ -27,7 +29,10 @@ namespace fs
 		// Build files list.
 		std::vector<std::string> paths = BuildFilesList(m_Path);
 		auto files_count = paths.size();
+
+		m_Mutex.lock();
 		std::cout << "DEBUG: [NativeFileSystem] Initialized: " << m_Path << " with: " << files_count << " files\n";
+		m_Mutex.unlock();
 
 		for (const std::string_view path : paths)
 		{
@@ -38,8 +43,10 @@ namespace fs
 
 			if (relative_path[0] == '\\' || relative_path[0] == '/')
 				relative_path.remove_prefix(1);
-
-			m_Files.emplace(relative_path, file);
+				
+				m_Mutex.lock();
+				m_Files.emplace(relative_path, file);
+				m_Mutex.unlock();
 		}
 
 		m_IsInitialized = true;
@@ -52,7 +59,9 @@ namespace fs
 		for (auto& file : m_OpenedFiles)
 			file->Close();
 
+		m_Mutex.lock();
 		m_Files.clear();
+		m_Mutex.unlock();
 		m_OpenedFiles.clear();
 		m_Path.clear();
 
@@ -77,9 +86,15 @@ namespace fs
 				return file;
 		}
 
+		m_Mutex.lock();
 		std::shared_ptr<IFile> file = m_Files.at({ _path.cbegin(), _path.cend() });
+		m_Mutex.unlock();
+
 		file->Open(_mode);
+
+		m_Mutex.lock();
 		m_OpenedFiles.push_back(file);
+		m_Mutex.unlock();
 
 		// TODO: Extra check if file exists on the disk & we've privaleges to operate on it with current mode.
 
@@ -93,7 +108,9 @@ namespace fs
 			if (*it == _file)
 			{
 				_file->Close();
+				m_Mutex.lock();
 				m_OpenedFiles.erase(it);
+				m_Mutex.unlock();
 				return true;
 			}
 		}
@@ -143,7 +160,9 @@ namespace fs
 			if (relative_path[0] == '\\' || relative_path[0] == '/')
 				relative_path.remove_prefix(1);
 
+			m_Mutex.lock();
 			m_Files.emplace(relative_path, file);
+			m_Mutex.unlock();
 		}
 
 		return os_file_operation_result;

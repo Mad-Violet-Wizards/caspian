@@ -48,6 +48,8 @@ class DebugHelper
 
 		EngineModule& GetEngineModule() { return m_engineModule; }
 
+		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
+
 	private:
 
 		Window m_window;
