@@ -34,83 +34,40 @@ void Toolbar::Render()
 		styles.toolbar_push_button_style();
 
 		{
-			constexpr auto assets_popup_name = "AssetsPopup";
+			constexpr auto files_popup_name = "FilePopup";
 
-			if (ImGui::Button("Assets", styles.toolbar_button_size))
-				ImGui::OpenPopup(assets_popup_name);
+			ImGui::SameLine();
+			if (ImGui::Button("File", styles.toolbar_button_size))
+				ImGui::OpenPopup(files_popup_name);
 
-			if (ImGui::BeginPopup(assets_popup_name))
+			if (ImGui::BeginPopup(files_popup_name))
 			{
-				if (ImGui::Selectable("Import Asset"))
-				{
-					m_Manager->m_ImportAssetWindow.m_Active = true;
-				}
-
-				if (ImGui::Selectable("View Assets List"))
-				{
-					m_Manager->m_AssetListWindow.m_Active = true;
-				}
-
-				ImGui::EndPopup();
-			}
-		}
-		
-		{
-			constexpr auto cheats_popup_name = "CheatsPopup";
-
-			ImGui::SameLine();
-			if (ImGui::Button("Cheats", styles.toolbar_button_size))
-				ImGui::OpenPopup(cheats_popup_name);
-
-			if (ImGui::BeginPopup(cheats_popup_name))
-				ImGui::EndPopup();
-		}
-
-		{
-			constexpr auto npc_popup_name = "NPCPopup";
-
-			ImGui::SameLine();
-			if (ImGui::Button("NPC", styles.toolbar_button_size))
-				ImGui::OpenPopup(npc_popup_name);
-
-			if (ImGui::BeginPopup(npc_popup_name))
-				ImGui::EndPopup();
-		}
-		
-		{
-			constexpr auto level_popup_name = "LevelPopup";
-
-			ImGui::SameLine();
-			if (ImGui::Button("Level", styles.toolbar_button_size))
-				ImGui::OpenPopup(level_popup_name);
-
-			if (ImGui::BeginPopup(level_popup_name))
-				ImGui::EndPopup();
-		}
-
-		{
-			constexpr auto project_popup_name = "ProjectPopup";
-
-			ImGui::SameLine();
-			if (ImGui::Button("Project", styles.toolbar_button_size))
-				ImGui::OpenPopup(project_popup_name);
-
-			if (ImGui::BeginPopup(project_popup_name))
-			{
-				if (ImGui::Selectable("New..."))
+				if (ImGui::Selectable("New project..."))
 				{
 					m_Manager->m_NewProjectWindow.m_Active = true;
 				}
 
-				if (ImGui::Selectable("Load..."))
+				if (ImGui::Selectable("Load project..."))
 				{
-					// Action.
+					m_Manager->m_LoadProjectWindow.m_Active = true;
+				}
+
+				if (ImGui::Selectable("Import asset..."))
+				{
+					if (!ApplicationSingleton::Instance().GetEngineModule().IsAnyProjectLoaded())
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot import asset\nwithout loading project first!");
+					}
+					else
+					{
+						m_Manager->m_ImportAssetWindow.m_Active = true;
+					}
 				}
 
 				ImGui::EndPopup();
 			}
 		}
-
+		
 		styles.toolbar_pop_combobox_style();
 		styles.toolbar_pop_button_style();
 
@@ -220,7 +177,9 @@ Manager::Manager()
 	, m_ImportAssetWindow(this)
 	, m_AssetListWindow(this)
 	, m_NewProjectWindow(this)
+	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
+	, m_MagicNumberBytes{ 0x43, 0x41, 0x53, 0x50 }
 {
 
 }
@@ -255,6 +214,7 @@ void Manager::Render()
 	m_ImportAssetWindow.Render();
 	m_AssetListWindow.Render();
 	m_NewProjectWindow.Render();
+	m_LoadProjectWindow.Render();
 }
 
 void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
@@ -326,7 +286,7 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 			data_path /= "data";
 			data_folder_created = std::filesystem::create_directories(data_path);
 
-			const std::array<unsigned char, 4> magic_number_bytes = { 0x43, 0x41, 0x53, 0x50 };
+			const std::array<unsigned char, 4> magic_number_bytes = m_MagicNumberBytes;
 			const std::array<unsigned char, 4> engine_version = ApplicationSingleton::Instance().GetEngineModule().GetEngineVersion();
 
 			// We do not have the project loaded yet, so no access to resource & data filesystems.
@@ -356,5 +316,61 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 	else
 	{
 		ShowNotification(ENotificationType::Error, "Failed to create project! :(");
+	}
+}
+
+void Manager::LoadProjectRequest(const std::string& _project_name, const std::string& _project_path)
+{
+	std::filesystem::path project_path{ _project_path };
+	project_path.append(_project_name);
+
+	if (std::filesystem::exists(project_path))
+	{
+		const std::filesystem::path resources_path{ project_path / "resources" };
+		const std::filesystem::path data_path { project_path / "data" };
+
+		// Read magic file.
+		std::fstream magic_number_file;
+		magic_number_file.open(project_path / (_project_name + ".casp"), std::fstream::in);
+
+		std::array<unsigned char, 4> magic_number_bytes;
+		std::array<unsigned char, 4> engine_version;
+
+		magic_number_file.read(reinterpret_cast<char*>(magic_number_bytes.data()), magic_number_bytes.size());
+		magic_number_file.read(reinterpret_cast<char*>(engine_version.data()), engine_version.size());
+
+		// Validate magic number.
+		if (magic_number_bytes != m_MagicNumberBytes)
+		{
+			ShowNotification(ENotificationType::Error, "Invalid project file!");
+			return;
+		}
+
+		auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
+
+		if (engine_version != engine_module.GetEngineVersion())
+		{
+			ShowNotification(ENotificationType::Error, "Project was created with different engine version!");
+			// TODO: Depending on what will change in the future handle exceptions.
+		}
+
+		if (engine_module.IsAnyProjectLoaded())
+		{
+			// TOOD: Ask user if he wants to switch.
+			engine_module.UnloadCurrentProject();
+		}
+
+		Project p;
+		p.m_ProjectName = _project_name;
+		p.m_ProjectPath = _project_path;
+
+		engine_module.SetCurrentProject(p);
+
+		if (p == engine_module.GetCurrentProject())
+		{
+			auto msg = std::format("Project {} parsed successfully. Loading systems.", _project_name);
+			ShowNotification(ENotificationType::Success, msg);
+			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
+		}
 	}
 }

@@ -73,6 +73,7 @@ namespace Tools_Impl
 			void ShowNotification(ENotificationType _type, std::string_view _msg);
 
 			void CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path);
+			void LoadProjectRequest(const std::string& _project_name, const std::string& _project_path);
 
 		public:
 
@@ -82,6 +83,7 @@ namespace Tools_Impl
 
 			// ImGuiProjectTools.h
 			NewProjectWindow m_NewProjectWindow;
+			LoadProjectWindow m_LoadProjectWindow;
 
 			// ImGuiTools.h
 			NotificationsManager m_NotificationManager;
@@ -91,5 +93,7 @@ namespace Tools_Impl
 			Toolbar m_Toolbar;
 
 			bool m_Active = utils::TOOLS_INIT_ACTIVE_STATE;
+
+			std::array<unsigned char, 4> m_MagicNumberBytes;
 	};
 };

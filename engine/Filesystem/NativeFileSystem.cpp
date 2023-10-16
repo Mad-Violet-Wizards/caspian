@@ -6,6 +6,8 @@
 
 namespace fs
 {
+	sf::Mutex NativeFileSystem::m_Mutex;
+
 	NativeFileSystem::NativeFileSystem(std::string_view _path)
 		: IFileSystem(_path)
 	{
@@ -27,7 +29,10 @@ namespace fs
 		// Build files list.
 		std::vector<std::string> paths = BuildFilesList(m_Path);
 		auto files_count = paths.size();
+
+		m_Mutex.lock();
 		std::cout << "DEBUG: [NativeFileSystem] Initialized: " << m_Path << " with: " << files_count << " files\n";
+		m_Mutex.unlock();
 
 		for (const std::string_view path : paths)
 		{
@@ -38,8 +43,10 @@ namespace fs
 
 			if (relative_path[0] == '\\' || relative_path[0] == '/')
 				relative_path.remove_prefix(1);
-
-			m_Files.emplace(relative_path, file);
+				
+				m_Mutex.lock();
+				m_Files.emplace(relative_path, file);
+				m_Mutex.unlock();
 		}
 
 		m_IsInitialized = true;
@@ -52,7 +59,9 @@ namespace fs
 		for (auto& file : m_OpenedFiles)
 			file->Close();
 
+		m_Mutex.lock();
 		m_Files.clear();
+		m_Mutex.unlock();
 		m_OpenedFiles.clear();
 		m_Path.clear();
 
@@ -77,9 +86,15 @@ namespace fs
 				return file;
 		}
 
+		m_Mutex.lock();
 		std::shared_ptr<IFile> file = m_Files.at({ _path.cbegin(), _path.cend() });
+		m_Mutex.unlock();
+
 		file->Open(_mode);
+
+		m_Mutex.lock();
 		m_OpenedFiles.push_back(file);
+		m_Mutex.unlock();
 
 		// TODO: Extra check if file exists on the disk & we've privaleges to operate on it with current mode.
 
@@ -93,7 +108,9 @@ namespace fs
 			if (*it == _file)
 			{
 				_file->Close();
+				m_Mutex.lock();
 				m_OpenedFiles.erase(it);
+				m_Mutex.unlock();
 				return true;
 			}
 		}
@@ -110,7 +127,7 @@ namespace fs
 		if (_file_type != IFile::EType::Directory)
 		{
 			const std::string& extension = file_path.extension().string();
-			const std::string_view supported_extensions = IFile::TypeToFileExtension(_file_type);
+			const std::string_view supported_extensions = IFile::TypeToString(_file_type);
 
 			if (supported_extensions != extension)
 				return false;
@@ -143,10 +160,34 @@ namespace fs
 			if (relative_path[0] == '\\' || relative_path[0] == '/')
 				relative_path.remove_prefix(1);
 
+			m_Mutex.lock();
 			m_Files.emplace(relative_path, file);
+			m_Mutex.unlock();
 		}
 
 		return os_file_operation_result;
+	}
+
+	bool NativeFileSystem::RegisterFile(std::string_view _file_path)
+	{
+		std::filesystem::path file_path{ m_Path };
+		file_path /= _file_path;
+
+		if (IFile::StringToType(file_path.extension().string()) == IFile::EType::Unknown)
+			return false;
+
+		std::string_view relative_path = _file_path;
+
+		std::shared_ptr<IFile> file = std::make_shared<NativeFile>(file_path.string());
+
+		if (relative_path[0] == '\\' || relative_path[0] == '/')
+			relative_path.remove_prefix(1);
+
+		m_Mutex.lock();
+		m_Files.emplace(relative_path, file);
+		m_Mutex.unlock();
+
+		return true;
 	}
 
 	bool NativeFileSystem::RemoveFile(std::string_view _file_path)

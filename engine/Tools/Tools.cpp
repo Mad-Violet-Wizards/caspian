@@ -46,3 +46,8 @@ void Manager::InitializeEventListeners()
 		main_instance.GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
 	}
 }
+
+void Manager::ShowNotification(Tools_Impl::ENotificationType _type, std::string_view _msg)
+{
+	m_ImplManager.ShowNotification(_type, _msg);
+}

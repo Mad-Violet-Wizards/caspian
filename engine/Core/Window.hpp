@@ -14,6 +14,8 @@ class Window
 
 		bool IsOpen() const;
 		void Exit();
+
+		void UpdateTitle(const std::string& _title);
 		
 		[[nodiscard]] sf::RenderWindow& GetRenderWindow() { return m_renderWindow; }
 
