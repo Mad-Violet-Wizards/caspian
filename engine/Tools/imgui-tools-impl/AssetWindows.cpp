@@ -29,6 +29,7 @@ void ImportAssetWindow::Render()
 			if (ImGuiFileDialog::Instance()->IsOk())
 			{
 				m_srcPath = ImGuiFileDialog::Instance()->GetFilePathName();
+				m_srcFileName = ImGuiFileDialog::Instance()->GetCurrentFileName();
 			}
 
 			ImGuiFileDialog::Instance()->Close();
@@ -41,7 +42,8 @@ void ImportAssetWindow::Render()
 		if (ImGui::Button("Select dest folder"))
 		{
 			auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
-			const auto& project_path = engine_module.GetCurrentProject().m_ProjectPath;
+			auto project_path = engine_module.GetCurrentProject().m_ProjectPath;
+			project_path += "\\" + engine_module.GetCurrentProject().m_ProjectName;
 
 			ImGuiFileDialog::Instance()->OpenDialog(dest_dialog_name, "Choose Dest", ".", project_path);
 		}
@@ -89,8 +91,23 @@ void ImportAssetWindow::Render()
 		{
 			copy_file_async(m_srcPath, m_destPath, [this](bool _success)
 				{
-					_success ? m_Manager->ShowNotification(ENotificationType::Success, "File copy success") 
-									 : m_Manager->ShowNotification(ENotificationType::Error,   "File copy failed");
+					if (_success)
+					{
+						auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
+						fs::IFileSystem* resources_fs = engine_module.GetFilesystemManager()->Get("resources");
+						const std::string full_dest_path = m_destPath + "\\" + m_srcFileName;
+						const std::string relative_path = full_dest_path.substr(resources_fs->GetPath().size() + 1);
+						const bool registered = resources_fs->RegisterFile(relative_path);
+
+						if (registered) 
+							m_Manager->ShowNotification(ENotificationType::Success, "Asset imported successfuly.");
+						else
+							m_Manager->ShowNotification(ENotificationType::Success, "Asset couldn't be registered in fs.");
+					}
+					else
+					{
+						m_Manager->ShowNotification(ENotificationType::Error, "Asset file couldn't be copied.");
+					}
 			});
 		}
 	}

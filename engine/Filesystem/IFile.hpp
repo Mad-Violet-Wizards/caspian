@@ -58,7 +58,7 @@ namespace fs
 			};
 
 			static const char* S_UNKNOWN_ETYPE_STR;
-			static const char* TypeToFileExtension(EType _type)
+			static const char* TypeToString(EType _type)
 			{
 				switch(_type)
 				{
@@ -72,6 +72,19 @@ namespace fs
 					case EType::Data:      return ".pak";
 					default:							 return S_UNKNOWN_ETYPE_STR;
 				}
+			}
+
+			static EType StringToType(const std::string_view _type)
+			{
+				if (_type == ".png")		return EType::Texture;
+				if (_type == ".ttf")		return EType::Font;
+				if (_type == ".wav")		return EType::Audio;
+				if (_type == ".glsl")		return EType::Shader;
+				if (_type == ".lua")		return EType::Lua;
+				if (_type == ".json")		return EType::JSON;
+				if (_type == ".txt")		return EType::Text;
+				if (_type == ".pak")		return EType::Data;
+				return EType::Unknown;
 			}
 
 		public:

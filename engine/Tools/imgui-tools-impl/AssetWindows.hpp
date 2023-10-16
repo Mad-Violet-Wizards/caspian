@@ -18,6 +18,7 @@ namespace Tools_Impl
 
 		std::string m_srcPath;
 		std::string m_destPath;
+		std::string m_srcFileName;
 	};
 
 	/////////////////////////////////////////////////////////

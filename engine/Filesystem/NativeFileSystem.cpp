@@ -127,7 +127,7 @@ namespace fs
 		if (_file_type != IFile::EType::Directory)
 		{
 			const std::string& extension = file_path.extension().string();
-			const std::string_view supported_extensions = IFile::TypeToFileExtension(_file_type);
+			const std::string_view supported_extensions = IFile::TypeToString(_file_type);
 
 			if (supported_extensions != extension)
 				return false;
@@ -166,6 +166,28 @@ namespace fs
 		}
 
 		return os_file_operation_result;
+	}
+
+	bool NativeFileSystem::RegisterFile(std::string_view _file_path)
+	{
+		std::filesystem::path file_path{ m_Path };
+		file_path /= _file_path;
+
+		if (IFile::StringToType(file_path.extension().string()) == IFile::EType::Unknown)
+			return false;
+
+		std::string_view relative_path = _file_path;
+
+		std::shared_ptr<IFile> file = std::make_shared<NativeFile>(file_path.string());
+
+		if (relative_path[0] == '\\' || relative_path[0] == '/')
+			relative_path.remove_prefix(1);
+
+		m_Mutex.lock();
+		m_Files.emplace(relative_path, file);
+		m_Mutex.unlock();
+
+		return true;
 	}
 
 	bool NativeFileSystem::RemoveFile(std::string_view _file_path)
