@@ -24,12 +24,34 @@ namespace Tools_Impl
 	/////////////////////////////////////////////////////////
 	class AssetsListWindow : public IWindow
 	{
-	public:
+		public:
 
-		AssetsListWindow(Manager* _mgr) : IWindow(_mgr) {}
-		~AssetsListWindow() = default;
+			AssetsListWindow(Manager* _mgr) : IWindow(_mgr) {}
+			~AssetsListWindow() = default;
 
-		void Render() override;
+			void Update(float _dt) override;
+			void Render() override;
+
+			void SetAvailability(bool _available) { m_Available = _available; }
+			bool GetAvailability() const { return m_Available; }
+
+		public:
+
+			struct Internal_AssetTableData
+			{
+				std::string m_Name;
+				std::string m_Path;
+				std::string m_Type;
+
+				bool m_bSearchFlag = false;
+			};
+
+
+		private:
+
+			std::vector<Internal_AssetTableData> m_RegisteredAssets;
+			bool m_Available = false;
+			
+			std::string m_SearchPhrase;
 	};
-
 };

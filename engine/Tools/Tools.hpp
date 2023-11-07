@@ -27,6 +27,8 @@ namespace Tools
 			void ShowNotification(Tools_Impl::ENotificationType _type, std::string_view _msg);
 			void InitializeEventListeners();
 
+			void OnAssetsStorageInitialized();
+
 		private:
 
 			Tools_Impl::Manager m_ImplManager;

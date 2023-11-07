@@ -47,6 +47,11 @@ void Manager::InitializeEventListeners()
 	}
 }
 
+void Manager::OnAssetsStorageInitialized()
+{
+	m_ImplManager.OnAssetsStorageInitialized();
+}
+
 void Manager::ShowNotification(Tools_Impl::ENotificationType _type, std::string_view _msg)
 {
 	m_ImplManager.ShowNotification(_type, _msg);

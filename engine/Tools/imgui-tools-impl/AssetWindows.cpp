@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <imgui-file-dialog/ImGuiFileDialog.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
 
 using namespace Tools_Impl;
 
@@ -119,14 +120,96 @@ void ImportAssetWindow::Render()
 
 ////////////////////////////////////////////////////////
 /* AssetListWindow */
+void AssetsListWindow::Update(float _dt)
+{
+	if (!m_Active)
+		return;
+
+	Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage();
+	size_t assets_storage_count = assets_storage->GetTotalResourcesCount();
+
+	if (assets_storage_count != m_RegisteredAssets.size())
+	{
+		m_RegisteredAssets.clear();
+
+		std::vector<std::string> registered_assets;
+		registered_assets.reserve(assets_storage_count);
+
+		std::ranges::move(assets_storage->GetTexturesKeys(), std::back_inserter(registered_assets));
+		std::ranges::move(assets_storage->GetFontKeys(),		 std::back_inserter(registered_assets));
+
+		fs::IFileSystem* resource_fs = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources");
+
+		for (const std::string& asset_name : registered_assets)
+		{
+			const std::string asset_path = resource_fs->GetAbsoluteFilePath(asset_name);
+
+			Internal_AssetTableData d;
+			d.m_Name = asset_name;
+			d.m_Path = asset_path;
+
+			if (assets_storage->IsTexture(asset_name))
+				d.m_Type = "Texture";
+			else if (assets_storage->IsFont(asset_name))
+				d.m_Type = "Font";
+			else
+				d.m_Type = "Unknown";
+
+			m_RegisteredAssets.push_back(d);
+		}
+	}
+
+	//if (!m_SearchPhrase.empty())
+	//{
+		// TODO: Do searching, std::boyer_moore_searcher.
+	//}
+}
+
 void AssetsListWindow::Render()
 {
 	if (!m_Active)
 		return;
 
-	if (ImGui::Begin("Asset List Window", &m_Active))
+	if (ImGui::Begin("Asset List Window", &m_Active, ImGuiTableFlags_Resizable))
 	{
+		ImGui::InputText("Search phrase: ", &m_SearchPhrase);
+		
+		if (ImGui::Button("Exit"))
+			m_Active = false;
 
+		if(ImGui::BeginTable("Assets List", 5, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg))
+		{
+			ImGui::TableNextColumn();
+			ImGui::Text("Number");
+			ImGui::TableNextColumn();
+			ImGui::Text("Asset name");
+			ImGui::TableNextColumn();
+			ImGui::Text("Asset type");
+			ImGui::TableNextColumn();
+			ImGui::Text("Asset path");
+			ImGui::TableNextColumn();
+			ImGui::Text("Actions");
+			ImGui::TableNextRow();
+
+			for (auto i = 0; i < m_RegisteredAssets.size(); ++i)
+			{
+				auto& asset = m_RegisteredAssets[i];
+
+				ImGui::TableNextColumn();
+				ImGui::Text("%d", i+1);
+				ImGui::TableNextColumn();
+				ImGui::Text(asset.m_Name.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text(asset.m_Type.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text(asset.m_Path.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text("...");
+				ImGui::TableNextRow();
+			}
+
+			ImGui::EndTable();
+		}
 	}
 	ImGui::End();
 }

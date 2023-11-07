@@ -3,6 +3,7 @@
 #include "engine/Tools/Tools.hpp"
 #include "engine/Filesystem/FsManager.hpp"
 #include "EventHandler.hpp"
+#include "Assets.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 struct Project
@@ -37,6 +38,9 @@ class EngineModule
 		void SetFilesystemManager(std::unique_ptr<fs::Manager> _fs_mgr) { m_filesystemManager = std::move(_fs_mgr); }
 		fs::Manager* const GetFilesystemManager() { return m_filesystemManager.get(); }
 
+		void SetAssetsStorage(std::unique_ptr<Assets::Storage> _assets_storage) { m_assetsStorage = std::move(_assets_storage); }
+		Assets::Storage* const GetAssetsStorage() { return m_assetsStorage.get(); }
+
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
 		static std::string GetEngineVersionString();
 
@@ -48,21 +52,27 @@ class EngineModule
 	private:
 
 		void OnProjectChanged();
+		void OnFilesystemsLoaded();
+		void OnAssetsStorageLoaded();
 
 		void InitializeFilesystems();
+		void InitializeAssets();
 
 	private:
 
 		std::unique_ptr<Events::Dispatcher> m_eventDispatcher = nullptr;
 		std::unique_ptr<Tools::Manager> m_toolsManager = nullptr;
 		std::unique_ptr<fs::Manager> m_filesystemManager = nullptr;
+		std::unique_ptr<Assets::Storage> m_assetsStorage = nullptr;
 
 		std::optional<Project> m_CurrentProject = std::nullopt;
 
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;
+		std::atomic<bool> m_ProjectResourcesInitStarted = false;
 
 		std::atomic<bool> m_ResourcesFsInitFinished = false;
 		std::atomic<bool> m_DataFsInitFinished = false;
+		std::atomic<bool> m_ProjectResourcesInitFinished = false;
 
 };

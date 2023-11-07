@@ -18,7 +18,7 @@ namespace Tools_Impl
 		/////////////////////////////////////////////////////////
 		struct flags
 		{
-			int toolbar_window_flags = ImGuiWindowFlags_NoResize |
+			const int toolbar_window_flags = ImGuiWindowFlags_NoResize |
 				ImGuiWindowFlags_NoMove |
 				ImGuiWindowFlags_NoCollapse |
 				ImGuiWindowFlags_NoTitleBar |
@@ -27,7 +27,7 @@ namespace Tools_Impl
 				ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoSavedSettings;
 
-			int message_window_flags = toolbar_window_flags;
+			const int message_window_flags = toolbar_window_flags;
 		};
 		/////////////////////////////////////////////////////////
 		struct paths

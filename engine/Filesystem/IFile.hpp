@@ -14,7 +14,8 @@ namespace fs
 			Out = 0x02,
 			ReadWrite = In | Out,
 			Append = 0x04,
-			Truncate = 0x08
+			Truncate = 0x08,
+			Binary = 0x10
 		};
 
 		inline OpenMode operator|(OpenMode _lhs, OpenMode _rhs)
@@ -104,6 +105,7 @@ namespace fs
 			virtual bool IsReadOnly() const { return m_IsReadOnly; };
 
 			virtual std::string_view GetPath() const { return m_Path; };
+			virtual EType GetType() const = 0;
 
 			template<typename T>
 			bool Read(T& _target, size_t _size)
@@ -136,6 +138,18 @@ namespace fs
 				return success;
 			}
 
+			template<>
+			bool Read(std::vector<uint8_t>& _buffer, size_t _size)
+			{
+				if (!IsOpen())
+					return false;
+
+				_buffer.reserve(_size);
+				size_t read_bytes = Read_UnsignedBuffer_Impl(_buffer);
+
+				return read_bytes == _size;
+			}
+
 			/////////////////////////////////////////////////////////
 			template<typename T>
 			bool Write(const T& _source, size_t _size)
@@ -166,6 +180,8 @@ namespace fs
 
 			virtual size_t Read_Impl(std::vector<uint8_t>& _buffer) = 0;
 			virtual size_t Write_Impl(const std::vector<uint8_t>& _buffer) = 0;
+
+			virtual size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) = 0;
 
 			virtual bool ReadJson_Impl(nlohmann::json& _json,  [[maybe_unused]] size_t _size) = 0;
 			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) = 0;

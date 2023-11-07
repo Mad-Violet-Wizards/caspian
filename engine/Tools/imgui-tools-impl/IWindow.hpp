@@ -15,7 +15,7 @@ namespace Tools_Impl
 
 		virtual ~IWindow() = default;
 
-		virtual void Update(float _dt) = delete;
+		virtual void Update(float _dt) {};
 		virtual void Render() = 0;
 
 	public:

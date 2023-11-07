@@ -64,6 +64,18 @@ void Toolbar::Render()
 					}
 				}
 
+				if (ImGui::Selectable("Assets list"))
+				{
+					if (m_Manager->m_AssetListWindow.GetAvailability())
+					{
+						m_Manager->m_AssetListWindow.m_Active = true;
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot open assets list\nwithout loading project first!");
+					}
+				}
+
 				ImGui::EndPopup();
 			}
 		}
@@ -196,6 +208,7 @@ void Manager::Update(float _dt)
 		return;
 
 	m_NotificationManager.Update(_dt);
+	m_AssetListWindow.Update(_dt);
 
 	//m_Toolbar.Update(_dt);
 	//m_ImportAssetWindow.Update(_dt);
@@ -373,4 +386,9 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
 		}
 	}
+}
+
+void Manager::OnAssetsStorageInitialized()
+{
+	m_AssetListWindow.SetAvailability(true);
 }

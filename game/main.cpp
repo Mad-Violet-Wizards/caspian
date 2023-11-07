@@ -18,6 +18,9 @@ int main()
 	std::unique_ptr<fs::Manager> filesystem_manager = std::make_unique<fs::Manager>();
 	main_instance.SetFilesystemManager(std::move(filesystem_manager));
 
+	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
+	main_instance.SetAssetsStorage(std::move(assets_storage));
+
 	#if defined(DEBUG)
 	std::unique_ptr<DebugHelper> game_debug_helper = std::make_unique<DebugHelper>();
 	game_debug_helper->InitializeDebugEventListeners();

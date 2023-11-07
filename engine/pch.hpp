@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <future>
+#include <ranges>
 
 // ENGINE //
 

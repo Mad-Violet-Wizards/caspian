@@ -46,6 +46,9 @@ class DebugHelper
 		void SetFilesystemManager(std::unique_ptr<fs::Manager> _fs_mgr) { m_engineModule.SetFilesystemManager(std::move(_fs_mgr)); }
 		fs::Manager* const GetFilesystemManager() { return m_engineModule.GetFilesystemManager(); }
 
+		void SetAssetsStorage(std::unique_ptr<Assets::Storage> _assets_storage) { m_engineModule.SetAssetsStorage(std::move(_assets_storage)); }
+		Assets::Storage* const GetAssetsStorage() { return m_engineModule.GetAssetsStorage(); }
+
 		EngineModule& GetEngineModule() { return m_engineModule; }
 
 		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
