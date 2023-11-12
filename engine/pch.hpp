@@ -28,6 +28,7 @@
 #include "engine/Core/IComponent.hpp"
 #include "engine/Core/EventHandler.hpp"
 #include "engine/Core/GameObject.hpp"
+#include "game/Application.hpp"
 
 // WARNING C4603.
 #if(defined DEBUG)

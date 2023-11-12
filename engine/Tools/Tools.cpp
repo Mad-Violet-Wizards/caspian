@@ -1,7 +1,6 @@
 #include "engine/pch.hpp"
 
 #include "Tools.hpp"
-#include "game/Application.hpp"
 
 using namespace Tools;
 
@@ -45,11 +44,6 @@ void Manager::InitializeEventListeners()
 
 		main_instance.GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
 	}
-}
-
-void Manager::OnAssetsStorageInitialized()
-{
-	m_ImplManager.OnAssetsStorageInitialized();
 }
 
 void Manager::ShowNotification(Tools_Impl::ENotificationType _type, std::string_view _msg)

@@ -2,7 +2,6 @@
 
 #include "EngineModule.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
-#include "game/Application.hpp"
 #include <iostream>
 
 void EngineModule::Update()
@@ -48,9 +47,8 @@ void EngineModule::OnFilesystemsLoaded()
 
 void EngineModule::OnAssetsStorageLoaded()
 {
-	auto& main_instance = ApplicationSingleton::Instance();
-	Tools::Manager* tools_manager = main_instance.GetToolsManager();
-	tools_manager->OnAssetsStorageInitialized();
+	auto& main_instance = ApplicationSingleton::Instance(); 
+	main_instance.GetAssetsStorage()->SetInitialized();
 }
 
 void EngineModule::InitializeFilesystems()

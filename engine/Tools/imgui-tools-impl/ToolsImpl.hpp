@@ -75,8 +75,6 @@ namespace Tools_Impl
 			void CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path);
 			void LoadProjectRequest(const std::string& _project_name, const std::string& _project_path);
 
-			void OnAssetsStorageInitialized();
-
 		public:
 
 			// ImGuiAssetsTools.h

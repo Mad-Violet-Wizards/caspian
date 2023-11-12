@@ -23,6 +23,8 @@ namespace mock
 			return _buffer.size();
 		}
 
+		size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) override { return 0; }
+
 		bool ReadJson_Impl(nlohmann::json& _json, size_t _size) override { return false; }
 		bool WriteJson_Impl(const nlohmann::json& _json, size_t _size) override { return false; }
 
@@ -34,6 +36,8 @@ namespace mock
 		size_t Size() override { return m_Data.size(); }
 		bool IsEOF() const override { return true; }
 		bool IsReadOnly() const override { return false; }
+		EType GetType() const override { return EType::Unknown; }
+
 
 	public:
 

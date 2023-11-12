@@ -32,9 +32,6 @@ namespace Tools_Impl
 			void Update(float _dt) override;
 			void Render() override;
 
-			void SetAvailability(bool _available) { m_Available = _available; }
-			bool GetAvailability() const { return m_Available; }
-
 		public:
 
 			struct Internal_AssetTableData
@@ -46,12 +43,25 @@ namespace Tools_Impl
 				bool m_bSearchFlag = false;
 			};
 
+			struct Internal_AssetToDelete
+			{
+				Internal_AssetToDelete(const std::string& _name, const std::string& _type, const std::function<void(bool)>& _onDelete)
+					: m_Name(_name), 
+						m_Type(_type), 
+						m_OnDelete(_onDelete) { }
+
+				const std::string& m_Name;
+				const std::string& m_Type;
+
+				const std::function<void(bool)> m_OnDelete;
+			};
+
 
 		private:
 
 			std::vector<Internal_AssetTableData> m_RegisteredAssets;
-			bool m_Available = false;
-			
+			std::optional<Internal_AssetToDelete> m_AssetSelectedToDelete;
+
 			std::string m_SearchPhrase;
 	};
 };

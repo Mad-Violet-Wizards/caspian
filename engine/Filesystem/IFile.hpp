@@ -59,7 +59,7 @@ namespace fs
 			};
 
 			static const char* S_UNKNOWN_ETYPE_STR;
-			static const char* TypeToString(EType _type)
+			static const char* TypeToStringExt(EType _type)
 			{
 				switch(_type)
 				{
@@ -75,7 +75,7 @@ namespace fs
 				}
 			}
 
-			static EType StringToType(const std::string_view _type)
+			static EType StringExtToType(const std::string_view _type)
 			{
 				if (_type == ".png")		return EType::Texture;
 				if (_type == ".ttf")		return EType::Font;
@@ -85,6 +85,20 @@ namespace fs
 				if (_type == ".json")		return EType::JSON;
 				if (_type == ".txt")		return EType::Text;
 				if (_type == ".pak")		return EType::Data;
+				return EType::Unknown;
+			}
+
+			static EType ETypeFromString(const std::string_view _str)
+			{
+				if (_str == "Texture")		return EType::Texture;
+				if (_str == "Font")				return EType::Font;
+				if (_str == "Audio")			return EType::Audio;
+				if (_str == "Shader")			return EType::Shader;
+				if (_str == "Lua")				return EType::Lua;
+				if (_str == "JSON")				return EType::JSON;
+				if (_str == "Text")				return EType::Text;
+				if (_str == "Data")				return EType::Data;
+				if (_str == "Directory")	return EType::Directory;
 				return EType::Unknown;
 			}
 

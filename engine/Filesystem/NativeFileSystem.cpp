@@ -127,7 +127,7 @@ namespace fs
 		if (_file_type != IFile::EType::Directory)
 		{
 			const std::string& extension = file_path.extension().string();
-			const std::string_view supported_extensions = IFile::TypeToString(_file_type);
+			const std::string_view supported_extensions = IFile::TypeToStringExt(_file_type);
 
 			if (supported_extensions != extension)
 				return false;
@@ -173,7 +173,7 @@ namespace fs
 		std::filesystem::path file_path{ m_Path };
 		file_path /= _file_path;
 
-		if (IFile::StringToType(file_path.extension().string()) == IFile::EType::Unknown)
+		if (IFile::StringExtToType(file_path.extension().string()) == IFile::EType::Unknown)
 			return false;
 
 		std::string_view relative_path = _file_path;

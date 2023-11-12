@@ -5,7 +5,6 @@
 #include "ToolsImpl.hpp"
 #include "Validators.hpp"
 
-#include "game/Application.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/NativeFile.hpp"
 #include "vendor/include/nlohmann/json.hpp"

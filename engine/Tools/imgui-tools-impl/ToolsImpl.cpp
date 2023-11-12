@@ -4,7 +4,6 @@
 
 #include "ToolsImpl.hpp"
 #include "AssetWindows.hpp"
-#include "game/Application.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/NativeFile.hpp"
 #include "vendor/include/nlohmann/json.hpp"
@@ -20,6 +19,8 @@ void Toolbar::Render()
 {
 	if (!m_Active)
 		return;
+
+	const bool bAssets_storage_initialized = ApplicationSingleton::Instance().GetAssetsStorage()->IsInitialized();
 
 	static auto flags = utils::flags();
 
@@ -66,7 +67,7 @@ void Toolbar::Render()
 
 				if (ImGui::Selectable("Assets list"))
 				{
-					if (m_Manager->m_AssetListWindow.GetAvailability())
+					if (bAssets_storage_initialized)
 					{
 						m_Manager->m_AssetListWindow.m_Active = true;
 					}
@@ -78,6 +79,22 @@ void Toolbar::Render()
 
 				ImGui::EndPopup();
 			}
+		}
+
+		{
+			constexpr auto levels_popup_name = "LevelsPopup";
+
+			if (ImGui::Button("Tools", styles.toolbar_button_size))
+				ImGui::OpenPopup(levels_popup_name);
+
+			if (ImGui::BeginPopup(levels_popup_name))
+			{
+				if (bAssets_storage_initialized)
+				{
+					
+				}
+			}
+			
 		}
 		
 		styles.toolbar_pop_combobox_style();
@@ -386,9 +403,4 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
 		}
 	}
-}
-
-void Manager::OnAssetsStorageInitialized()
-{
-	m_AssetListWindow.SetAvailability(true);
 }

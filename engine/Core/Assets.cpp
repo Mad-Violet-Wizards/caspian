@@ -54,6 +54,96 @@ void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files
 	}
 }
 
+void Assets::Storage::LoadResourceAcceptableType(fs::IFile* _file)
+{
+	if (_file->IsOpen())
+	{
+		std::string_view path = _file->GetPath();
+		path = path.substr(path.find_last_of("\\/") + 1);
+
+		switch (_file->GetType())
+		{
+			case fs::IFile::EType::Texture:
+			{
+				Resource<sf::Texture> texture;
+
+				std::vector<uint8_t> data;
+				if (_file->Read(data, _file->Size()))
+				{
+					texture.LoadFromData(data);
+					sf::Lock lock(m_Mutex);
+					m_textures[{path.cbegin(), path.cend()}] = texture;
+				}
+				break;
+			}
+			case fs::IFile::EType::Font:
+			{
+				Resource<sf::Font> font;
+
+				std::vector<uint8_t> data;
+				if (_file->Read(data, _file->Size()))
+				{
+					font.LoadFromData(data);
+					sf::Lock lock(m_Mutex);
+					m_fonts[{path.cbegin(), path.cend()}] = font;
+				}
+				break;
+			}
+			default:
+			{
+				std::cout << "[Assets::Storage] ERROR: File " << path << " has unacceptable type.\n";
+				break;
+			}
+		}
+	}
+}
+
+void Assets::Storage::DeleteResource(const std::string& _key, fs::IFile::EType _eFileType)
+{
+	switch (_eFileType)
+	{
+		case fs::IFile::EType::Texture:
+		{
+			sf::Lock lock(m_Mutex);
+			auto it = m_textures.find(_key);
+
+			if (it != m_textures.end())
+			{
+				m_textures.erase(it);
+			}
+			else
+			{
+				std::cout << "[Assets::Storage] ERROR: File " << _key << " not found.\n";
+			}
+
+			m_textures.erase(_key);
+			break;
+		}
+		case fs::IFile::EType::Font:
+		{
+			sf::Lock lock(m_Mutex);
+			auto it = m_fonts.find(_key);
+
+			if (it != m_fonts.end())
+			{
+				m_fonts.erase(it);
+			}
+			else
+			{
+				std::cout << "[Assets::Storage] ERROR: File " << _key << " not found.\n";
+			}
+
+			m_fonts.erase(_key);
+			break;
+		}
+		default:
+		{
+			std::cout << "[Assets::Storage] ERROR: Type is not yet handled.\n";
+			break;
+		}
+	}
+}
+
 sf::Texture& Assets::Storage::GetTexture(const std::string& _path)
 {
 	sf::Lock lock(m_Mutex);

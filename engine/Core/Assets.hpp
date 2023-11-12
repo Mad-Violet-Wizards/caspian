@@ -80,6 +80,9 @@ namespace Assets
 
 			void LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files);
 			void LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files);
+			void LoadResourceAcceptableType(fs::IFile* _file);
+
+			void DeleteResource(const std::string& _key, fs::IFile::EType _eFileType);
 
 			sf::Texture& GetTexture(const std::string& _path);
 			sf::Font& GetFont(const std::string& _path);
@@ -95,10 +98,15 @@ namespace Assets
 			[[nodiscard]] std::vector<std::string> GetTexturesKeys() const;
 			[[nodiscard]] std::vector<std::string> GetFontKeys() const;
  
+			void SetInitialized() { m_bInitialized = true; }
+			bool IsInitialized() const { return m_bInitialized; }
+
 		private:
 
 			std::unordered_map<std::string, Resource<sf::Texture>> m_textures;
 			std::unordered_map<std::string, Resource<sf::Font>> m_fonts;
+
+			bool m_bInitialized = false;
 
 			mutable sf::Mutex m_Mutex;
 	};

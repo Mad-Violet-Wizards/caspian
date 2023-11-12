@@ -116,7 +116,7 @@ namespace fs
 	IFile::EType NativeFile::GetType() const
 	{
 		std::filesystem::path p{ m_Path };
-		return StringToType(p.extension().string());
+		return StringExtToType(p.extension().string());
 	}
 
 	size_t NativeFile::Read_Impl(std::vector<uint8_t>& _buffer)
