@@ -21,35 +21,6 @@ void NewLevelWindow::Render()
 		ImGui::InputText("Layers", &m_nLayers);
 		ImGui::InputText("Tile width", &m_nTileWidth);
 		ImGui::InputText("Tile height", &m_nTileHeight);
-
-		if (ImGui::Button("Create"))
-		{
-			if (m_LevelName.empty())
-			{
-				Tools::Log("Level name cannot be empty!");
-				return;
-			}
-
-			if (m_LevelPath.empty())
-			{
-				Tools::Log("Level path cannot be empty!");
-				return;
-			}
-
-			if (m_LevelWidth.empty())
-			{
-				Tools::Log("Level width cannot be empty!");
-				return;
-			}
-
-			if (m_LevelHeight.empty())
-			{
-				Tools::Log("Level height cannot be empty!");
-				return;
-			}
-
-			//Tools::CreateLevel(m_LevelName, m_LevelPath, std::stoi(m_LevelWidth), std::stoi(m_LevelHeight));
-			m_Active = false;
 		}
 	}
 }

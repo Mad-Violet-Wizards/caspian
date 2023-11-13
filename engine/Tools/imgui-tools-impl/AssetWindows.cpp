@@ -221,7 +221,23 @@ void AssetsListWindow::Update(float _dt)
 	}
 	if (!m_SearchPhrase.empty())
 	{
-		// Finish searching algo.
+		auto fn_str_to_lower_by_ref = [](std::string& _str) { std::transform(_str.begin(), _str.end(), _str.begin(), [](unsigned char c) { return std::tolower(c); }); };
+
+		auto fn_search = [](std::string_view _search_phrase, std::string_view _txt_to_filter) -> bool
+		{
+				auto boyer_moore_searcher = std::boyer_moore_searcher(_search_phrase.begin(), _search_phrase.end());
+				return std::search(_txt_to_filter.begin(), _txt_to_filter.end(), boyer_moore_searcher) != _txt_to_filter.end();
+		};
+
+		auto lower_search_phrase = m_SearchPhrase;
+		fn_str_to_lower_by_ref(lower_search_phrase);
+
+		for (auto& asset_data : m_RegisteredAssets)
+		{
+			std::string txt_to_filter = asset_data.m_Name + asset_data.m_Path;
+			fn_str_to_lower_by_ref(txt_to_filter);
+			fn_search(lower_search_phrase, txt_to_filter) ? asset_data.m_bSearchFlag = true : asset_data.m_bSearchFlag = false;
+		}
 	}
 }
 
@@ -254,6 +270,10 @@ void AssetsListWindow::Render()
 			for (auto i = 0; i < m_RegisteredAssets.size(); ++i)
 			{
 				auto& asset = m_RegisteredAssets[i];
+
+				if (!m_SearchPhrase.empty())
+					if (!asset.m_bSearchFlag)
+						continue;
 
 				ImGui::TableNextColumn();
 				ImGui::Text("%d", i+1);
