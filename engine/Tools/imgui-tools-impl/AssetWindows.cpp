@@ -45,7 +45,7 @@ void ImportAssetWindow::Render()
 			auto project_path = engine_module.GetCurrentProject().m_ProjectPath;
 			project_path += "\\" + engine_module.GetCurrentProject().m_ProjectName + "\\";
 
-			ImGuiFileDialog::Instance()->OpenDialog(dest_dialog_name, "Choose Dest", ".", project_path);
+			ImGuiFileDialog::Instance()->OpenDialog(dest_dialog_name, "Choose Dest", nullptr, project_path);
 		}
 
 		if (ImGuiFileDialog::Instance()->Display(dest_dialog_name))

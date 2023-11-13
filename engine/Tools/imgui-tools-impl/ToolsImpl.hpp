@@ -7,6 +7,7 @@
 #include "AssetWindows.hpp"
 #include "ProjectWindows.hpp"
 #include "NotificationWindows.hpp"
+#include "LevelWindows.hpp"
 
 namespace Tools_Impl
 {
@@ -77,15 +78,14 @@ namespace Tools_Impl
 
 		public:
 
-			// ImGuiAssetsTools.h
 			ImportAssetWindow m_ImportAssetWindow;
 			AssetsListWindow m_AssetListWindow;
 
-			// ImGuiProjectTools.h
 			NewProjectWindow m_NewProjectWindow;
 			LoadProjectWindow m_LoadProjectWindow;
 
-			// ImGuiTools.h
+			NewLevelWindow m_NewLevelWindow;
+
 			NotificationsManager m_NotificationManager;
 
 		private:

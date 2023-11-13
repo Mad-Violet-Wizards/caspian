@@ -84,15 +84,25 @@ void Toolbar::Render()
 		{
 			constexpr auto levels_popup_name = "LevelsPopup";
 
+		ImGui::SameLine();
 			if (ImGui::Button("Tools", styles.toolbar_button_size))
 				ImGui::OpenPopup(levels_popup_name);
 
 			if (ImGui::BeginPopup(levels_popup_name))
 			{
-				if (bAssets_storage_initialized)
+				if (ImGui::Selectable("New level..."))
 				{
-					
+					if (bAssets_storage_initialized)
+					{
+						m_Manager->m_NewLevelWindow.m_Active = true;
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot create new level\nwithout loading project first!");
+					}
 				}
+
+				ImGui::EndPopup();
 			}
 			
 		}
@@ -208,6 +218,7 @@ Manager::Manager()
 	, m_NewProjectWindow(this)
 	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
+	, m_NewLevelWindow(this)
 	, m_MagicNumberBytes{ 0x43, 0x41, 0x53, 0x50 }
 {
 
@@ -245,6 +256,7 @@ void Manager::Render()
 	m_AssetListWindow.Render();
 	m_NewProjectWindow.Render();
 	m_LoadProjectWindow.Render();
+	m_NewLevelWindow.Render();
 }
 
 void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
