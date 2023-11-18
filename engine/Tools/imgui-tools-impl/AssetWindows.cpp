@@ -180,8 +180,9 @@ void AssetsListWindow::Update(float _dt)
 			const std::string asset_path = resource_fs->GetAbsoluteFilePath(asset_name);
 
 			Internal_AssetTableData d;
-			d.m_Name = asset_name;
-			d.m_Path = asset_path;
+			d.m_Name = asset_name.substr(asset_name.find_last_of("\\/") + 1);
+			d.m_RelativePath = asset_name;
+			d.m_AbsolutePath = asset_path;
 
 			if (assets_storage->IsTexture(asset_name))
 				d.m_Type = "Texture";
@@ -234,7 +235,7 @@ void AssetsListWindow::Update(float _dt)
 
 		for (auto& asset_data : m_RegisteredAssets)
 		{
-			std::string txt_to_filter = asset_data.m_Name + asset_data.m_Path;
+			std::string txt_to_filter = asset_data.m_Name + asset_data.m_AbsolutePath;
 			fn_str_to_lower_by_ref(txt_to_filter);
 			fn_search(lower_search_phrase, txt_to_filter) ? asset_data.m_bSearchFlag = true : asset_data.m_bSearchFlag = false;
 		}
@@ -253,16 +254,18 @@ void AssetsListWindow::Render()
 		if (ImGui::Button("Exit"))
 			m_Active = false;
 
-		if(ImGui::BeginTable("Assets List", 5, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg))
+		if(ImGui::BeginTable("Assets List", 6, ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg))
 		{
 			ImGui::TableNextColumn();
 			ImGui::Text("Number");
 			ImGui::TableNextColumn();
-			ImGui::Text("Asset name");
-			ImGui::TableNextColumn();
 			ImGui::Text("Asset type");
 			ImGui::TableNextColumn();
-			ImGui::Text("Asset path");
+			ImGui::Text("Asset name");
+			ImGui::TableNextColumn();
+			ImGui::Text("Asset relative path");
+			ImGui::TableNextColumn();
+			ImGui::Text("Asset absolute path");
 			ImGui::TableNextColumn();
 			ImGui::Text("Actions");
 			ImGui::TableNextRow();
@@ -278,11 +281,13 @@ void AssetsListWindow::Render()
 				ImGui::TableNextColumn();
 				ImGui::Text("%d", i+1);
 				ImGui::TableNextColumn();
-				ImGui::Text(asset.m_Name.c_str());
-				ImGui::TableNextColumn();
 				ImGui::Text(asset.m_Type.c_str());
 				ImGui::TableNextColumn();
-				ImGui::Text(asset.m_Path.c_str());
+				ImGui::Text(asset.m_Name.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text(asset.m_RelativePath.c_str());
+				ImGui::TableNextColumn();
+				ImGui::Text(asset.m_AbsolutePath.c_str());
 				ImGui::TableNextColumn();
 				ImGui::PushID(i);
 				if (ImGui::Button("Delete"))
@@ -298,6 +303,13 @@ void AssetsListWindow::Render()
 					Internal_AssetToDelete asset_to_delete{ asset.m_Name, asset.m_Type, on_delete };
 					m_AssetSelectedToDelete.emplace(asset_to_delete);
 				}
+				ImGui::SameLine();
+				if (ImGui::Button("Select"))
+				{
+					SelectedAssetData data;
+					data.m_RelativePath = asset.m_RelativePath;
+					NotifyAssetSelected(data);
+				}
 				ImGui::PopID();
 				ImGui::TableNextRow();
 			}
@@ -306,4 +318,12 @@ void AssetsListWindow::Render()
 		}
 	}
 	ImGui::End();
+}
+
+void AssetsListWindow::NotifyAssetSelected(const SelectedAssetData& _data)
+{
+	if (!m_ActionListener)
+		return;
+
+	m_ActionListener->OnAssetSelected(_data);
 }

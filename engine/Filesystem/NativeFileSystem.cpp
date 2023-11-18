@@ -237,7 +237,7 @@ namespace fs
 
 		return std::filesystem::exists(file_path);
 	}
-
+	 
 	std::string NativeFileSystem::GetAbsoluteFilePath(std::string_view _file_path) const
 	{
 		const std::string path{ _file_path };

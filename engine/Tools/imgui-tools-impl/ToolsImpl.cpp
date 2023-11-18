@@ -7,6 +7,7 @@
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/NativeFile.hpp"
 #include "vendor/include/nlohmann/json.hpp"
+#include "engine/Core/Level.hpp"
 
 using namespace Tools_Impl;
 
@@ -266,7 +267,6 @@ void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 
 void Manager::CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path)
 {	
-	// JSON PART:
 	bool data_packed_in_json = false;
 	bool file_closed_successfully = false;
 
@@ -305,7 +305,6 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 		file_closed_successfully = appdata_fs->CloseFile(projects_json_file);
 	}
 
-	// TODO: FILESYSTEM PART:
 	bool project_folder_created = false;
 	bool resource_folder_created = false;
 	bool data_folder_created = false;
@@ -415,4 +414,92 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
 		}
 	}
+}
+
+void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_width, unsigned int _tile_height)
+{
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
+	
+	bool json_created_succesfully = false;
+
+	std::string relative_lvl_path{ _lvl_path };
+	relative_lvl_path = relative_lvl_path.substr(resource_fs->GetPath().size() + 1);
+
+	if (!resource_fs->FileExists(relative_lvl_path))
+	{
+		json_created_succesfully = resource_fs->CreateFile(relative_lvl_path, fs::IFile::EType::JSON);
+
+		if (!json_created_succesfully)
+		{
+			std::cout << "DEBUG: [ToolsImpl] Failed to create level file: " << relative_lvl_path << std::endl;
+		}
+	}
+
+	bool file_closed_successfully = false;
+
+	if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::ReadWrite))
+	{
+		nlohmann::json level_json;
+
+		level_json["name"] = _lvl_name;
+		level_json["tile_width"] = _tile_width;
+		level_json["tile_height"] = _tile_height;
+		level_json["chunk_root_file"] = _lvl_name + ".caspchunk";
+
+		level_json_file->Write(level_json, 0);
+
+		file_closed_successfully = resource_fs->CloseFile(level_json_file);
+	}
+
+	std::fstream chunk_file;
+
+	fs::IFileSystem* data_fs = main_instance.GetFilesystemManager()->Get("data");
+
+	if (!data_fs->FileExists("levels"))
+	{
+				data_fs->CreateFile("levels", fs::IFile::EType::Directory);
+	}
+
+	std::filesystem::path chunk_file_path{ data_fs->GetPath() };
+	chunk_file_path /= "levels";
+	chunk_file_path /= _lvl_name + ".caspchunk";
+
+	chunk_file.open(chunk_file_path, std::fstream::out | std::fstream::binary);
+
+	const bool chunk_file_created = chunk_file.is_open();
+
+	if (chunk_file_created)
+	{
+		Level::Data::Chunk_File_Header header;
+		strncpy_s(header.m_Path, relative_lvl_path.c_str(), header.MAX_PATH_SIZE);
+		header.m_TileHeight = _tile_height;
+		header.m_TileWidth = _tile_width;
+
+		chunk_file.write(reinterpret_cast<const char*>(&header), sizeof(Level::Data::Chunk_File_Header));
+		chunk_file.close();
+	}
+
+	const bool success = json_created_succesfully && file_closed_successfully && chunk_file_created;
+
+	if (success)
+	{
+		ShowNotification(ENotificationType::Success, "Level created succesfully! :)");
+	}
+	else
+	{
+		ShowNotification(ENotificationType::Error, "Failed to create level! :(");
+	}
+}
+
+void Manager::OpenAssetTableForAction(IAssetsTableActionsListener* _listener)
+{
+	if (!_listener)
+		return;
+
+	if (!m_AssetListWindow.m_Active)
+		m_AssetListWindow.m_Active = true;
+
+	m_AssetListWindow.OnOpenForAction(_listener);
 }

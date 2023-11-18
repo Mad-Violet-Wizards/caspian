@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IWindow.hpp"
+#include "AssetsTableActions.hpp"
 
 namespace Tools_Impl
 {
@@ -29,15 +30,20 @@ namespace Tools_Impl
 			AssetsListWindow(Manager* _mgr) : IWindow(_mgr) {}
 			~AssetsListWindow() = default;
 
+			void OnOpenForAction(IAssetsTableActionsListener* _listener) { m_ActionListener = _listener; }
+
+			void NotifyAssetSelected(const SelectedAssetData& _data);
+
 			void Update(float _dt) override;
 			void Render() override;
 
-		public:
+	public:
 
 			struct Internal_AssetTableData
 			{
 				std::string m_Name;
-				std::string m_Path;
+				std::string m_RelativePath;
+				std::string m_AbsolutePath;
 				std::string m_Type;
 
 				bool m_bSearchFlag = false;
@@ -61,6 +67,8 @@ namespace Tools_Impl
 
 			std::vector<Internal_AssetTableData> m_RegisteredAssets;
 			std::optional<Internal_AssetToDelete> m_AssetSelectedToDelete;
+
+			IAssetsTableActionsListener* m_ActionListener;
 
 			std::string m_SearchPhrase;
 	};

@@ -71,10 +71,14 @@ namespace Tools_Impl
 			void Update(float _dt);
 			void Render();
 
+			void OpenAssetTableForAction(IAssetsTableActionsListener* _listener);
+
 			void ShowNotification(ENotificationType _type, std::string_view _msg);
 
 			void CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path);
 			void LoadProjectRequest(const std::string& _project_name, const std::string& _project_path);
+
+			void CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_width, unsigned int _tile_height);
 
 		public:
 

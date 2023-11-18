@@ -2,6 +2,27 @@
 
 namespace Level
 {
+	namespace Data
+	{
+		class Chunk_File_Header
+		{
+			public:
+
+				Chunk_File_Header() = default;
+				~Chunk_File_Header() = default;
+
+		public:
+
+			const static size_t MAX_PATH_SIZE = 1024;
+
+			public:
+			
+				char m_Path[MAX_PATH_SIZE];
+				unsigned int m_TileWidth;
+				unsigned int m_TileHeight;
+		};	
+	}
+
 	class Tile
 	{
 	public:

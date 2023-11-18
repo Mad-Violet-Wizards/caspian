@@ -5,6 +5,8 @@
 
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+
 	for (auto& file : _files)
 	{
 		if (!file->IsOpen())
@@ -22,7 +24,7 @@ void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _fi
 
 			// Trim path to get only filename.
 			std::string_view path = file->GetPath();
-			path = path.substr(path.find_last_of("\\/") + 1);
+			path = path.substr(resources_fs_path.size() + 1);
 
 			sf::Lock lock(m_Mutex);
 			m_textures[{path.cbegin(), path.cend()}] = texture;
@@ -32,6 +34,8 @@ void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _fi
 
 void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+
 	for (auto& file : _files)
 	{
 		if (!file->IsOpen())
@@ -46,7 +50,7 @@ void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files
 
 				// Trim path to get only filename.
 				std::string_view path = file->GetPath();
-				path = path.substr(path.find_last_of("\\/") + 1);
+				path = path.substr(resources_fs_path.size() + 1);
 
 				sf::Lock lock(m_Mutex);
 				m_fonts[{path.cbegin(), path.cend()}] = font;
@@ -56,10 +60,12 @@ void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files
 
 void Assets::Storage::LoadResourceAcceptableType(fs::IFile* _file)
 {
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+
 	if (_file->IsOpen())
 	{
 		std::string_view path = _file->GetPath();
-		path = path.substr(path.find_last_of("\\/") + 1);
+		path = path.substr(resources_fs_path.size() + 1);
 
 		switch (_file->GetType())
 		{
