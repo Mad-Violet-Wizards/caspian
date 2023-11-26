@@ -2,8 +2,10 @@
 
 #include "LevelWindows.hpp"
 #include "ToolsImpl.hpp"
+#include "engine/Core/Assets.hpp"
 
 #include <imgui-file-dialog/ImGuiFileDialog.h>
+#include <imgui-SFML/imgui-SFML.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
 using namespace Tools_Impl;
@@ -12,10 +14,7 @@ using namespace Tools_Impl;
 /* NewLevelWindow */
 void NewLevelWindow::Render()
 {
-	if (!m_Active)
-		return;
-
-	if (ImGui::Begin("New Level", &m_Active))
+	if (ImGui::CollapsingHeader("New Level"))
 	{
 		ImGui::InputText("Name", &m_LevelName);
 		ImGui::InputText("Path", &m_LevelPath); 
@@ -70,34 +69,101 @@ void NewLevelWindow::Render()
 				m_Manager->CreateNewLevelRequest(level_path, m_LevelName, tile_width, tile_height);
 			}
 		}
-
-		ImGui::End();
 	}
 }
 
+/////////////////////////////////////////////////////////
+void LoadLevelWindow::Render()
+{
+	if (ImGui::CollapsingHeader("Load level"))
+	{
+		ImGui::Text("Select from cache");
 
+		if (ImGui::BeginCombo("Cached levels", "..."))
+		{
+			ImGui::EndCombo();
+		}
+
+		ImGui::Separator();
+		ImGui::Text("...or select from disk");
+		ImGui::Button("Select level");
+	}
+}
 
 /////////////////////////////////////////////////////////
 void TilesetListWindow::Render()
 {
-		if (!m_Active)
-			return;
-
-		if (ImGui::Begin("Tilesets", &m_Active))
+		if (ImGui::CollapsingHeader("Tilesets"))
 		{
 			if (ImGui::Button("Add tileset"))
 			{
 				m_Manager->OpenAssetTableForAction(this);
 			}
+			ImGui::SameLine();
+			if (ImGui::Button("Tileset list"))
+			{
 
+			}
 
-			ImGui::End();
+			if (m_TilesetPreview != nullptr)
+			{
+				std::string fmt = std::format("Currently watching preview of: {}", m_QueuedToAddAsTileset->m_RelativePath);
+				ImGui::Separator();
+				ImGui::Text(fmt.c_str());
+				auto styles = utils::styles();
+
+				styles.push_accept_button_style();
+				if (ImGui::Button("Accept"))
+				{
+
+				}
+				styles.pop_accept_button_style();
+
+				ImGui::SameLine();
+				styles.push_cancel_button_style();
+				if (ImGui::Button("Cancel"))
+				{
+				}
+				styles.pop_cancel_button_style();
+				ImGui::Separator();
+				ImGui::Image(*m_TilesetPreview);
+			}
 		}
 }
 
 void TilesetListWindow::OnAssetSelected(const SelectedAssetData& data)
 {
+	m_QueuedToAddAsTileset = data;
+
+	auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
+	const std::string key{ data.m_RelativePath };
+	m_TilesetPreview = &engine_module.GetAssetsStorage()->GetConstTexture(key);
 }
 
 /////////////////////////////////////////////////////////
-void 
+void LevelEditorWindow::Update(float _dt)
+{
+	if (!m_Active)
+		return;
+
+	m_NewLevelWindow.Update(_dt);
+	m_LoadLevelWindow.Update(_dt);
+	m_TilesetListWindow.Update(_dt);
+}
+
+void LevelEditorWindow::Render()
+{
+	if (!m_Active)
+		return;
+
+	if (ImGui::Begin("Level Editor", &m_Active))
+	{
+		m_NewLevelWindow.Render();
+		ImGui::Dummy({ 0.f, 10.f});
+		m_LoadLevelWindow.Render();
+		ImGui::Dummy({ 0.f, 10.f });
+		m_TilesetListWindow.Render();
+
+		ImGui::End();
+	}
+}

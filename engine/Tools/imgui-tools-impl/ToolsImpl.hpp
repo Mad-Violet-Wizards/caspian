@@ -88,7 +88,7 @@ namespace Tools_Impl
 			NewProjectWindow m_NewProjectWindow;
 			LoadProjectWindow m_LoadProjectWindow;
 
-			NewLevelWindow m_NewLevelWindow;
+			LevelEditorWindow m_LevelEditorWindow;
 
 			NotificationsManager m_NotificationManager;
 

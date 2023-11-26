@@ -91,11 +91,11 @@ void Toolbar::Render()
 
 			if (ImGui::BeginPopup(levels_popup_name))
 			{
-				if (ImGui::Selectable("New level..."))
+				if (ImGui::Selectable("Level editor..."))
 				{
 					if (bAssets_storage_initialized)
 					{
-						m_Manager->m_NewLevelWindow.m_Active = true;
+						m_Manager->m_LevelEditorWindow.m_Active = true;
 					}
 					else
 					{
@@ -219,7 +219,7 @@ Manager::Manager()
 	, m_NewProjectWindow(this)
 	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
-	, m_NewLevelWindow(this)
+	, m_LevelEditorWindow(this)
 	, m_MagicNumberBytes{ 0x43, 0x41, 0x53, 0x50 }
 {
 
@@ -238,6 +238,7 @@ void Manager::Update(float _dt)
 
 	m_NotificationManager.Update(_dt);
 	m_AssetListWindow.Update(_dt);
+	m_LevelEditorWindow.Update(_dt);
 
 	//m_Toolbar.Update(_dt);
 	//m_ImportAssetWindow.Update(_dt);
@@ -257,7 +258,8 @@ void Manager::Render()
 	m_AssetListWindow.Render();
 	m_NewProjectWindow.Render();
 	m_LoadProjectWindow.Render();
-	m_NewLevelWindow.Render();
+
+	m_LevelEditorWindow.Render();
 }
 
 void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
@@ -470,6 +472,7 @@ void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::str
 
 	const bool chunk_file_created = chunk_file.is_open();
 
+	// TODO: Replace with cereal library.
 	if (chunk_file_created)
 	{
 		Level::Data::Chunk_File_Header header;

@@ -53,6 +53,11 @@ namespace Assets
 				return m_resource;
 			}
 
+			const T& GetConstResource() const
+			{
+				return m_resource;
+			}
+
 			EResourceType GetType() const
 			{
 				switch (T)
@@ -86,6 +91,9 @@ namespace Assets
 
 			sf::Texture& GetTexture(const std::string& _path);
 			sf::Font& GetFont(const std::string& _path);
+
+			const sf::Texture& GetConstTexture(const std::string& _path) const;
+			const sf::Font& GetConstFont(const std::string& _path) const;
 
 			size_t GetTexturesCount() const { return m_textures.size(); }
 			size_t GetFontsCount() const { return m_fonts.size(); }

@@ -179,6 +179,33 @@ sf::Font& Assets::Storage::GetFont(const std::string& _path)
 	throw std::runtime_error("Font wasn't found.");
 }
 
+const sf::Texture& Assets::Storage::GetConstTexture(const std::string& _path) const
+{
+	sf::Lock lock(m_Mutex);
+	auto it = m_textures.find(_path);
+
+	if (it != m_textures.end())
+		return it->second.GetConstResource();
+
+	// Report error if not exists.
+	// Otherwise we'll prove default asset.
+	std::cout << "ERROR: Texture " << _path << " not found.\n";
+	throw std::runtime_error("Texture wasn't found.");
+}
+
+const sf::Font& Assets::Storage::GetConstFont(const std::string& _path) const
+{
+	sf::Lock lock(m_Mutex);
+	auto it = m_fonts.find(_path);
+
+	if (it != m_fonts.end())
+		return it->second.GetConstResource();
+
+	// Otherwise we'll report default asset.
+	std::cout << "ERROR: Font " << _path << " not found.\n";
+	throw std::runtime_error("Font wasn't found.");
+}
+
 bool Assets::Storage::IsTexture(const std::string& _cmp) const
 {
 	sf::Lock lock(m_Mutex);
