@@ -4,10 +4,11 @@
 
 #include "ToolsImpl.hpp"
 #include "AssetWindows.hpp"
-#include "game/Application.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/NativeFile.hpp"
-#include "vendor/include/nlohmann/json.hpp"
+#include <vendor/include/nlohmann/json.hpp>
+#include "engine/Core/Level.hpp"
+#include "engine/Filesystem/FilesystemMark.hpp"
 
 using namespace Tools_Impl;
 
@@ -20,6 +21,8 @@ void Toolbar::Render()
 {
 	if (!m_Active)
 		return;
+
+	const bool bAssets_storage_initialized = ApplicationSingleton::Instance().GetAssetsStorage()->IsInitialized();
 
 	static auto flags = utils::flags();
 
@@ -64,8 +67,46 @@ void Toolbar::Render()
 					}
 				}
 
+				if (ImGui::Selectable("Assets list"))
+				{
+					if (bAssets_storage_initialized)
+					{
+						m_Manager->m_AssetListWindow.m_Active = true;
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot open assets list\nwithout loading project first!");
+					}
+				}
+
 				ImGui::EndPopup();
 			}
+		}
+
+		{
+			constexpr auto levels_popup_name = "LevelsPopup";
+
+		ImGui::SameLine();
+			if (ImGui::Button("Tools", styles.toolbar_button_size))
+				ImGui::OpenPopup(levels_popup_name);
+
+			if (ImGui::BeginPopup(levels_popup_name))
+			{
+				if (ImGui::Selectable("Level editor..."))
+				{
+					if (bAssets_storage_initialized)
+					{
+						m_Manager->m_LevelEditorWindow.m_Active = true;
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot create new level\nwithout loading project first!");
+					}
+				}
+
+				ImGui::EndPopup();
+			}
+			
 		}
 		
 		styles.toolbar_pop_combobox_style();
@@ -179,6 +220,7 @@ Manager::Manager()
 	, m_NewProjectWindow(this)
 	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
+	, m_LevelEditorWindow(this)
 	, m_MagicNumberBytes{ 0x43, 0x41, 0x53, 0x50 }
 {
 
@@ -196,6 +238,8 @@ void Manager::Update(float _dt)
 		return;
 
 	m_NotificationManager.Update(_dt);
+	m_AssetListWindow.Update(_dt);
+	m_LevelEditorWindow.Update(_dt);
 
 	//m_Toolbar.Update(_dt);
 	//m_ImportAssetWindow.Update(_dt);
@@ -215,6 +259,8 @@ void Manager::Render()
 	m_AssetListWindow.Render();
 	m_NewProjectWindow.Render();
 	m_LoadProjectWindow.Render();
+
+	m_LevelEditorWindow.Render();
 }
 
 void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
@@ -224,7 +270,6 @@ void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 
 void Manager::CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path)
 {	
-	// JSON PART:
 	bool data_packed_in_json = false;
 	bool file_closed_successfully = false;
 
@@ -263,7 +308,6 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 		file_closed_successfully = appdata_fs->CloseFile(projects_json_file);
 	}
 
-	// TODO: FILESYSTEM PART:
 	bool project_folder_created = false;
 	bool resource_folder_created = false;
 	bool data_folder_created = false;
@@ -373,4 +417,83 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
 		}
 	}
+}
+
+void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_width, unsigned int _tile_height)
+{
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
+	
+	bool json_created_succesfully = false;
+
+	std::string relative_lvl_path{ _lvl_path };
+	relative_lvl_path = relative_lvl_path.substr(resource_fs->GetPath().size() + 1);
+
+	if (!resource_fs->FileExists(relative_lvl_path))
+	{
+		json_created_succesfully = resource_fs->CreateFile(relative_lvl_path, fs::IFile::EType::JSON);
+
+		if (!json_created_succesfully)
+		{
+			std::cout << "DEBUG: [ToolsImpl] Failed to create level file: " << relative_lvl_path << std::endl;
+		}
+	}
+
+	bool file_closed_successfully = false;
+
+	if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::ReadWrite))
+	{
+		const std::string& root_chunk_file_name = _lvl_name + ".rootchunk";
+
+		Level::Data::JsonRootFileData data(_lvl_name, root_chunk_file_name, _tile_width, _tile_height);
+
+		nlohmann::json json_to_pack = data.Deserialize();
+
+		level_json_file->Write(json_to_pack, 0);
+		main_instance.GetWorld()->EmplaceInitialLevelData(json_to_pack);
+
+		file_closed_successfully = resource_fs->CloseFile(level_json_file);
+	}
+
+	std::fstream chunk_file;
+
+	fs::IFileSystem* data_fs = main_instance.GetFilesystemManager()->Get("data");
+
+	if (!data_fs->FileExists("levels"))
+	{
+				data_fs->CreateFile("levels", fs::IFile::EType::Directory);
+	}
+
+	std::filesystem::path chunk_file_path{ data_fs->GetPath() };
+	chunk_file_path /= "levels";
+	chunk_file_path /= _lvl_name + ".rootchunk";
+
+	chunk_file.open(chunk_file_path, std::fstream::out | std::fstream::binary);
+
+	const bool chunk_file_created = chunk_file.is_open();
+
+	chunk_file.close();
+
+	const bool success = json_created_succesfully && file_closed_successfully && chunk_file_created;
+
+	if (success)
+	{
+		ShowNotification(ENotificationType::Success, "Level created succesfully! :)");
+	}
+	else
+	{
+		ShowNotification(ENotificationType::Error, "Failed to create level! :(");
+	}
+}
+
+void Manager::OpenAssetTableForAction(IAssetsTableActionsListener* _listener)
+{
+	if (!_listener)
+		return;
+
+	if (!m_AssetListWindow.m_Active)
+		m_AssetListWindow.m_Active = true;
+
+	m_AssetListWindow.OnOpenForAction(_listener);
 }

@@ -24,7 +24,7 @@ class GameObject
 		template<typename T, typename ...Args>
 		[[nodiscard]] std::shared_ptr<T> AddComponent(Args &&...args)
 		{
-			static_assert(std::is_base_of<IComponent, T>::value, "T must derife from IComponent class.");
+			static_assert(std::is_base_of<IComponent, T>::value, "T must derive from IComponent class.");
 
 			// Do not allow duplicates.
 			for (const auto& existingComponent : m_components)

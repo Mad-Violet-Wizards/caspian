@@ -3,7 +3,7 @@
 #include "IFileSystem.hpp"
 
 namespace fs
-{
+{ 
 	namespace io { enum class OpenMode; }
 	
 	class NativeFileSystem final : public IFileSystem
@@ -28,6 +28,7 @@ namespace fs
 			virtual bool CopyFile(std::string_view _src_path, std::string_view _dest_path) override;
 			virtual bool RenameFile(std::string_view _src_path, std::string_view _dest_path) override;
 			virtual bool FileExists(std::string_view _file_path) const override;
+			virtual std::string GetAbsoluteFilePath(std::string_view _file_path) const override;
 
 		private:
 

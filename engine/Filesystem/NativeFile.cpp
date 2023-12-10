@@ -44,6 +44,10 @@ namespace fs
 		{
 			stream_open_mode |= std::ios_base::trunc;
 		}
+		if (_open_mode & io::OpenMode::Binary)
+		{
+			stream_open_mode |= std::ios_base::binary;
+		}
 
 		m_FileStream.open(m_Path, stream_open_mode);
 		return true;
@@ -109,6 +113,12 @@ namespace fs
 		return m_FileStream.is_open();
 	}
 
+	IFile::EType NativeFile::GetType() const
+	{
+		std::filesystem::path p{ m_Path };
+		return StringExtToType(p.extension().string());
+	}
+
 	size_t NativeFile::Read_Impl(std::vector<uint8_t>& _buffer)
 	{
 		if (!IsOpen())
@@ -133,6 +143,17 @@ namespace fs
 			return _buffer.size();
 
 		return m_FileStream.gcount();
+	}
+
+	size_t NativeFile::Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer)
+	{
+		if (!IsOpen())
+			return 0;
+
+		std::vector<uint8_t> buff( (std::istreambuf_iterator<char>(m_FileStream)), std::istreambuf_iterator<char>() );
+		_buffer = std::move(buff);
+
+		return _buffer.size();
 	}
 
 	bool NativeFile::ReadJson_Impl(nlohmann::json& _json, [[maybe_unused]] size_t _size)

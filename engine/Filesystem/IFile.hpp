@@ -14,7 +14,8 @@ namespace fs
 			Out = 0x02,
 			ReadWrite = In | Out,
 			Append = 0x04,
-			Truncate = 0x08
+			Truncate = 0x08,
+			Binary = 0x10
 		};
 
 		inline OpenMode operator|(OpenMode _lhs, OpenMode _rhs)
@@ -58,7 +59,7 @@ namespace fs
 			};
 
 			static const char* S_UNKNOWN_ETYPE_STR;
-			static const char* TypeToString(EType _type)
+			static const char* TypeToStringExt(EType _type)
 			{
 				switch(_type)
 				{
@@ -74,7 +75,7 @@ namespace fs
 				}
 			}
 
-			static EType StringToType(const std::string_view _type)
+			static EType StringExtToType(const std::string_view _type)
 			{
 				if (_type == ".png")		return EType::Texture;
 				if (_type == ".ttf")		return EType::Font;
@@ -84,6 +85,20 @@ namespace fs
 				if (_type == ".json")		return EType::JSON;
 				if (_type == ".txt")		return EType::Text;
 				if (_type == ".pak")		return EType::Data;
+				return EType::Unknown;
+			}
+
+			static EType ETypeFromString(const std::string_view _str)
+			{
+				if (_str == "Texture")		return EType::Texture;
+				if (_str == "Font")				return EType::Font;
+				if (_str == "Audio")			return EType::Audio;
+				if (_str == "Shader")			return EType::Shader;
+				if (_str == "Lua")				return EType::Lua;
+				if (_str == "JSON")				return EType::JSON;
+				if (_str == "Text")				return EType::Text;
+				if (_str == "Data")				return EType::Data;
+				if (_str == "Directory")	return EType::Directory;
 				return EType::Unknown;
 			}
 
@@ -104,6 +119,7 @@ namespace fs
 			virtual bool IsReadOnly() const { return m_IsReadOnly; };
 
 			virtual std::string_view GetPath() const { return m_Path; };
+			virtual EType GetType() const = 0;
 
 			template<typename T>
 			bool Read(T& _target, size_t _size)
@@ -136,6 +152,18 @@ namespace fs
 				return success;
 			}
 
+			template<>
+			bool Read(std::vector<uint8_t>& _buffer, size_t _size)
+			{
+				if (!IsOpen())
+					return false;
+
+				_buffer.reserve(_size);
+				size_t read_bytes = Read_UnsignedBuffer_Impl(_buffer);
+
+				return read_bytes == _size;
+			}
+
 			/////////////////////////////////////////////////////////
 			template<typename T>
 			bool Write(const T& _source, size_t _size)
@@ -166,6 +194,8 @@ namespace fs
 
 			virtual size_t Read_Impl(std::vector<uint8_t>& _buffer) = 0;
 			virtual size_t Write_Impl(const std::vector<uint8_t>& _buffer) = 0;
+
+			virtual size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) = 0;
 
 			virtual bool ReadJson_Impl(nlohmann::json& _json,  [[maybe_unused]] size_t _size) = 0;
 			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) = 0;

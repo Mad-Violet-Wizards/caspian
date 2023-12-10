@@ -4,8 +4,6 @@
 
 #include <imgui-SFML/imgui-SFML.h>
 
-#include "game/Application.hpp"
-
 Window::Window(const std::string& windowName)
 	: m_renderWindow(sf::VideoMode(800, 600), windowName)
 {
