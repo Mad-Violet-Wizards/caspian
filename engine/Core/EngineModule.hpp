@@ -67,6 +67,8 @@ class EngineModule
 
 		std::optional<Project> m_CurrentProject = std::nullopt;
 
+		std::queue<std::string> m_MismatchedResourcesPool;
+
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;
 		std::atomic<bool> m_ProjectResourcesInitStarted = false;

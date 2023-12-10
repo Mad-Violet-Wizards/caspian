@@ -3,6 +3,7 @@
 #include "engine/Core/Window.hpp"
 #include "engine/Design-Patterns/Singleton.hpp"
 #include "engine/core/EngineModule.hpp"
+#include "engine/Core/Level.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(DEBUG)
@@ -49,6 +50,9 @@ class DebugHelper
 		void SetAssetsStorage(std::unique_ptr<Assets::Storage> _assets_storage) { m_engineModule.SetAssetsStorage(std::move(_assets_storage)); }
 		Assets::Storage* const GetAssetsStorage() { return m_engineModule.GetAssetsStorage(); }
 
+		void SetWorld(std::unique_ptr<Level::World> _world) { m_World = std::move(_world); }
+		Level::World* const GetWorld() { return m_World.get(); }
+
 		EngineModule& GetEngineModule() { return m_engineModule; }
 
 		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
@@ -58,6 +62,8 @@ class DebugHelper
 		Window m_window;
 
 		EngineModule m_engineModule;
+
+		std::unique_ptr<Level::World> m_World = nullptr;
 
 		sf::Clock m_clock;
 		float m_deltaTime;

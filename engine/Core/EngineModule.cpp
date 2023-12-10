@@ -2,6 +2,8 @@
 
 #include "EngineModule.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
+#include "engine/Filesystem/FilesystemMark.hpp"
+#include "engine/core/Level.hpp"
 #include <iostream>
 
 void EngineModule::Update()
@@ -24,6 +26,49 @@ void EngineModule::Update()
 			<< "No. fonts: " << assets_storage->GetFontsCount() << "\n";
 		m_ProjectResourcesInitFinished = false;
 		OnAssetsStorageLoaded();
+	}
+
+	if (!m_MismatchedResourcesPool.empty())
+	{
+		auto it = m_MismatchedResourcesPool.front();
+		m_MismatchedResourcesPool.pop();
+
+		auto& main_instance = ApplicationSingleton::Instance();
+		fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
+
+			std::shared_ptr<fs::IFile> file = resource_fs->OpenFile(it, fs::io::OpenMode::In);
+
+			if (file)
+			{
+			switch (file->GetType())
+			{
+				case fs::IFile::EType::JSON:
+				{
+					nlohmann::json json;
+
+					if (file->Size() > 0)
+					{
+						file->Read(json, file->Size());
+					}
+
+					unsigned int fs_mark_hash = json["fs_mark"];
+					fs::EFilesystemMark fs_mark = fs::EFilesystemMarkFromHash(fs_mark_hash);
+
+					switch (fs_mark)
+					{
+					case fs::EFilesystemMark::Level:
+					{
+						main_instance.GetWorld()->EmplaceInitialLevelData(json);
+						break;
+					}
+					default:
+					{
+						break;
+					}
+					}
+				}
+				}
+			}
 	}
 }
 
@@ -147,7 +192,8 @@ void EngineModule::InitializeAssets()
 					}
 					default:
 					{
-						std::cout << "ERROR: File with alias: " << alias << " has an invalid type and couldn't be assigned to any pool.\n";
+						std::cout << "WARNING: File with alias: " << alias << " has an invalid type and couldn't be assigned to any pool.\nData from this file will be processed later.";
+						m_MismatchedResourcesPool.push(alias);
 						break;
 					}
 				}
@@ -189,3 +235,4 @@ void EngineModule::InitializeAssets()
 
 	thread_load_resources.launch();
 }
+

@@ -5,6 +5,7 @@
 #include "Application.hpp"
 #include "engine/Design-Patterns/Singleton.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
+#include "engine/Core/Level.hpp"
 
 int main()
 {
@@ -20,6 +21,11 @@ int main()
 
 	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
 	main_instance.SetAssetsStorage(std::move(assets_storage));
+
+	// Rendering system must initialize somewhere around here.
+
+	std::unique_ptr<Level::World> world = std::make_unique<Level::World>();
+	main_instance.SetWorld(std::move(world));
 
 	#if defined(DEBUG)
 	std::unique_ptr<DebugHelper> game_debug_helper = std::make_unique<DebugHelper>();

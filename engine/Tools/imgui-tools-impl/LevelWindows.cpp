@@ -79,10 +79,43 @@ void LoadLevelWindow::Render()
 	{
 		ImGui::Text("Select from cache");
 
-		if (ImGui::BeginCombo("Cached levels", "..."))
+		auto& main_instance = ApplicationSingleton::Instance();
+		auto levels_data = main_instance.GetWorld()->GetInitialLevelsData();
+		static std::optional<int> current_idx;
+		std::string combo_preview_value = current_idx.has_value() ? levels_data[current_idx.value()].m_LevelName : "...";
+
+		if (ImGui::BeginCombo("Cached levels", combo_preview_value.c_str()))
 		{
+			if (ImGui::Selectable("..."))
+				current_idx.reset();
+
+			for (int i = 0; i < levels_data.size(); i++)
+			{
+				const bool is_selected = (current_idx == i);
+				if (ImGui::Selectable(levels_data[i].m_LevelName.c_str(), is_selected))
+					current_idx = i;
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
 			ImGui::EndCombo();
 		}
+		ImGui::SameLine();
+		
+		bool bComboSelected = current_idx.has_value();
+		static utils::styles styles;
+		
+
+		bComboSelected ? styles.push_accept_button_style() : styles.push_cancel_button_style();
+		if (ImGui::Button("Load"))
+		{
+			if (bComboSelected)
+			{
+				// Load level.
+			}
+		}
+		bComboSelected ? styles.pop_accept_button_style() : styles.pop_cancel_button_style();
 
 		ImGui::Separator();
 		ImGui::Text("...or select from disk");

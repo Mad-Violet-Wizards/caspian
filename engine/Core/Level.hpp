@@ -1,26 +1,54 @@
 #pragma once
+#include "engine/Filesystem/FilesystemMark.hpp"
 
 namespace Level
 {
 	namespace Data
 	{
-		class Chunk_File_Header
+		// TODO: Deserialize/Serializer json struct wrapper.
+		struct JsonRootFileData
 		{
-			public:
+			JsonRootFileData(const std::string& _level_name, 
+											 const std::string& _chunk_root_file, 
+											 unsigned int _tile_width, 
+											 unsigned int _tile_height)
+				: m_LevelName{ _level_name }
+				, m_ChunkRootFile{ _chunk_root_file }
+				, m_TileWidth{ _tile_width }
+				, m_TileHeight{ _tile_height }
+			{
+			}
 
-				Chunk_File_Header() = default;
-				~Chunk_File_Header() = default;
+			JsonRootFileData(nlohmann::json& _json)
+				: m_LevelName { _json["name"].get<std::string>() }
+				, m_ChunkRootFile{ _json["chunk_root_file"].get<std::string>() }
+				, m_TileWidth{ _json["tile_width"].get<unsigned int>() }
+				, m_TileHeight{ _json["tile_height"].get<unsigned int>() }
+			{
+			}
 
-		public:
+			nlohmann::json Deserialize() const
+			{
+				nlohmann::json res;
+				res["name"] = m_LevelName;
+				res["chunk_root_file"] = m_ChunkRootFile;
+				res["tile_width"] = m_TileWidth;
+				res["tile_height"] = m_TileHeight;
+				res["fs_mark"] = fs::EFilesystemMarkToHash(fs::EFilesystemMark::Level);
 
-			const static size_t MAX_PATH_SIZE = 1024;
+				return res;
+			}
 
-			public:
-			
-				char m_Path[MAX_PATH_SIZE];
-				unsigned int m_TileWidth;
-				unsigned int m_TileHeight;
-		};	
+			std::string m_LevelName;
+			std::string m_ChunkRootFile;
+			unsigned int m_TileWidth;
+			unsigned int m_TileHeight;
+		};
+
+		class ChunkRootFile
+		{
+				ChunkRootFile() = default;
+		};
 	}
 
 	class Tile
@@ -117,8 +145,13 @@ namespace Level
 		void Draw();
 		void Update(float _dt);
 
+		void EmplaceInitialLevelData(nlohmann::json& json);
+		const std::vector<Data::JsonRootFileData>& GetInitialLevelsData() const { return m_InitialLevelsData; }
+
 	private:
 
 		std::unordered_map<std::string, Level> m_levels;
+
+		std::vector<Data::JsonRootFileData> m_InitialLevelsData;
 	};
 }

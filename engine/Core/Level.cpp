@@ -1,5 +1,6 @@
 #include "engine/pch.hpp"
 
+#include <vendor/include/nlohmann/json.hpp>
 #include "Level.hpp"
 
 //////////////////////////////////////////////////////////////////////////
@@ -29,6 +30,10 @@ void Level::World::Update(float _dt)
 
 }
 
+void Level::World::EmplaceInitialLevelData(nlohmann::json& json)
+{
+	m_InitialLevelsData.emplace_back(json);
+}
 
 //////////////////////////////////////////////
 // LEVEL

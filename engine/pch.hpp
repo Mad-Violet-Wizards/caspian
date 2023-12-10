@@ -22,6 +22,7 @@
 #include <filesystem>
 #include <future>
 #include <ranges>
+#include <queue>
 
 // ENGINE //
 

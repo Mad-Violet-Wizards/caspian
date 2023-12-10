@@ -6,8 +6,9 @@
 #include "AssetWindows.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/NativeFile.hpp"
-#include "vendor/include/nlohmann/json.hpp"
+#include <vendor/include/nlohmann/json.hpp>
 #include "engine/Core/Level.hpp"
+#include "engine/Filesystem/FilesystemMark.hpp"
 
 using namespace Tools_Impl;
 
@@ -443,14 +444,14 @@ void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::str
 
 	if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::ReadWrite))
 	{
-		nlohmann::json level_json;
+		const std::string& root_chunk_file_name = _lvl_name + ".rootchunk";
 
-		level_json["name"] = _lvl_name;
-		level_json["tile_width"] = _tile_width;
-		level_json["tile_height"] = _tile_height;
-		level_json["chunk_root_file"] = _lvl_name + ".caspchunk";
+		Level::Data::JsonRootFileData data(_lvl_name, root_chunk_file_name, _tile_width, _tile_height);
 
-		level_json_file->Write(level_json, 0);
+		nlohmann::json json_to_pack = data.Deserialize();
+
+		level_json_file->Write(json_to_pack, 0);
+		main_instance.GetWorld()->EmplaceInitialLevelData(json_to_pack);
 
 		file_closed_successfully = resource_fs->CloseFile(level_json_file);
 	}
@@ -466,23 +467,13 @@ void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::str
 
 	std::filesystem::path chunk_file_path{ data_fs->GetPath() };
 	chunk_file_path /= "levels";
-	chunk_file_path /= _lvl_name + ".caspchunk";
+	chunk_file_path /= _lvl_name + ".rootchunk";
 
 	chunk_file.open(chunk_file_path, std::fstream::out | std::fstream::binary);
 
 	const bool chunk_file_created = chunk_file.is_open();
 
-	// TODO: Replace with cereal library.
-	if (chunk_file_created)
-	{
-		Level::Data::Chunk_File_Header header;
-		strncpy_s(header.m_Path, relative_lvl_path.c_str(), header.MAX_PATH_SIZE);
-		header.m_TileHeight = _tile_height;
-		header.m_TileWidth = _tile_width;
-
-		chunk_file.write(reinterpret_cast<const char*>(&header), sizeof(Level::Data::Chunk_File_Header));
-		chunk_file.close();
-	}
+	chunk_file.close();
 
 	const bool success = json_created_succesfully && file_closed_successfully && chunk_file_created;
 
