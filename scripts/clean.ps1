@@ -1,6 +1,5 @@
-# Quick desc: 
-# The script destination is to clearn the workspace files 
-# due to directiories names & file extensions put in clear_keys.txt file.
+# Quick desc:
+# Script is taking data from clear_keys.txt & deleting the found matching files all accross the project directory.
 
 $keysFilePath = "./clear_keys.txt"
 $directoryToClean = "../"
