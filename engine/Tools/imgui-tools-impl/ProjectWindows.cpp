@@ -110,42 +110,17 @@ void LoadProjectWindow::Render()
 		ImGui::Text("Select from cache...");
 
 		auto& main_instance = ApplicationSingleton::Instance();
+		Projects::Manager* project_manager = main_instance.GetProjectsManager();
 
-		fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
-
-		// TODO: If JSON is too big we'll get freeze. 
-		// Add pagination of data or pre-loading of the file.
-		if (appdata_fs)
-		{
-			if (auto projects_json_file = appdata_fs->OpenFile("projects.json", fs::io::OpenMode::In))
+		for (auto& project : project_manager->GetProjects())
 			{
-				nlohmann::json projects_json;
+				if (ImGui::Button(project.m_ProjectName.c_str()))
+					m_Manager->LoadProjectRequest(project.m_ProjectName, project.m_ProjectPath);
 
-				if (projects_json_file->Size() > 0)
-				{
-					projects_json_file->Read(projects_json, projects_json_file->Size());
-				}
-
-				for (auto& project : projects_json["projects"])
-				{
-					const std::string project_name = project["name"].get<std::string>();
-					const std::string project_path = project["path"].get<std::string>();
-
-					if (ImGui::Button(project_name.c_str()))
-						m_Manager->LoadProjectRequest(project_name, project_path);
-
-					ImGui::SameLine();
-					ImGui::Text(project_path.c_str());
-				}
-
-				appdata_fs->CloseFile(projects_json_file);
-			}
-			else
-			{
-				ImGui::Text("No cached projects found...");
-			}
+				ImGui::SameLine();
+				ImGui::Text(project.m_ProjectPath.c_str());
 		}
-		
+
 		ImGui::Separator();
 		ImGui::Text("Select from disc...");
 		// TODO: Add support for loading project from disc.

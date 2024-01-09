@@ -9,6 +9,10 @@
 #include <vendor/include/nlohmann/json.hpp>
 #include "engine/Core/Level.hpp"
 #include "engine/Filesystem/FilesystemMark.hpp"
+#include "engine/Core/Serializable/ProjectSerializable.hpp"
+#include "engine/Core/Serializable/LevelSerializable.hpp"
+
+#include <cereal/archives/portable_binary.hpp>
 
 using namespace Tools_Impl;
 
@@ -57,7 +61,7 @@ void Toolbar::Render()
 
 				if (ImGui::Selectable("Import asset..."))
 				{
-					if (!ApplicationSingleton::Instance().GetEngineModule().IsAnyProjectLoaded())
+					if (!ApplicationSingleton::Instance().GetProjectsManager()->IsAnyProjectLoaded())
 					{
 						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot import asset\nwithout loading project first!");
 					}
@@ -221,7 +225,6 @@ Manager::Manager()
 	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
 	, m_LevelEditorWindow(this)
-	, m_MagicNumberBytes{ 0x43, 0x41, 0x53, 0x50 }
 {
 
 }
@@ -270,11 +273,11 @@ void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
 
 void Manager::CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path)
 {	
-	bool data_packed_in_json = false;
 	bool file_closed_successfully = false;
 
 	auto& main_instance = ApplicationSingleton::Instance();
 
+	// TODO: Refactor to use cereal.
 	fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
 
 	if (!appdata_fs->FileExists("projects.json"))
@@ -288,22 +291,19 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 		}
 	}
 
+	Serializable::JSON::ProjectInfo project_info(_project_name, _project_path);
+
 	if (std::shared_ptr<fs::IFile> projects_json_file = appdata_fs->OpenFile("projects.json", fs::io::OpenMode::ReadWrite))
 	{
-		nlohmann::json projects_json;
+		Projects::Manager* projects_manager = main_instance.GetProjectsManager();
+		projects_manager->PushProject(project_info);
 
-		if (projects_json_file->Size() > 0)
-			projects_json_file->Read(projects_json, projects_json_file->Size());
+		std::vector<Serializable::JSON::ProjectInfo> projects_info = projects_manager->GetProjectsInfo();
 
-		nlohmann::json project_obj = {
-			{ "name", _project_name },
-			{ "path", _project_path }
-		};
-
-		projects_json["projects"].push_back(project_obj);
+		std::shared_ptr<ISerializable::JSON> projects_json = std::make_shared<Serializable::JSON::ProjectsInfo>(projects_info);
 
 		projects_json_file->Seek(0, fs::io::Origin::Begin);
-		data_packed_in_json = projects_json_file->Write(projects_json, 0);
+		projects_json_file->SerializeJson(projects_json);
 
 		file_closed_successfully = appdata_fs->CloseFile(projects_json_file);
 	}
@@ -330,28 +330,25 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 			data_path /= "data";
 			data_folder_created = std::filesystem::create_directories(data_path);
 
-			const std::array<unsigned char, 4> magic_number_bytes = m_MagicNumberBytes;
-			const std::array<unsigned char, 4> engine_version = ApplicationSingleton::Instance().GetEngineModule().GetEngineVersion();
+			Serializable::Binary::MagicFileInfo magic_file_info(ApplicationSingleton::Instance().GetEngineModule().GetEngineVersion());
 
-			// We do not have the project loaded yet, so no access to resource & data filesystems.
 			std::filesystem::path magic_number_path{ project_path };
 			magic_number_path /= _project_name + ".casp";
 
 			std::fstream magic_number_file;
 			magic_number_file.open(magic_number_path, std::fstream::out);
 
-			magic_number_file_created = magic_number_file.is_open();
+			cereal::PortableBinaryOutputArchive archive(magic_number_file);
+			archive(magic_file_info);
 
-			if (magic_number_file_created)
-			{
-				magic_number_file.write(reinterpret_cast<const char*>(magic_number_bytes.data()), magic_number_bytes.size());
-				magic_number_file.write(reinterpret_cast<const char*>(engine_version.data()), engine_version.size());
-				magic_number_file.close();
-			}
+			if (magic_number_file.good())
+				magic_number_file_created = true;
+
+			magic_number_file.close();
 		}
 	}
 
-	const bool success = data_packed_in_json && file_closed_successfully && project_folder_created && resource_folder_created && data_folder_created && magic_number_file_created;
+	const bool success = file_closed_successfully && project_folder_created && resource_folder_created && data_folder_created && magic_number_file_created;
 
 	if (success)
 	{
@@ -360,6 +357,7 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 	else
 	{
 		ShowNotification(ENotificationType::Error, "Failed to create project! :(");
+		main_instance.GetProjectsManager()->RemoveProject(_project_name);
 	}
 }
 
@@ -371,46 +369,35 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 	if (std::filesystem::exists(project_path))
 	{
 		const std::filesystem::path resources_path{ project_path / "resources" };
-		const std::filesystem::path data_path { project_path / "data" };
+		const std::filesystem::path data_path{ project_path / "data" };
+		const std::array<unsigned char, 4> magic_numbers = { 'C', 'A', 'S', 'P' };
 
 		// Read magic file.
 		std::fstream magic_number_file;
 		magic_number_file.open(project_path / (_project_name + ".casp"), std::fstream::in);
 
-		std::array<unsigned char, 4> magic_number_bytes;
-		std::array<unsigned char, 4> engine_version;
+		Serializable::Binary::MagicFileInfo magic_file_info;
+		cereal::PortableBinaryInputArchive archive(magic_number_file);
+		archive(magic_file_info);
 
-		magic_number_file.read(reinterpret_cast<char*>(magic_number_bytes.data()), magic_number_bytes.size());
-		magic_number_file.read(reinterpret_cast<char*>(engine_version.data()), engine_version.size());
-
-		// Validate magic number.
-		if (magic_number_bytes != m_MagicNumberBytes)
+		if (magic_file_info.m_MagicNumber != magic_numbers)
 		{
 			ShowNotification(ENotificationType::Error, "Invalid project file!");
 			return;
 		}
-
 		auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
 
-		if (engine_version != engine_module.GetEngineVersion())
+		if (magic_file_info.m_EngineVersion != engine_module.GetEngineVersion())
 		{
 			ShowNotification(ENotificationType::Error, "Project was created with different engine version!");
-			// TODO: Depending on what will change in the future handle exceptions.
+			return;
 		}
 
-		if (engine_module.IsAnyProjectLoaded())
-		{
-			// TOOD: Ask user if he wants to switch.
-			engine_module.UnloadCurrentProject();
-		}
+		Projects::Manager* project_manager = ApplicationSingleton::Instance().GetProjectsManager();
 
-		Project p;
-		p.m_ProjectName = _project_name;
-		p.m_ProjectPath = _project_path;
+		bool project_set = project_manager->SetCurrentProject(_project_name);
 
-		engine_module.SetCurrentProject(p);
-
-		if (p == engine_module.GetCurrentProject())
+		if (project_set)
 		{
 			auto msg = std::format("Project {} parsed successfully. Loading systems.", _project_name);
 			ShowNotification(ENotificationType::Success, msg);
@@ -445,13 +432,11 @@ void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::str
 	if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::ReadWrite))
 	{
 		const std::string& root_chunk_file_name = _lvl_name + ".rootchunk";
+		std::shared_ptr<ISerializable::JSON> level_data = std::make_shared<Serializable::JSON::LevelInfo>(_lvl_name, root_chunk_file_name, _tile_width, _tile_height);
+		level_json_file->SerializeJson(level_data);
 
-		Level::Data::JsonRootFileData data(_lvl_name, root_chunk_file_name, _tile_width, _tile_height);
-
-		nlohmann::json json_to_pack = data.Deserialize();
-
-		level_json_file->Write(json_to_pack, 0);
-		main_instance.GetWorld()->EmplaceInitialLevelData(json_to_pack);
+		std::shared_ptr<Serializable::JSON::LevelInfo> level_info = std::dynamic_pointer_cast<Serializable::JSON::LevelInfo>(level_data);
+		main_instance.GetWorld()->PushInitialLevelData(level_info);
 
 		file_closed_successfully = resource_fs->CloseFile(level_json_file);
 	}

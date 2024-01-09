@@ -1,20 +1,20 @@
 #include "engine/pch.hpp"
 
-#include "NativeFileSystem.hpp"
-#include "NativeFile.hpp"
+#include "BinaryFilesystem.hpp"
+#include "BinaryFile.hpp"
 #include <iostream>
 
 namespace fs
 {
-	sf::Mutex NativeFileSystem::m_Mutex;
+		sf::Mutex BinaryFileSystem::m_Mutex;
 
-	NativeFileSystem::NativeFileSystem(std::string_view _path)
-		: IFileSystem(_path)
-	{
+		BinaryFileSystem::BinaryFileSystem(std::string_view _path)
+			: IFileSystem(_path)
+		{
 	}
 
-	bool NativeFileSystem::Initialize()
-	{
+		bool BinaryFileSystem::Initialize()
+		{
 		if (m_IsInitialized)
 			return true;
 
@@ -25,7 +25,6 @@ namespace fs
 			std::filesystem::create_directories(path);
 		}
 
-
 		// Build files list.
 		std::vector<std::string> paths = BuildFilesList(m_Path);
 		auto files_count = paths.size();
@@ -35,18 +34,29 @@ namespace fs
 			std::string_view relative_path = path;
 			relative_path.remove_prefix(m_Path.size());
 
-			std::shared_ptr<IFile> file = std::make_shared<NativeFile>(path);
+			auto pos = relative_path.rfind(".");
+			if (pos == std::string_view::npos)
+				continue;
+			else
+			{
+				std::string_view extension = relative_path.substr(pos);
+				if (!IFile::IsBinary(IFile::StringExtToType(extension)))
+					continue;
+			}
+
+
+			std::shared_ptr<IFile> file = std::make_shared<BinaryFile>(path);
 
 			if (relative_path[0] == '\\' || relative_path[0] == '/')
 				relative_path.remove_prefix(1);
-				
-				m_Mutex.lock();
-				m_Files.emplace(relative_path, file);
-				m_Mutex.unlock();
+
+			m_Mutex.lock();
+			m_Files.emplace(relative_path, file);
+			m_Mutex.unlock();
 		}
 
 		m_Mutex.lock();
-		std::cout << "DEBUG: [NativeFileSystem] Initialized: " << m_Path << " with: " << files_count << " files\n";
+		std::cout << "DEBUG: [BinaryFileSystem] Initialized: " << m_Path << " with: " << m_Files.size() << " files\n";
 		m_Mutex.unlock();
 
 		m_IsInitialized = true;
@@ -54,8 +64,8 @@ namespace fs
 		return m_IsInitialized;
 	}
 
-	bool NativeFileSystem::Shutdown()
-	{
+		bool BinaryFileSystem::Shutdown()
+		{
 		for (auto& file : m_OpenedFiles)
 			file->Close();
 
@@ -65,15 +75,18 @@ namespace fs
 		m_Mutex.unlock();
 		m_Path.clear();
 		m_IsInitialized = false;
+
 		return true;
 	}
 
-	bool NativeFileSystem::IsInitialized() const
+	bool BinaryFileSystem::IsInitialized() const
 	{
 		return m_IsInitialized;
 	}
 
-	std::shared_ptr<IFile> NativeFileSystem::OpenFile(std::string_view _path, io::OpenMode _mode)
+
+
+	std::shared_ptr<fs::IFile> BinaryFileSystem::OpenFile(std::string_view _path, io::OpenMode _mode)
 	{
 		const std::string path{ _path };
 
@@ -101,7 +114,7 @@ namespace fs
 		return file;
 	}
 
-	bool NativeFileSystem::CloseFile(std::shared_ptr<IFile> _file)
+	bool BinaryFileSystem::CloseFile(std::shared_ptr<IFile> _file)
 	{
 		for (auto it = m_OpenedFiles.begin(); it != m_OpenedFiles.end(); ++it)
 		{
@@ -118,35 +131,31 @@ namespace fs
 		return false;
 	}
 
-	bool NativeFileSystem::CreateFile(std::string_view _file_path, IFile::EType _file_type)
+	bool BinaryFileSystem::CreateFile(std::string_view _file_path, IFile::EType _file_type)
 	{
 		std::filesystem::path file_path{ m_Path };
 		file_path /= _file_path;
 
-		// Validate extensions.
 		if (_file_type != IFile::EType::Directory)
-		{
-			const std::string& extension = file_path.extension().string();
-			const std::string_view supported_extensions = IFile::TypeToStringExt(_file_type);
-
-			if (supported_extensions != extension)
+			if (!IFile::IsBinary(_file_type))
 				return false;
-		}
-
+		
 		bool os_file_operation_result = false;
 		switch (_file_type)
 		{
-			// TODO: Add other file types.
-			case IFile::EType::Text:
-			case IFile::EType::JSON:
+			case IFile::EType::Data:
+			case IFile::EType::Data_LevelRootChunk:
+			case IFile::EType::Data_LevelChunk:
 			{
 				std::ofstream file(file_path);
 				os_file_operation_result = file.good();
 				break;
 			}
 			case IFile::EType::Directory:
+			{
 				os_file_operation_result = std::filesystem::create_directory(file_path);
 				break;
+			}
 			default:
 				return false;
 		}
@@ -155,7 +164,7 @@ namespace fs
 		{
 			std::string_view relative_path = _file_path;
 
-			std::shared_ptr<IFile> file = std::make_shared<NativeFile>(file_path.string());
+			std::shared_ptr<IFile> file = std::make_shared<BinaryFile>(file_path.string());
 
 			if (relative_path[0] == '\\' || relative_path[0] == '/')
 				relative_path.remove_prefix(1);
@@ -168,7 +177,7 @@ namespace fs
 		return os_file_operation_result;
 	}
 
-	bool NativeFileSystem::RegisterFile(std::string_view _file_path)
+	bool BinaryFileSystem::RegisterFile(std::string_view _file_path)
 	{
 		std::filesystem::path file_path{ m_Path };
 		file_path /= _file_path;
@@ -176,9 +185,11 @@ namespace fs
 		if (IFile::StringExtToType(file_path.extension().string()) == IFile::EType::Unknown)
 			return false;
 
-		std::string_view relative_path = _file_path;
+		if (!std::filesystem::exists(file_path))
+			return false;
 
-		std::shared_ptr<IFile> file = std::make_shared<NativeFile>(file_path.string());
+		std::string_view relative_path = _file_path;
+		std::shared_ptr<IFile> file = std::make_shared<BinaryFile>(file_path.string());
 
 		if (relative_path[0] == '\\' || relative_path[0] == '/')
 			relative_path.remove_prefix(1);
@@ -190,7 +201,7 @@ namespace fs
 		return true;
 	}
 
-	bool NativeFileSystem::RemoveFile(std::string_view _file_path)
+	bool BinaryFileSystem::RemoveFile(std::string_view _file_path)
 	{
 		if (!FileExists(_file_path))
 			return false;
@@ -201,7 +212,7 @@ namespace fs
 		return std::filesystem::remove(file_path);
 	}
 
-	bool NativeFileSystem::CopyFile(std::string_view _src_path, std::string_view _dest_path)
+	bool BinaryFileSystem::CopyFile(std::string_view _src_path, std::string_view _dest_path)
 	{
 		const std::filesystem::path path{ m_Path };
 		const std::filesystem::path src_path = path / _src_path;
@@ -215,7 +226,7 @@ namespace fs
 		return std::filesystem::exists(dest_path);
 	}
 
-	bool NativeFileSystem::RenameFile(std::string_view _src_path, std::string_view _dest_path)
+	bool BinaryFileSystem::RenameFile(std::string_view _src_path, std::string_view _dest_path)
 	{
 		const std::filesystem::path path{ m_Path };
 		const std::filesystem::path src_path = path / _src_path;
@@ -225,29 +236,29 @@ namespace fs
 			return false;
 
 		std::filesystem::rename(src_path, dest_path);
-		
+
 		return std::filesystem::exists(dest_path);
 	}
 
 
-	bool NativeFileSystem::FileExists(std::string_view _file_path) const
+	bool BinaryFileSystem::FileExists(std::string_view _file_path) const
 	{
 		std::filesystem::path file_path{ m_Path };
 		file_path /= _file_path;
 
 		return std::filesystem::exists(file_path);
 	}
-	 
-	std::string NativeFileSystem::GetAbsoluteFilePath(std::string_view _file_path) const
+
+	std::string BinaryFileSystem::GetAbsoluteFilePath(std::string_view _file_path) const
 	{
 		const std::string path{ _file_path };
-		
+
 		if (auto find_it = m_Files.find(path); find_it != m_Files.end())
 		{
 			const std::string res{ find_it->second->GetPath() };
 			return res;
 		}
-	
+
 		return {};
 	}
 

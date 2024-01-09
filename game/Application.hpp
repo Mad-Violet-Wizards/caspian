@@ -4,6 +4,7 @@
 #include "engine/Design-Patterns/Singleton.hpp"
 #include "engine/core/EngineModule.hpp"
 #include "engine/Core/Level.hpp"
+#include "engine/Core/Projects.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(DEBUG)
@@ -55,6 +56,9 @@ class DebugHelper
 
 		EngineModule& GetEngineModule() { return m_engineModule; }
 
+		void SetProjectsManager(std::unique_ptr<Projects::Manager> _pm) { m_ProjectsManager = std::move(_pm); }
+		Projects::Manager* const GetProjectsManager() { return m_ProjectsManager.get(); }
+
 		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
 
 	private:
@@ -64,6 +68,7 @@ class DebugHelper
 		EngineModule m_engineModule;
 
 		std::unique_ptr<Level::World> m_World = nullptr;
+		std::unique_ptr<Projects::Manager> m_ProjectsManager;
 
 		sf::Clock m_clock;
 		float m_deltaTime;

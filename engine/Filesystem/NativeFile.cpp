@@ -2,6 +2,9 @@
 
 #include "NativeFile.hpp"
 
+#include <cereal/archives/json.hpp>
+
+
 namespace fs
 {
 	NativeFile::NativeFile(std::string_view _path)
@@ -178,4 +181,15 @@ namespace fs
 			return true;
 	}
 
+	void NativeFile::DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json)
+	{
+		cereal::JSONInputArchive archive(m_FileStream);
+		archive(_json);
+	}
+
+	void NativeFile::SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json)
+	{
+			cereal::JSONOutputArchive archive(m_FileStream);
+			archive(_json);
+	}
 }
