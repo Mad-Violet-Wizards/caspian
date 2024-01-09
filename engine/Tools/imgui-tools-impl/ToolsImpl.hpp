@@ -97,7 +97,5 @@ namespace Tools_Impl
 			Toolbar m_Toolbar;
 
 			bool m_Active = utils::TOOLS_INIT_ACTIVE_STATE;
-
-			std::array<unsigned char, 4> m_MagicNumberBytes;
 	};
 };

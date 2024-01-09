@@ -3,6 +3,7 @@
 #include "LevelWindows.hpp"
 #include "ToolsImpl.hpp"
 #include "engine/Core/Assets.hpp"
+#include "engine/Core/Projects.hpp"
 
 #include <imgui-file-dialog/ImGuiFileDialog.h>
 #include <imgui-SFML/imgui-SFML.h>
@@ -23,9 +24,9 @@ void NewLevelWindow::Render()
 		constexpr auto dlg_name = "NewLevelWindowPathDialog";
 		if (ImGui::Button("Select path"))
 		{
-			auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
-			auto project_path = engine_module.GetCurrentProject().m_ProjectPath;
-			project_path += "\\" + engine_module.GetCurrentProject().m_ProjectName + "\\";
+			Projects::Manager* project_manager = ApplicationSingleton::Instance().GetProjectsManager();
+			auto project_path = project_manager->GetCurrentProject().m_ProjectPath;
+			project_path += "\\" + project_manager->GetCurrentProject().m_ProjectName + "\\";
 
 			ImGuiFileDialog::Instance()->OpenDialog(dlg_name, "Choose directory", nullptr, project_path);
 		}

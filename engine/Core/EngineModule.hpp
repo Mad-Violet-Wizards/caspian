@@ -44,14 +44,10 @@ class EngineModule
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
 		static std::string GetEngineVersionString();
 
-		void SetCurrentProject(const Project& _project) { m_CurrentProject = _project; OnProjectChanged(); }
-		const Project& GetCurrentProject() const { return m_CurrentProject.value(); }
-		bool IsAnyProjectLoaded() const { return m_CurrentProject.has_value(); }
-		void UnloadCurrentProject() { m_CurrentProject.reset(); }
+		void OnProjectChanged();
 
 	private:
 
-		void OnProjectChanged();
 		void OnFilesystemsLoaded();
 		void OnAssetsStorageLoaded();
 
@@ -64,10 +60,6 @@ class EngineModule
 		std::unique_ptr<Tools::Manager> m_toolsManager = nullptr;
 		std::unique_ptr<fs::Manager> m_filesystemManager = nullptr;
 		std::unique_ptr<Assets::Storage> m_assetsStorage = nullptr;
-
-		std::optional<Project> m_CurrentProject = std::nullopt;
-
-		std::queue<std::string> m_MismatchedResourcesPool;
 
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;

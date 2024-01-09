@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vendor/include/nlohmann/json.hpp>
+#include "engine/Core/Serializable/Serializable.hpp"
 
 namespace fs
 {
@@ -55,6 +56,8 @@ namespace fs
 				JSON,
 				Text,
 				Data,
+					Data_LevelRootChunk,
+					Data_LevelChunk,
 				Directory
 			};
 
@@ -71,35 +74,54 @@ namespace fs
 					case EType::JSON:      return ".json";
 					case EType::Text:      return ".txt";
 					case EType::Data:      return ".pak";
-					default:							 return S_UNKNOWN_ETYPE_STR;
+					case EType::Data_LevelRootChunk: return ".rootchunk";
+					case EType::Data_LevelChunk:		 return ".chunk";
+					default:												 return S_UNKNOWN_ETYPE_STR;
 				}
 			}
 
 			static EType StringExtToType(const std::string_view _type)
 			{
-				if (_type == ".png")		return EType::Texture;
-				if (_type == ".ttf")		return EType::Font;
-				if (_type == ".wav")		return EType::Audio;
-				if (_type == ".glsl")		return EType::Shader;
-				if (_type == ".lua")		return EType::Lua;
-				if (_type == ".json")		return EType::JSON;
-				if (_type == ".txt")		return EType::Text;
-				if (_type == ".pak")		return EType::Data;
+				if (_type == ".png")		   return EType::Texture;
+				if (_type == ".ttf")		   return EType::Font;
+				if (_type == ".wav")		   return EType::Audio;
+				if (_type == ".glsl")		   return EType::Shader;
+				if (_type == ".lua")		   return EType::Lua;
+				if (_type == ".json")		   return EType::JSON;
+				if (_type == ".txt")			 return EType::Text;
+				if (_type == ".pak")			 return EType::Data;
+				if (_type == ".rootchunk") return EType::Data_LevelRootChunk;
+				if (_type == ".chunk")		 return EType::Data_LevelChunk;
 				return EType::Unknown;
 			}
 
 			static EType ETypeFromString(const std::string_view _str)
 			{
-				if (_str == "Texture")		return EType::Texture;
-				if (_str == "Font")				return EType::Font;
-				if (_str == "Audio")			return EType::Audio;
-				if (_str == "Shader")			return EType::Shader;
-				if (_str == "Lua")				return EType::Lua;
-				if (_str == "JSON")				return EType::JSON;
-				if (_str == "Text")				return EType::Text;
-				if (_str == "Data")				return EType::Data;
-				if (_str == "Directory")	return EType::Directory;
+				if (_str == "Texture")							return EType::Texture;
+				if (_str == "Font")									return EType::Font;
+				if (_str == "Audio")								return EType::Audio;
+				if (_str == "Shader")								return EType::Shader;
+				if (_str == "Lua")									return EType::Lua;
+				if (_str == "JSON")									return EType::JSON;
+				if (_str == "Text")									return EType::Text;
+				if (_str == "Data")									return EType::Data;
+				if (_str == "Directory")						return EType::Directory;
+				if (_str == "Data_LevelRootChunk")	return EType::Data_LevelRootChunk;
+				if (_str == "Data_LevelChunk")			return EType::Data_LevelChunk;
 				return EType::Unknown;
+			}
+
+			static bool IsBinary(EType _type)
+			{
+				switch (_type)
+				{
+					case EType::Data:
+					case EType::Data_LevelRootChunk:
+					case EType::Data_LevelChunk:
+						return true;
+					default:
+						return false;
+				}
 			}
 
 		public:
@@ -120,6 +142,12 @@ namespace fs
 
 			virtual std::string_view GetPath() const { return m_Path; };
 			virtual EType GetType() const = 0;
+
+			virtual void DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json) = 0;
+			virtual void SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json) = 0;
+
+			virtual void DeserializeBinary(std::shared_ptr<ISerializable::Binary>& _binary) = 0;
+			virtual void SerializeBinary(std::shared_ptr<ISerializable::Binary> _binary) = 0;
 
 			template<typename T>
 			bool Read(T& _target, size_t _size)
@@ -190,6 +218,29 @@ namespace fs
 				return success;
 			}
 
+			//template<>
+			//bool Write(const ISerializable::JSON& _json, size_t size)
+			//{
+			//		if (!IsOpen() || IsReadOnly())
+			//			return false;
+
+			//	bool success = WriteJson_CerealImpl(_json, size);
+
+			//	return success;
+			//}
+
+			//template<>
+			//bool Write(const ISerializable::Binary& _binary_data, size_t size)
+			//{
+			//	if (!IsOpen() || IsReadOnly())
+			//		return false;
+
+			//	bool success = WriteBinary_CerealImpl(_binary_data, size);
+
+			//	return success;
+			//}
+
+
 		protected:
 
 			virtual size_t Read_Impl(std::vector<uint8_t>& _buffer) = 0;
@@ -197,8 +248,17 @@ namespace fs
 
 			virtual size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) = 0;
 
+			//[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
 			virtual bool ReadJson_Impl(nlohmann::json& _json,  [[maybe_unused]] size_t _size) = 0;
+
+			//[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
 			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) = 0;
+
+			//virtual bool ReadJson_CerealImpl(ISerializable::JSON& _json, [[maybe_unused]] size_t _size) = 0;
+			//virtual bool WriteJson_CerealImpl(const ISerializable::JSON& _json, [[maybe_unused]] size_t _size) = 0;
+
+			//virtual bool ReadBinary_CerealImpl(ISerializable::Binary& _binary, [[maybe_unused]] size_t _size) = 0;
+			//virtual bool WriteBinary_CerealImpl(const ISerializable::Binary& _binary, [[maybe_unused]] size_t _size) = 0;
 
 			bool m_IsReadOnly;
 			io::OpenMode m_OpenMode;

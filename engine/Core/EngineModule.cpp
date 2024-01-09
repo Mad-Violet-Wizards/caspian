@@ -2,6 +2,7 @@
 
 #include "EngineModule.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
+#include "engine/Filesystem/BinaryFilesystem.hpp"
 #include "engine/Filesystem/FilesystemMark.hpp"
 #include "engine/core/Level.hpp"
 #include <iostream>
@@ -26,49 +27,6 @@ void EngineModule::Update()
 			<< "No. fonts: " << assets_storage->GetFontsCount() << "\n";
 		m_ProjectResourcesInitFinished = false;
 		OnAssetsStorageLoaded();
-	}
-
-	if (!m_MismatchedResourcesPool.empty())
-	{
-		auto it = m_MismatchedResourcesPool.front();
-		m_MismatchedResourcesPool.pop();
-
-		auto& main_instance = ApplicationSingleton::Instance();
-		fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
-
-			std::shared_ptr<fs::IFile> file = resource_fs->OpenFile(it, fs::io::OpenMode::In);
-
-			if (file)
-			{
-			switch (file->GetType())
-			{
-				case fs::IFile::EType::JSON:
-				{
-					nlohmann::json json;
-
-					if (file->Size() > 0)
-					{
-						file->Read(json, file->Size());
-					}
-
-					unsigned int fs_mark_hash = json["fs_mark"];
-					fs::EFilesystemMark fs_mark = fs::EFilesystemMarkFromHash(fs_mark_hash);
-
-					switch (fs_mark)
-					{
-					case fs::EFilesystemMark::Level:
-					{
-						main_instance.GetWorld()->EmplaceInitialLevelData(json);
-						break;
-					}
-					default:
-					{
-						break;
-					}
-					}
-				}
-				}
-			}
 	}
 }
 
@@ -101,20 +59,22 @@ void EngineModule::InitializeFilesystems()
 	if (m_ResourcesFsInitStarted || m_DataFsInitStarted)
 		return;
 
-	if (m_CurrentProject == std::nullopt)
+	Projects::Manager* project_manager = ApplicationSingleton::Instance().GetProjectsManager();
+
+	if (!project_manager->IsAnyProjectLoaded())
 		return;
 
-	const std::string project_path = m_CurrentProject->m_ProjectPath + "\\" + m_CurrentProject->m_ProjectName;
+	const std::string project_path = project_manager->GetCurrentProject().m_ProjectPath + "\\" + project_manager->GetCurrentProject().m_ProjectName;
 
 	const std::string resources_path = project_path + "\\resources";
 	const std::string data_path = project_path + "\\data";
 
-	auto game_resources_fs = std::make_unique<fs::NativeFileSystem>(resources_path);
-	auto game_data_fs = std::make_unique<fs::NativeFileSystem>(data_path);
+	std::unique_ptr<fs::IFileSystem> game_resources_fs = std::make_unique<fs::NativeFileSystem>(resources_path);
+	std::unique_ptr<fs::IFileSystem> game_data_fs = std::make_unique<fs::BinaryFileSystem>(data_path);
 
 	sf::Mutex mutex;
 
-	auto thread_init_fs = [&](const std::string& _fs_alias, std::unique_ptr<fs::NativeFileSystem>& _fs)
+	auto thread_init_fs = [&](const std::string& _fs_alias, std::unique_ptr<fs::IFileSystem>& _fs)
 	{
 		_fs->Initialize();
 
@@ -161,6 +121,17 @@ void EngineModule::InitializeFilesystems()
 
 void EngineModule::InitializeAssets()
 {
+	auto fn_contains = [](const std::string_view _str1, const std::string_view _str2) -> bool
+	{
+			if (_str1.size() < _str2.size())
+				return false;
+
+			if (_str1.find(_str2) != std::string_view::npos)
+				return true;
+
+			return false;
+	};
+
 	auto& main_instance = ApplicationSingleton::Instance();
 	fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
 	const std::vector<std::string> file_aliases = resource_fs->GetFilesAliases();
@@ -174,7 +145,7 @@ void EngineModule::InitializeAssets()
 		(auto&& alias)
 		{
 
-			std::shared_ptr<fs::IFile> file = resource_fs->OpenFile(alias, fs::io::OpenMode::In | fs::io::OpenMode::Binary);
+			std::shared_ptr<fs::IFile> file = resource_fs->OpenFile(alias, fs::io::OpenMode::In);
 
 			if (file)
 			{
@@ -190,10 +161,23 @@ void EngineModule::InitializeAssets()
 						fonts_files.push_back(file.get());
 						break;
 					}
+					case fs::IFile::EType::JSON:
+					{
+						if (fn_contains(alias, "level"))
+						{
+							std::shared_ptr<ISerializable::JSON> json_load_wrapper = std::make_shared<Serializable::JSON::LevelInfo>();
+
+							file->Seek(0, fs::io::Origin::Begin);
+							file->DeserializeJson(json_load_wrapper);
+
+							auto level_info { std::dynamic_pointer_cast<Serializable::JSON::LevelInfo>(json_load_wrapper) };
+							main_instance.GetWorld()->PushInitialLevelData(level_info);
+						}
+							break;
+					}
 					default:
 					{
-						std::cout << "WARNING: File with alias: " << alias << " has an invalid type and couldn't be assigned to any pool.\nData from this file will be processed later.";
-						m_MismatchedResourcesPool.push(alias);
+						std::cout << "WARNING: File with alias: " << alias << " has an invalid type and couldn't be assigned to any pool.\n";
 						break;
 					}
 				}

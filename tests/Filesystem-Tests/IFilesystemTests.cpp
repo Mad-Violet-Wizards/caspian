@@ -28,6 +28,12 @@ namespace mock
 		bool ReadJson_Impl(nlohmann::json& _json, size_t _size) override { return false; }
 		bool WriteJson_Impl(const nlohmann::json& _json, size_t _size) override { return false; }
 
+		void DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json) override {}
+		void SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json) override {}
+
+		void DeserializeBinary(std::shared_ptr<ISerializable::Binary>& _binary) override {}
+		void SerializeBinary(std::shared_ptr<ISerializable::Binary> _binary) override {}
+
 		bool IsOpen() const override { return true; }
 		void Close() override { }
 		bool Open(fs::io::OpenMode _open_mode) override { return true; }

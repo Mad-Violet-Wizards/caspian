@@ -30,9 +30,9 @@ void Level::World::Update(float _dt)
 
 }
 
-void Level::World::EmplaceInitialLevelData(nlohmann::json& json)
+void Level::World::PushInitialLevelData(std::shared_ptr<Serializable::JSON::LevelInfo>& _level_info)
 {
-	m_InitialLevelsData.emplace_back(json);
+	m_InitialLevelsData.push_back({ _level_info->m_LevelName, _level_info->m_ChunkRootFile, _level_info->m_TileWidth, _level_info->m_TileHeight });
 }
 
 //////////////////////////////////////////////
