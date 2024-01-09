@@ -31,6 +31,7 @@ namespace fs
 		size_t Write_Impl(const std::vector<uint8_t>& _buffer) override { return -1; }
 		size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) override { return -1; }
 		bool ReadJson_Impl(nlohmann::json& _json, [[maybe_unused]] size_t _size) override { return false; }
+
 		bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) override { return false; }
 
 		void DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json) override {}

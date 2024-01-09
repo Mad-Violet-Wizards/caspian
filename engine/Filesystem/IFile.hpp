@@ -218,28 +218,6 @@ namespace fs
 				return success;
 			}
 
-			//template<>
-			//bool Write(const ISerializable::JSON& _json, size_t size)
-			//{
-			//		if (!IsOpen() || IsReadOnly())
-			//			return false;
-
-			//	bool success = WriteJson_CerealImpl(_json, size);
-
-			//	return success;
-			//}
-
-			//template<>
-			//bool Write(const ISerializable::Binary& _binary_data, size_t size)
-			//{
-			//	if (!IsOpen() || IsReadOnly())
-			//		return false;
-
-			//	bool success = WriteBinary_CerealImpl(_binary_data, size);
-
-			//	return success;
-			//}
-
 
 		protected:
 
@@ -248,17 +226,12 @@ namespace fs
 
 			virtual size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) = 0;
 
-			//[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
+			[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
 			virtual bool ReadJson_Impl(nlohmann::json& _json,  [[maybe_unused]] size_t _size) = 0;
 
-			//[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
+			[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
 			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) = 0;
 
-			//virtual bool ReadJson_CerealImpl(ISerializable::JSON& _json, [[maybe_unused]] size_t _size) = 0;
-			//virtual bool WriteJson_CerealImpl(const ISerializable::JSON& _json, [[maybe_unused]] size_t _size) = 0;
-
-			//virtual bool ReadBinary_CerealImpl(ISerializable::Binary& _binary, [[maybe_unused]] size_t _size) = 0;
-			//virtual bool WriteBinary_CerealImpl(const ISerializable::Binary& _binary, [[maybe_unused]] size_t _size) = 0;
 
 			bool m_IsReadOnly;
 			io::OpenMode m_OpenMode;
