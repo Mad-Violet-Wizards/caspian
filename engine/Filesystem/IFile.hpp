@@ -226,10 +226,10 @@ namespace fs
 
 			virtual size_t Read_UnsignedBuffer_Impl(std::vector<uint8_t>& _buffer) = 0;
 
-			[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
+			[[deprecated("Use DeserializeJson instead. To be removed in later versions.")]]
 			virtual bool ReadJson_Impl(nlohmann::json& _json,  [[maybe_unused]] size_t _size) = 0;
 
-			[[deprecated("Use ReadBinary_CerealImpl instead. To be removed in later versions.")]]
+			[[deprecated("Use SerializeJson instead. To be removed in later versions.")]]
 			virtual bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) = 0;
 
 
