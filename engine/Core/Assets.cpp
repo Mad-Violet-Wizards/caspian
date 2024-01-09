@@ -5,7 +5,7 @@
 
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
 
 	for (auto& file : _files)
 	{
@@ -34,7 +34,7 @@ void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _fi
 
 void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
 
 	for (auto& file : _files)
 	{
@@ -60,7 +60,7 @@ void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files
 
 void Assets::Storage::LoadResourceAcceptableType(fs::IFile* _file)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
 
 	if (_file->IsOpen())
 	{

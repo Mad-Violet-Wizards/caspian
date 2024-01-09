@@ -41,7 +41,7 @@ void Application::Update()
 
 	ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
 
-	m_engineModule.Update();
+	m_engineModule.Update(m_deltaTime);
 
 	if (auto tools_mgr = m_engineModule.GetToolsManager())
 	{
@@ -97,6 +97,6 @@ bool Application::IsRunning() const
 
 		auto& main_instance = ApplicationSingleton::Instance();
 
-		main_instance.GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
+		main_instance.GetEngineModule().GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
 	}
 #endif

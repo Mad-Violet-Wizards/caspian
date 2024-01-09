@@ -2,6 +2,7 @@
 
 #include "engine/Tools/Tools.hpp"
 #include "engine/Filesystem/FsManager.hpp"
+#include "engine/Scenes/StateMachine.hpp"
 #include "EventHandler.hpp"
 #include "Assets.hpp"
 
@@ -27,7 +28,7 @@ class EngineModule
 		EngineModule() = default;
 		~EngineModule() = default;
 
-		void Update();
+		void Update(float _dt);
 
 		void SetEventDispatcher(std::unique_ptr<Events::Dispatcher> _event_dispatcher) { m_eventDispatcher = std::move(_event_dispatcher); }
 		Events::Dispatcher* const GetEventDispatcher() { return m_eventDispatcher.get(); }
@@ -40,6 +41,9 @@ class EngineModule
 
 		void SetAssetsStorage(std::unique_ptr<Assets::Storage> _assets_storage) { m_assetsStorage = std::move(_assets_storage); }
 		Assets::Storage* const GetAssetsStorage() { return m_assetsStorage.get(); }
+
+		void SetScenesStateMachine(std::unique_ptr<Scenes::StateMachine> _scenes_state_machine) { m_ScenesStateMachine = std::move(_scenes_state_machine); }
+		Scenes::StateMachine* const GetScenesStateMachine() { return m_ScenesStateMachine.get(); }
 
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
 		static std::string GetEngineVersionString();
@@ -60,6 +64,7 @@ class EngineModule
 		std::unique_ptr<Tools::Manager> m_toolsManager = nullptr;
 		std::unique_ptr<fs::Manager> m_filesystemManager = nullptr;
 		std::unique_ptr<Assets::Storage> m_assetsStorage = nullptr;
+		std::unique_ptr<Scenes::StateMachine> m_ScenesStateMachine = nullptr;
 
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;

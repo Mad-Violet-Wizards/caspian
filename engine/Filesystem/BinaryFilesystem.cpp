@@ -25,6 +25,20 @@ namespace fs
 			std::filesystem::create_directories(path);
 		}
 
+		auto fn_create_engine_dir = [](const std::filesystem::path& _root_path, std::string_view _dir_to_create)
+		{
+				std::filesystem::path final_path = _root_path / _dir_to_create;
+
+				if (!std::filesystem::exists(final_path))
+				{
+					std::filesystem::create_directories(final_path);
+				}
+		};
+
+		fn_create_engine_dir(path, "levels");
+		fn_create_engine_dir(path, "tilemaps");
+		// ...
+
 		// Build files list.
 		std::vector<std::string> paths = BuildFilesList(m_Path);
 		auto files_count = paths.size();

@@ -23,6 +23,7 @@
 #include <future>
 #include <ranges>
 #include <queue>
+#include <cstdint> // https://en.cppreference.com/w/cpp/types/integer
 
 // ENGINE //
 

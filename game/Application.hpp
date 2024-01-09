@@ -39,22 +39,10 @@ class DebugHelper
 		void CalculateDeltaTime();
 		bool IsRunning() const;
 
-		void SetEventDispatcher(std::unique_ptr<Events::Dispatcher> _event_dispatcher) { m_engineModule.SetEventDispatcher(std::move(_event_dispatcher)); }
-		Events::Dispatcher* const GetEventDispatcher() { return m_engineModule.GetEventDispatcher(); }
-
-		void SetToolsManager(std::unique_ptr<Tools::Manager> _tools_mgr) { m_engineModule.SetToolsManager(std::move(_tools_mgr)); }
-		Tools::Manager* const GetToolsManager() { return m_engineModule.GetToolsManager(); }
-
-		void SetFilesystemManager(std::unique_ptr<fs::Manager> _fs_mgr) { m_engineModule.SetFilesystemManager(std::move(_fs_mgr)); }
-		fs::Manager* const GetFilesystemManager() { return m_engineModule.GetFilesystemManager(); }
-
-		void SetAssetsStorage(std::unique_ptr<Assets::Storage> _assets_storage) { m_engineModule.SetAssetsStorage(std::move(_assets_storage)); }
-		Assets::Storage* const GetAssetsStorage() { return m_engineModule.GetAssetsStorage(); }
+		EngineModule& GetEngineModule() { return m_engineModule; }
 
 		void SetWorld(std::unique_ptr<Level::World> _world) { m_World = std::move(_world); }
 		Level::World* const GetWorld() { return m_World.get(); }
-
-		EngineModule& GetEngineModule() { return m_engineModule; }
 
 		void SetProjectsManager(std::unique_ptr<Projects::Manager> _pm) { m_ProjectsManager = std::move(_pm); }
 		Projects::Manager* const GetProjectsManager() { return m_ProjectsManager.get(); }

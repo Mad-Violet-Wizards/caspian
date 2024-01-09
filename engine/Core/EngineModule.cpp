@@ -7,8 +7,13 @@
 #include "engine/core/Level.hpp"
 #include <iostream>
 
-void EngineModule::Update()
+void EngineModule::Update(float _dt)
 {
+	if (m_ScenesStateMachine)
+	{
+		m_ScenesStateMachine->Update(_dt);
+	}
+
 	if (m_ResourcesFsInitFinished && m_DataFsInitFinished)
 	{
 		m_toolsManager->ShowNotification(Tools_Impl::ENotificationType::Success, "FS: Filesystems initialized.\nResources & data.");
@@ -20,7 +25,7 @@ void EngineModule::Update()
 	if (m_ProjectResourcesInitFinished)
 	{
 		auto& main_instance = ApplicationSingleton::Instance();
-		Assets::Storage* assets_storage = main_instance.GetAssetsStorage();
+		Assets::Storage* assets_storage = main_instance.GetEngineModule().GetAssetsStorage();
 
 		std::cout << "EngineModule: Finished filling assets storage.\n"
 			<< "No. textures: " << assets_storage->GetTexturesCount() << "\n"
@@ -51,7 +56,7 @@ void EngineModule::OnFilesystemsLoaded()
 void EngineModule::OnAssetsStorageLoaded()
 {
 	auto& main_instance = ApplicationSingleton::Instance(); 
-	main_instance.GetAssetsStorage()->SetInitialized();
+	main_instance.GetEngineModule().GetAssetsStorage()->SetInitialized();
 }
 
 void EngineModule::InitializeFilesystems()
@@ -70,7 +75,9 @@ void EngineModule::InitializeFilesystems()
 	const std::string data_path = project_path + "\\data";
 
 	std::unique_ptr<fs::IFileSystem> game_resources_fs = std::make_unique<fs::NativeFileSystem>(resources_path);
+	game_resources_fs->SetProjectFilesystem(true);
 	std::unique_ptr<fs::IFileSystem> game_data_fs = std::make_unique<fs::BinaryFileSystem>(data_path);
+	game_data_fs->SetProjectFilesystem(true);
 
 	sf::Mutex mutex;
 
@@ -80,7 +87,7 @@ void EngineModule::InitializeFilesystems()
 
 		mutex.lock();
 		auto& main_instance = ApplicationSingleton::Instance();
-		main_instance.GetFilesystemManager()->Mount(_fs_alias, std::move(_fs));
+		main_instance.GetEngineModule().GetFilesystemManager()->Mount(_fs_alias, std::move(_fs));
 		mutex.unlock();
 	};
 	
@@ -133,7 +140,7 @@ void EngineModule::InitializeAssets()
 	};
 
 	auto& main_instance = ApplicationSingleton::Instance();
-	fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
+	fs::IFileSystem* resource_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("resources");
 	const std::vector<std::string> file_aliases = resource_fs->GetFilesAliases();
 
 	std::vector<fs::IFile*> textures_files;
@@ -188,7 +195,7 @@ void EngineModule::InitializeAssets()
 			}
 		});
 
-	Assets::Storage* assets_storage = main_instance.GetAssetsStorage();
+	Assets::Storage* assets_storage = main_instance.GetEngineModule().GetAssetsStorage();
 	sf::Mutex mutex;
 
 	auto f_close_files = [](std::vector<fs::IFile*> _files)

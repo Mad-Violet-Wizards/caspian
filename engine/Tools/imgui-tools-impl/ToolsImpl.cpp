@@ -26,7 +26,7 @@ void Toolbar::Render()
 	if (!m_Active)
 		return;
 
-	const bool bAssets_storage_initialized = ApplicationSingleton::Instance().GetAssetsStorage()->IsInitialized();
+	const bool bAssets_storage_initialized = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage()->IsInitialized();
 
 	static auto flags = utils::flags();
 
@@ -278,7 +278,7 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 	auto& main_instance = ApplicationSingleton::Instance();
 
 	// TODO: Refactor to use cereal.
-	fs::IFileSystem* appdata_fs = main_instance.GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
+	fs::IFileSystem* appdata_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
 
 	if (!appdata_fs->FileExists("projects.json"))
 	{
@@ -410,7 +410,7 @@ void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::str
 {
 	auto& main_instance = ApplicationSingleton::Instance();
 
-	fs::IFileSystem* resource_fs = main_instance.GetFilesystemManager()->Get("resources");
+	fs::IFileSystem* resource_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("resources");
 	
 	bool json_created_succesfully = false;
 
@@ -443,7 +443,7 @@ void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::str
 
 	std::fstream chunk_file;
 
-	fs::IFileSystem* data_fs = main_instance.GetFilesystemManager()->Get("data");
+	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");
 
 	if (!data_fs->FileExists("levels"))
 	{

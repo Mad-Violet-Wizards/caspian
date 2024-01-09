@@ -8,10 +8,38 @@ namespace Scenes
 {
 	enum class ESceneID : char
 	{
-		Loading = 0,
+		_Start = -1,
+		InitialLoading = 0,
 		MainMenu,
-		Game
+		Game,
+		#if defined(DEBUG)
+		Edit,
+		#endif
+		_End
 	};
+
+	static std::string_view ToString(ESceneID _id)
+	{
+		#define ENUM_TO_STR(x) case ESceneID::x: return #x;
+		switch (_id)
+		{
+			ENUM_TO_STR(InitialLoading)
+			ENUM_TO_STR(MainMenu)
+			ENUM_TO_STR(Game)
+#if defined(DEBUG)
+			ENUM_TO_STR(Edit)
+#endif
+		}
+	}
+
+	constexpr std::initializer_list<ESceneID> AllScenes()
+	{
+#if defined(DEBUG)
+		return { ESceneID::InitialLoading, ESceneID::MainMenu, ESceneID::Game, ESceneID::Edit };
+#else
+		return { ESceneID::InitialLoading, ESceneID::MainMenu, ESceneID::Game };
+#endif
+	}
 
 	class StateMachine
 	{
@@ -23,7 +51,6 @@ namespace Scenes
 
 		void Update(float deltaTime);
 		void LateUpdate(float deltaTime);
-		void Draw(Window& window);
 
 		bool Add(ESceneID id, std::shared_ptr<IScene> scene);
 		bool SwitchTo(ESceneID id);

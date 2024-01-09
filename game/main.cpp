@@ -13,14 +13,19 @@ int main()
 
 	auto& main_instance = ApplicationSingleton::Instance();
 
+	auto& engine_module = main_instance.GetEngineModule();
+
+	std::unique_ptr<Scenes::StateMachine> scenes_state_machine = std::make_unique<Scenes::StateMachine>();
+	engine_module.SetScenesStateMachine(std::move(scenes_state_machine));
+
 	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
-	main_instance.SetEventDispatcher(std::move(event_dispatcher_system));
+	engine_module.SetEventDispatcher(std::move(event_dispatcher_system));
 
 	std::unique_ptr<fs::Manager> filesystem_manager = std::make_unique<fs::Manager>();
-	main_instance.SetFilesystemManager(std::move(filesystem_manager));
+	engine_module.SetFilesystemManager(std::move(filesystem_manager));
 
 	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
-	main_instance.SetAssetsStorage(std::move(assets_storage));
+	engine_module.SetAssetsStorage(std::move(assets_storage));
 
 	// Rendering system must initialize somewhere around here.
 
@@ -36,7 +41,7 @@ int main()
 
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
 	tools_manager->InitializeEventListeners();
-	main_instance.SetToolsManager(std::move(tools_manager));
+	engine_module.SetToolsManager(std::move(tools_manager));
 	#endif
 
 	#if defined (_WIN32)
@@ -78,7 +83,7 @@ int main()
 		}
 	}
 
-	main_instance.GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
+	main_instance.GetEngineModule().GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
 	#endif
 	
 
