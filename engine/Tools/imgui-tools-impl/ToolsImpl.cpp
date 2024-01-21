@@ -11,7 +11,7 @@
 #include "engine/Filesystem/FilesystemMark.hpp"
 #include "engine/Core/Serializable/ProjectSerializable.hpp"
 #include "engine/Core/Serializable/LevelSerializable.hpp"
-
+#include "engine/Core/Serializable/AssetsSerializable.hpp"
 #include <cereal/archives/portable_binary.hpp>
 
 using namespace Tools_Impl;
@@ -481,4 +481,49 @@ void Manager::OpenAssetTableForAction(IAssetsTableActionsListener* _listener)
 		m_AssetListWindow.m_Active = true;
 
 	m_AssetListWindow.OnOpenForAction(_listener);
+}
+
+void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::string& _tileset_name, unsigned int _tile_width, unsigned int _tile_height)
+{
+	std::cout << "=======================\n";
+	std::cout << "Adding new tileset\n";
+	std::cout << "Key (assets storage): " << _tileset_key << "\n";
+	std::cout << "Name: " << _tileset_name << "\n";
+	std::cout << "Width: " << _tile_width << "\n";
+	std::cout << "Height: " << _tile_height << "\n";
+
+
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");
+	const std::string tilemaps_storage_path = "tilemaps\\data.tilemaps";
+
+	bool tilemap_file_created = false;
+	bool tilemap_file_closed = false;
+
+	if (!data_fs->FileExists(tilemaps_storage_path))
+	{
+		tilemap_file_created = data_fs->CreateFile(tilemaps_storage_path, fs::IFile::EType::Data_Tilemaps);
+	}
+
+	if (std::shared_ptr<fs::IFile> tilemap_file = data_fs->OpenFile(tilemaps_storage_path, fs::io::OpenMode::ReadWrite))
+	{
+		Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineModule().GetAssetsStorage()->GetTilemapStorage();
+		
+		const Serializable::Binary::TilesetInfo tileset_info(_tileset_key, _tileset_name, _tile_width, _tile_height);
+		tilemap_storage->PushTilesetInfo(tileset_info);
+		tilemap_file->Seek(0, fs::io::Origin::Begin);
+		tilemap_file->SerializeBinary(tilemap_storage->GetTilesetsInfo());
+
+		tilemap_file_closed = data_fs->CloseFile(tilemap_file);
+	}
+
+	if (tilemap_file_closed)
+	{
+		ShowNotification(ENotificationType::Success, "Tileset added succesfully! :)");
+	}
+	else
+	{
+		ShowNotification(ENotificationType::Error, "Failed to add tileset! :(");
+	}
 }

@@ -4,8 +4,6 @@
 
 #include <fstream>
 
-#include <cereal/types/polymorphic.hpp>
-
 namespace fs
 {
 	class NativeFile final : public IFile
@@ -40,7 +38,7 @@ namespace fs
 			void SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json) override;
 
 			void DeserializeBinary(std::shared_ptr<ISerializable::Binary>& _binary) override {}
-			void SerializeBinary(std::shared_ptr<ISerializable::Binary> _binary) override {}
+			void SerializeBinary(const std::shared_ptr<ISerializable::Binary>& _binary) override {}
 
 		private:
 

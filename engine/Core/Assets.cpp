@@ -3,6 +3,11 @@
 #include "Assets.hpp"
 #include <iostream>
 
+Assets::Storage::Storage()
+{
+	m_TilemapStorage = std::make_unique<TilemapStorage>();
+}
+
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
 	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
@@ -150,6 +155,20 @@ void Assets::Storage::DeleteResource(const std::string& _key, fs::IFile::EType _
 	}
 }
 
+const sf::Vector2u& Assets::Storage::GetTextureSize(const std::string& _path) const
+{
+	sf::Lock lock(m_Mutex);
+
+	if (m_textures.find(_path) != m_textures.end())
+	{
+		return m_textures.at(_path).GetConstResource().getSize();
+	}
+
+	// Otherwise we'll report default asset.
+	std::cout << "ERROR: Texture " << _path << " not found.\n";
+	throw std::runtime_error("Texture wasn't found.");
+}
+
 sf::Texture& Assets::Storage::GetTexture(const std::string& _path)
 {
 	sf::Lock lock(m_Mutex);
@@ -245,4 +264,26 @@ std::vector<std::string> Assets::Storage::GetFontKeys() const
 	});
 
 	return keys;
+}
+
+Assets::TilemapStorage::TilemapStorage()
+{
+	m_TilestsInfo = std::make_shared<Serializable::Binary::TilesetsInfo>();
+}
+
+const std::vector<Serializable::Binary::TilesetInfo>& Assets::TilemapStorage::GetTilesetsVec() const
+{
+	return m_TilestsInfo->m_Tilesets;
+}
+
+void Assets::TilemapStorage::PushTilesetInfo(const Serializable::Binary::TilesetInfo& _tileset_info)
+{
+	// TODO: Check for duplicates!
+
+	m_TilestsInfo->m_Tilesets.push_back(_tileset_info);
+}
+
+std::shared_ptr<Serializable::Binary::TilesetsInfo>& Assets::TilemapStorage::GetTilesetsInfo()
+{
+	return m_TilestsInfo;
 }

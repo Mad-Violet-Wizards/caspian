@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "engine/Filesystem/IFile.hpp"
+#include "engine/Core/Serializable/AssetsSerializable.hpp"
 
 namespace Assets
 {
@@ -76,11 +77,29 @@ namespace Assets
 			T m_resource;
 	};
 
+	class TilemapStorage
+	{
+	public:
+
+		TilemapStorage();
+		~TilemapStorage() = default;
+
+		const std::vector<Serializable::Binary::TilesetInfo>& GetTilesetsVec() const;
+		void PushTilesetInfo(const Serializable::Binary::TilesetInfo& _tileset_info);
+		std::shared_ptr<Serializable::Binary::TilesetsInfo>& GetTilesetsInfo();
+
+	private:
+
+
+		std::shared_ptr<Serializable::Binary::TilesetsInfo> m_TilestsInfo = nullptr;
+
+	};
+
 	class Storage
 	{
 		public:
 
-			Storage() = default;
+			Storage();
 			~Storage() = default;
 
 			void LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files);
@@ -88,6 +107,8 @@ namespace Assets
 			void LoadResourceAcceptableType(fs::IFile* _file);
 
 			void DeleteResource(const std::string& _key, fs::IFile::EType _eFileType);
+
+			const sf::Vector2u& GetTextureSize(const std::string& _path) const;
 
 			sf::Texture& GetTexture(const std::string& _path);
 			sf::Font& GetFont(const std::string& _path);
@@ -105,6 +126,8 @@ namespace Assets
 
 			[[nodiscard]] std::vector<std::string> GetTexturesKeys() const;
 			[[nodiscard]] std::vector<std::string> GetFontKeys() const;
+
+			[[nodiscard]] TilemapStorage* GetTilemapStorage() const { return m_TilemapStorage.get(); }
  
 			void SetInitialized() { m_bInitialized = true; }
 			bool IsInitialized() const { return m_bInitialized; }
@@ -113,6 +136,8 @@ namespace Assets
 
 			std::unordered_map<std::string, Resource<sf::Texture>> m_textures;
 			std::unordered_map<std::string, Resource<sf::Font>> m_fonts;
+
+			std::unique_ptr<TilemapStorage> m_TilemapStorage = nullptr;
 
 			bool m_bInitialized = false;
 

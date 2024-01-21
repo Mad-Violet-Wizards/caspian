@@ -38,6 +38,12 @@ namespace Tools_Impl
 	{
 		public:
 
+			struct SelectedTileInfo
+			{
+				sf::Sprite m_Sprite;
+				bool m_Selected = false;
+			};
+
 			TilesetListWindow(Manager* _mgr) 
 				: IWindow(_mgr) 
 				{ 
@@ -48,14 +54,29 @@ namespace Tools_Impl
 
 			void OnAssetSelected(const SelectedAssetData& data) override;
 
+			void Update(float _dt) override;
 			void Render() override;
 
 	private:
 
+		std::string GetComboBoxTilesetName(Random::UUID _tileset_uuid) const;
+
+	private:
+		
+			Random::UUID m_PrevTilesetUUID;
+			bool m_bTilesetsListsOpened = false;
+
 			std::optional<SelectedAssetData> m_QueuedToAddAsTileset;
+
+			std::string m_TilesetName;
+			std::string m_nTileWidth;
+			std::string m_nTileHeight;
 			
 			const sf::Texture* m_TilesetPreview;
-			
+			SelectedTileInfo* m_SelectedTileInfo;
+
+			std::vector<SelectedTileInfo> m_CachedTilesetSprites;
+			std::map<Random::UUID, std::vector<sf::IntRect>> m_CachedTilesetRects;
 	};
 
 

@@ -30,6 +30,7 @@
 #include "engine/Core/IComponent.hpp"
 #include "engine/Core/EventHandler.hpp"
 #include "engine/Core/GameObject.hpp"
+#include "engine/Core/Random/UUID.hpp"
 #include "game/Application.hpp"
 
 // WARNING C4603.

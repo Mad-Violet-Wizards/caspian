@@ -160,6 +160,7 @@ namespace fs
 			case IFile::EType::Data:
 			case IFile::EType::Data_LevelRootChunk:
 			case IFile::EType::Data_LevelChunk:
+			case IFile::EType::Data_Tilemaps:
 			{
 				std::ofstream file(file_path);
 				os_file_operation_result = file.good();

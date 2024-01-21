@@ -1,6 +1,9 @@
 #pragma once
 #include "engine/Filesystem/FilesystemMark.hpp"
 
+#include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/json.hpp>
+
 #include "Serializable.hpp"
 
 namespace Serializable

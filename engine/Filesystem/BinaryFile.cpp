@@ -122,7 +122,7 @@ namespace fs
 		archive(_binary);
 	}
 
-	void BinaryFile::SerializeBinary(std::shared_ptr<ISerializable::Binary> _binary)
+	void BinaryFile::SerializeBinary(const std::shared_ptr<ISerializable::Binary>& _binary)
 	{
 		cereal::PortableBinaryOutputArchive archive(m_FileStream);
 		archive(_binary);

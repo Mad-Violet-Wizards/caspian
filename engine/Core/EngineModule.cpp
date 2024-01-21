@@ -141,18 +141,20 @@ void EngineModule::InitializeAssets()
 
 	auto& main_instance = ApplicationSingleton::Instance();
 	fs::IFileSystem* resource_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("resources");
-	const std::vector<std::string> file_aliases = resource_fs->GetFilesAliases();
+	const std::vector<std::string> resources_file_aliases = resource_fs->GetFilesAliases();
 
 	std::vector<fs::IFile*> textures_files;
 	std::vector<fs::IFile*> fonts_files;
+	std::vector<fs::IFile*> json_files;
+	std::vector<fs::IFile*> binary_files;
 
-	std::ranges::for_each(file_aliases.cbegin(),
-		file_aliases.cend(),
+	std::ranges::for_each(resources_file_aliases.cbegin(),
+		resources_file_aliases.cend(),
 		[&]
 		(auto&& alias)
 		{
 
-			std::shared_ptr<fs::IFile> file = resource_fs->OpenFile(alias, fs::io::OpenMode::In);
+			std::shared_ptr<fs::IFile> file = resource_fs->OpenFile(alias, fs::io::OpenMode::In | fs::io::OpenMode::Binary);
 
 			if (file)
 			{
@@ -179,6 +181,7 @@ void EngineModule::InitializeAssets()
 
 							auto level_info { std::dynamic_pointer_cast<Serializable::JSON::LevelInfo>(json_load_wrapper) };
 							main_instance.GetWorld()->PushInitialLevelData(level_info);
+							json_files.push_back(file.get());
 						}
 							break;
 					}
@@ -192,6 +195,46 @@ void EngineModule::InitializeAssets()
 			else
 			{
 				std::cout << "ERROR: File with alias: " << alias << " could not be found in resources fs.\n";
+			}
+		});
+
+	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");
+	const std::vector<std::string> data_file_aliases = data_fs->GetFilesAliases();
+
+	std::ranges::for_each(data_file_aliases.cbegin(),
+				data_file_aliases.cend(),
+		[&]
+		(auto&& alias)
+		{
+			std::shared_ptr<fs::IFile> file = data_fs->OpenFile(alias, fs::io::OpenMode::In | fs::io::OpenMode::Binary);
+
+			if (file)
+			{
+				switch (file->GetType())
+				{
+					case fs::IFile::EType::Data_Tilemaps:
+					{
+						Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineModule().GetAssetsStorage()->GetTilemapStorage();
+
+						auto& tilemap_info = tilemap_storage->GetTilesetsInfo();
+						auto binary_data = std::dynamic_pointer_cast<ISerializable::Binary>(tilemap_info);
+
+						file->Seek(0, fs::io::Origin::Begin);
+						file->DeserializeBinary(binary_data);
+						tilemap_info = std::dynamic_pointer_cast<Serializable::Binary::TilesetsInfo>(binary_data);
+						binary_files.push_back(file.get());
+						break;
+					}
+					default:
+					{
+						std::cout << "WARNING: File with alias: " << alias << " has an invalid type and couldn't be assigned to any pool.\n";
+						break;
+					}
+				}
+			}
+			else
+			{
+				std::cout << "ERROR: File with alias: " << alias << " could not be found in data fs.\n";
 			}
 		});
 
@@ -216,6 +259,8 @@ void EngineModule::InitializeAssets()
 			mutex.lock();
 			f_close_files(textures_files);
 			f_close_files(fonts_files);
+			f_close_files(json_files);
+			f_close_files(binary_files);
 
 			m_ProjectResourcesInitStarted = false;
 			m_ProjectResourcesInitFinished = true;

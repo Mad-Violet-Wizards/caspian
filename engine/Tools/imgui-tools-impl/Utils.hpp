@@ -14,6 +14,8 @@ namespace Tools_Impl
 		constexpr ImVec2 TOOLS_NOTIFICATION_START_POSITION{ 5.f, 42.f };
 		constexpr ImVec2 TOOLS_NOTIFICATION_SIZE{ 250.f, 72.f };
 
+		bool FilterDigitOnly(const std::string& _str);
+
 
 		/////////////////////////////////////////////////////////
 		struct flags

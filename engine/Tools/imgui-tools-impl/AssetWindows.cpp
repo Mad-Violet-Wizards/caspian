@@ -264,7 +264,7 @@ void AssetsListWindow::Render()
 			ImGui::TableNextColumn();
 			ImGui::Text("Asset name");
 			ImGui::TableNextColumn();
-			ImGui::Text("Asset relative path");
+			ImGui::Text("Asset relative path / Assets Storage Key");
 			ImGui::TableNextColumn();
 			ImGui::Text("Asset absolute path");
 			ImGui::TableNextColumn();
@@ -290,28 +290,32 @@ void AssetsListWindow::Render()
 				ImGui::TableNextColumn();
 				ImGui::Text(asset.m_AbsolutePath.c_str());
 				ImGui::TableNextColumn();
-				ImGui::PushID(i);
-				if (ImGui::Button("Delete"))
+				if (m_ActionListener)
 				{
-					auto on_delete = [&](bool _success)
-						{
-							if (_success)
-								m_Manager->ShowNotification(ENotificationType::Success, "Asset deleted successfully.");
-							else
-								m_Manager->ShowNotification(ENotificationType::Error, "Asset couldn't be deleted.");
-						};
+					ImGui::PushID(i);
 
-					Internal_AssetToDelete asset_to_delete{ asset.m_Name, asset.m_Type, on_delete };
-					m_AssetSelectedToDelete.emplace(asset_to_delete);
+					if (ImGui::Button("Delete"))
+					{
+						auto on_delete = [&](bool _success)
+							{
+								if (_success)
+									m_Manager->ShowNotification(ENotificationType::Success, "Asset deleted successfully.");
+								else
+									m_Manager->ShowNotification(ENotificationType::Error, "Asset couldn't be deleted.");
+							};
+
+						Internal_AssetToDelete asset_to_delete{ asset.m_Name, asset.m_Type, on_delete };
+						m_AssetSelectedToDelete.emplace(asset_to_delete);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Select"))
+					{
+						SelectedAssetData data;
+						data.m_RelativePath = asset.m_RelativePath;
+						NotifyAssetSelected(data);
+					}
+					ImGui::PopID();
 				}
-				ImGui::SameLine();
-				if (ImGui::Button("Select"))
-				{
-					SelectedAssetData data;
-					data.m_RelativePath = asset.m_RelativePath;
-					NotifyAssetSelected(data);
-				}
-				ImGui::PopID();
 				ImGui::TableNextRow();
 			}
 
@@ -327,4 +331,6 @@ void AssetsListWindow::NotifyAssetSelected(const SelectedAssetData& _data)
 		return;
 
 	m_ActionListener->OnAssetSelected(_data);
+
+	m_ActionListener = nullptr;
 }
