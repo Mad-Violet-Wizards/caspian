@@ -409,58 +409,7 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_width, unsigned int _tile_height)
 {
 	auto& main_instance = ApplicationSingleton::Instance();
-
-	fs::IFileSystem* resource_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("resources");
-	
-	bool json_created_succesfully = false;
-
-	std::string relative_lvl_path{ _lvl_path };
-	relative_lvl_path = relative_lvl_path.substr(resource_fs->GetPath().size() + 1);
-
-	if (!resource_fs->FileExists(relative_lvl_path))
-	{
-		json_created_succesfully = resource_fs->CreateFile(relative_lvl_path, fs::IFile::EType::JSON);
-
-		if (!json_created_succesfully)
-		{
-			std::cout << "DEBUG: [ToolsImpl] Failed to create level file: " << relative_lvl_path << std::endl;
-		}
-	}
-
-	bool file_closed_successfully = false;
-
-	if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::ReadWrite))
-	{
-		const std::string& root_chunk_file_name = _lvl_name + ".rootchunk";
-		std::shared_ptr<ISerializable::JSON> level_data = std::make_shared<Serializable::JSON::LevelInfo>(_lvl_name, root_chunk_file_name, _tile_width, _tile_height);
-		level_json_file->SerializeJson(level_data);
-
-		std::shared_ptr<Serializable::JSON::LevelInfo> level_info = std::dynamic_pointer_cast<Serializable::JSON::LevelInfo>(level_data);
-		main_instance.GetWorld()->PushInitialLevelData(level_info);
-
-		file_closed_successfully = resource_fs->CloseFile(level_json_file);
-	}
-
-	std::fstream chunk_file;
-
-	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");
-
-	if (!data_fs->FileExists("levels"))
-	{
-				data_fs->CreateFile("levels", fs::IFile::EType::Directory);
-	}
-
-	std::filesystem::path chunk_file_path{ data_fs->GetPath() };
-	chunk_file_path /= "levels";
-	chunk_file_path /= _lvl_name + ".rootchunk";
-
-	chunk_file.open(chunk_file_path, std::fstream::out | std::fstream::binary);
-
-	const bool chunk_file_created = chunk_file.is_open();
-
-	chunk_file.close();
-
-	const bool success = json_created_succesfully && file_closed_successfully && chunk_file_created;
+	const bool success = main_instance.GetWorld()->CreateNewLevel(_lvl_path, _lvl_name, _tile_width, _tile_height);
 
 	if (success)
 	{
@@ -485,14 +434,6 @@ void Manager::OpenAssetTableForAction(IAssetsTableActionsListener* _listener)
 
 void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::string& _tileset_name, unsigned int _tile_width, unsigned int _tile_height)
 {
-	std::cout << "=======================\n";
-	std::cout << "Adding new tileset\n";
-	std::cout << "Key (assets storage): " << _tileset_key << "\n";
-	std::cout << "Name: " << _tileset_name << "\n";
-	std::cout << "Width: " << _tile_width << "\n";
-	std::cout << "Height: " << _tile_height << "\n";
-
-
 	auto& main_instance = ApplicationSingleton::Instance();
 
 	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");

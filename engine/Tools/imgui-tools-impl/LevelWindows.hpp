@@ -71,6 +71,8 @@ namespace Tools_Impl
 			std::string m_TilesetName;
 			std::string m_nTileWidth;
 			std::string m_nTileHeight;
+
+			float m_CurrentTilesetHeight = 0.f;
 			
 			const sf::Texture* m_TilesetPreview;
 			SelectedTileInfo* m_SelectedTileInfo;

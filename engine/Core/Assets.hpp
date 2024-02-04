@@ -25,6 +25,8 @@ namespace Assets
 		};
 	};
 
+
+	//////////////////////////////////////////////////////
 	template <ResourceAcceptableType T>
 	class Resource
 	{
@@ -46,6 +48,14 @@ namespace Assets
 				if (!m_resource.loadFromMemory(_data.data(), _data.size()))
 				{
 					std::cout << "Failed to load resource from data\n";
+				}
+			}
+
+			void LoadFromImage(const sf::Image& _image)
+			{
+				if (!m_resource.loadFromImage(_image))
+				{
+					std::cout << "Failed to load resource from image\n";
 				}
 			}
 
@@ -77,6 +87,7 @@ namespace Assets
 			T m_resource;
 	};
 
+	//////////////////////////////////////////////////////
 	class TilemapStorage
 	{
 	public:
@@ -95,6 +106,7 @@ namespace Assets
 
 	};
 
+	//////////////////////////////////////////////////////
 	class Storage
 	{
 		public:
@@ -108,7 +120,7 @@ namespace Assets
 
 			void DeleteResource(const std::string& _key, fs::IFile::EType _eFileType);
 
-			const sf::Vector2u& GetTextureSize(const std::string& _path) const;
+			sf::Vector2u GetTextureSize(const std::string& _path) const;
 
 			sf::Texture& GetTexture(const std::string& _path);
 			sf::Font& GetFont(const std::string& _path);
@@ -132,10 +144,19 @@ namespace Assets
 			void SetInitialized() { m_bInitialized = true; }
 			bool IsInitialized() const { return m_bInitialized; }
 
+
+		private:
+			
+			void LoadEmptyTexture();
+			void LoadDefaultFont();
+
 		private:
 
 			std::unordered_map<std::string, Resource<sf::Texture>> m_textures;
 			std::unordered_map<std::string, Resource<sf::Font>> m_fonts;
+
+			Resource<sf::Texture> m_EmptyTexture;
+			Resource<sf::Font> m_DefaultFont;
 
 			std::unique_ptr<TilemapStorage> m_TilemapStorage = nullptr;
 

@@ -27,11 +27,12 @@
 
 // ENGINE //
 
-#include "engine/Core/IComponent.hpp"
 #include "engine/Core/EventHandler.hpp"
 #include "engine/Core/GameObject.hpp"
 #include "engine/Core/Random/UUID.hpp"
 #include "game/Application.hpp"
+#include "engine/Core/Random/Random.hpp"
+#include "engine/Core/Camera.hpp"
 
 // WARNING C4603.
 #if(defined DEBUG)

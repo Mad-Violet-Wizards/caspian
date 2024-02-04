@@ -27,10 +27,10 @@ int main()
 	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
 	engine_module.SetAssetsStorage(std::move(assets_storage));
 
-	// Rendering system must initialize somewhere around here.
-
 	std::unique_ptr<Level::World> world = std::make_unique<Level::World>();
 	main_instance.SetWorld(std::move(world));
+
+	// RENDERING
 
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();
@@ -67,6 +67,8 @@ int main()
 						<< "DEBUG: [Main] Engine appdata alias: " << Windows::S_ENGINE_APPDATA_ALIAS << "\n";
 
 	std::unique_ptr<fs::NativeFileSystem> engine_appdata_fs = std::make_unique<fs::NativeFileSystem>(engine_appdata_path);
+	engine_appdata_fs->SetProjectFilesystem(false);
+
 	engine_appdata_fs->Initialize();
 
 	if (engine_appdata_fs->FileExists("projects.json"))

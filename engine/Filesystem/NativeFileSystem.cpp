@@ -35,9 +35,12 @@ namespace fs
 				}
 			};
 
-		fn_create_engine_dir(path, "levels");
-		fn_create_engine_dir(path, "tilemaps");
-		fn_create_engine_dir(path, "fonts");
+		if (IsProjectFilesystem())
+		{
+			fn_create_engine_dir(path, "levels");
+			fn_create_engine_dir(path, "tilemaps");
+			fn_create_engine_dir(path, "fonts");
+		}
 
 		// Build files list.
 		std::vector<std::string> paths = BuildFilesList(m_Path);

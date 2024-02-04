@@ -3,9 +3,14 @@
 #include "Assets.hpp"
 #include <iostream>
 
+#include "engine/Default/default_font.inc"
+
 Assets::Storage::Storage()
 {
 	m_TilemapStorage = std::make_unique<TilemapStorage>();
+
+	LoadEmptyTexture();
+	LoadDefaultFont();
 }
 
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
@@ -155,7 +160,7 @@ void Assets::Storage::DeleteResource(const std::string& _key, fs::IFile::EType _
 	}
 }
 
-const sf::Vector2u& Assets::Storage::GetTextureSize(const std::string& _path) const
+ sf::Vector2u Assets::Storage::GetTextureSize(const std::string& _path) const
 {
 	sf::Lock lock(m_Mutex);
 
@@ -264,6 +269,32 @@ std::vector<std::string> Assets::Storage::GetFontKeys() const
 	});
 
 	return keys;
+}
+
+void Assets::Storage::LoadEmptyTexture()
+{
+	const auto size = 1024;
+
+	sf::Image image_buffer;
+	image_buffer.create(size, size);
+
+	for (auto y = 0; y < size; ++y)
+	{
+		for (auto x = 0; x < size; ++x)
+		{
+			bool is_even = (y / size) % 2 == 0 || (x / size) % 2 == 0;
+
+			image_buffer.setPixel(x, y, is_even ? sf::Color::Magenta : sf::Color(80, 80, 80));
+		}
+	}
+
+	m_EmptyTexture.LoadFromImage(image_buffer);
+}
+
+void Assets::Storage::LoadDefaultFont()
+{
+	std::vector<uint8_t> data(default_font, default_font + default_font_size);
+	m_DefaultFont.LoadFromData(data);
 }
 
 Assets::TilemapStorage::TilemapStorage()

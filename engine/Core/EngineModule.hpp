@@ -5,6 +5,7 @@
 #include "engine/Scenes/StateMachine.hpp"
 #include "EventHandler.hpp"
 #include "Assets.hpp"
+#include "engine/Core/Serializable/LevelSerializable.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 struct Project
@@ -57,6 +58,8 @@ class EngineModule
 
 		void InitializeFilesystems();
 		void InitializeAssets();
+
+		void LoadLevelData(const Serializable::JSON::LevelInfo& _lvl_info);
 
 	private:
 

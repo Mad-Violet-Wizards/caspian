@@ -35,8 +35,12 @@ namespace fs
 				}
 		};
 
-		fn_create_engine_dir(path, "levels");
-		fn_create_engine_dir(path, "tilemaps");
+		if (IsProjectFilesystem())
+		{
+			fn_create_engine_dir(path, "levels");
+			fn_create_engine_dir(path, "tilemaps");
+		}
+
 		// ...
 
 		// Build files list.

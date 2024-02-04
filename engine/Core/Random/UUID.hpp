@@ -21,6 +21,8 @@ namespace Random
 				uint64_t m_UUID;
 
 	};
+
+	static UUID EMPTY_UUID = 0;
 }
 
 namespace std

@@ -12,18 +12,6 @@ GameObject::~GameObject()
 	m_components.clear();
 }
 
-void GameObject::Awake()
-{
-	for (const auto& c : m_components)
-		c->Awake();
-}
-
-void GameObject::Start()
-{
-	for (const auto& c : m_components)
-		c->Start();
-}
-
 void GameObject::Update(float deltaTime)
 {
 	for (const auto& c : m_components)
@@ -34,12 +22,6 @@ void GameObject::LateUpdate(float deltaTime)
 {
 	for (const auto& c : m_components)
 		c->LateUpdate(deltaTime);
-}
-
-void GameObject::Draw(Window& window)
-{
-	for (const auto& c : m_components)
-		c->Draw(window);
 }
 
 bool GameObject::QueuedForRemoval() const

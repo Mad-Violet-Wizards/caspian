@@ -272,3 +272,8 @@ void EngineModule::InitializeAssets()
 	thread_load_resources.launch();
 }
 
+void EngineModule::LoadLevelData(const Serializable::JSON::LevelInfo& _lvl_info)
+{
+
+}
+

@@ -77,19 +77,19 @@ void LoadLevelWindow::Render()
 
 		auto& main_instance = ApplicationSingleton::Instance();
 		auto levels_data = main_instance.GetWorld()->GetInitialLevelsData();
-		static std::optional<int> current_idx;
-		static std::string combo_preview_value = current_idx.has_value() ? levels_data[current_idx.value()].m_LevelName : "...";
+		static std::optional<int> current_idx_levels;
+		const std::string level_combo_preview_value = current_idx_levels.has_value() ? levels_data[current_idx_levels.value()].m_LevelName : "...";
 
-		if (ImGui::BeginCombo("Cached levels", combo_preview_value.c_str()))
+		if (ImGui::BeginCombo("Cached levels", level_combo_preview_value.c_str()))
 		{
 			if (ImGui::Selectable("..."))
-				current_idx.reset();
+				current_idx_levels.reset();
 
 			for (int i = 0; i < levels_data.size(); i++)
 			{
-				const bool is_selected = (current_idx == i);
+				const bool is_selected = (current_idx_levels == i);
 				if (ImGui::Selectable(levels_data[i].m_LevelName.c_str(), is_selected))
-					current_idx = i;
+					current_idx_levels = i;
 
 				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
 				if (is_selected)
@@ -99,7 +99,7 @@ void LoadLevelWindow::Render()
 		}
 		ImGui::SameLine();
 		
-		bool bComboSelected = current_idx.has_value();
+		bool bComboSelected = current_idx_levels.has_value();
 		static utils::styles styles;
 		
 
@@ -108,7 +108,7 @@ void LoadLevelWindow::Render()
 		{
 			if (bComboSelected)
 			{
-				// Load level.
+				main_instance.GetWorld()->SwitchToLevel(level_combo_preview_value);
 			}
 		}
 		bComboSelected ? styles.pop_accept_button_style() : styles.pop_cancel_button_style();
@@ -238,15 +238,16 @@ void TilesetListWindow::Render()
 							tile_info.m_Sprite = sprite;
 							m_CachedTilesetSprites.emplace_back(tile_info);
 							m_PrevTilesetUUID = selected_tileset_uuid;
+							m_CurrentTilesetHeight = assets_storage->GetTexture(selected_tileset_path).getSize().y;
 						}
 					}
 					
 					if (m_CachedTilesetSprites.size() > 0)
 					{
-						ImGui::BeginChild("TileSelector", ImVec2(0, 600), true);
+						ImGui::BeginChild("TileSelector", ImVec2(0, 400), true, ImGuiWindowFlags_HorizontalScrollbar);
 
 						const float availableWidth = ImGui::GetContentRegionAvail().x;
-						const int tilesPerRow = availableWidth / selected_tileset_tile_width;
+						const int columns = std::max(1, (int)(availableWidth / selected_tileset_tile_width));
 
 						int counter = 0;
 						bool b_img_button_is_selected = false;
@@ -276,10 +277,8 @@ void TilesetListWindow::Render()
 							ImGui::PopStyleColor(3);
 							ImGui::PopID();
 
-							if (++counter < tilesPerRow)
+							if (++counter % columns != 0)
 								ImGui::SameLine();
-							else
-								counter = 0;
 						}
 
 						ImGui::EndChild();
