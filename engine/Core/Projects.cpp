@@ -44,7 +44,7 @@ bool Projects::Manager::SetCurrentProject(const std::string& _project_name)
 		{
 			m_CurrentProject = p;
 
-			ApplicationSingleton::Instance().GetEngineModule().OnProjectChanged();
+			ApplicationSingleton::Instance().GetEngineController().OnProjectChanged();
 
 			return true;
 		}

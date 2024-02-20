@@ -17,12 +17,10 @@ namespace Serializable
 				LevelInfo() = default;
 				LevelInfo(const std::string& _level_name,
 									const std::string& _chunk_root_file,
-									unsigned int _tile_width,
-									unsigned int _tile_height)
+									unsigned int _tile_size)
 					: m_LevelName{ _level_name }
 					, m_ChunkRootFile{ _chunk_root_file }
-					, m_TileWidth{ _tile_width }
-					, m_TileHeight{ _tile_height }
+					, m_TileSize{ _tile_size }
 					, m_FsMark{ fs::EFilesystemMarkToHash(fs::EFilesystemMark::Level) }
 				{
 				}
@@ -31,8 +29,7 @@ namespace Serializable
 
 				std::string m_LevelName;
 				std::string m_ChunkRootFile;
-				unsigned int m_TileWidth;
-				unsigned int m_TileHeight;
+				unsigned int m_TileSize;
 				unsigned int m_FsMark;
 
 				void dummy() override {}
@@ -42,8 +39,7 @@ namespace Serializable
 				{
 					ar(cereal::make_nvp("Name", m_LevelName), 
 						cereal::make_nvp("ChunkRootFile", m_ChunkRootFile),
-						cereal::make_nvp("Tile Width", m_TileWidth),
-						cereal::make_nvp("Tile Height", m_TileHeight), 
+						cereal::make_nvp("TileSize", m_TileSize),
 						cereal::make_nvp("Fs Mark", m_FsMark));
 				}
 		};
@@ -60,11 +56,12 @@ namespace Serializable
 
 			void dummy() override {}
 
-			Random::UUID m_TilesetUUID;
+			Random::UUID m_TilesetUUID = Random::EMPTY_UUID;
 			Random::UUID m_TileUUID = Random::EMPTY_UUID;
 			unsigned int m_TilesetRow;
 			unsigned int m_TilesetColumn;
-			// Do we need to store the tile pos in the world?
+			unsigned int m_TilePositionX;
+			unsigned int m_TilePositionY;
 
 			template<class Archive>
 			void serialize(Archive& archive)
@@ -72,7 +69,9 @@ namespace Serializable
 				archive(cereal::make_nvp("TilesetUUID", m_TilesetUUID.GetUUID()),
 								cereal::make_nvp("TileUUID", m_TileUUID.GetUUID()),
 								cereal::make_nvp("TilesetRow", m_TilesetRow),
-								cereal::make_nvp("TilesetColumn", m_TilesetColumn));
+								cereal::make_nvp("TilesetColumn", m_TilesetColumn),
+								cereal::make_nvp("TilePositionX", m_TilePositionX),
+								cereal::make_nvp("TilePositionY", m_TilePositionY));
 			}
 		};
 

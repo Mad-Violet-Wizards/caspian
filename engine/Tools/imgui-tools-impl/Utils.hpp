@@ -16,6 +16,52 @@ namespace Tools_Impl
 
 		bool FilterDigitOnly(const std::string& _str);
 
+		namespace widgets
+		{
+			struct ToggleButton
+			{
+				ToggleButton(const std::string& _label, const std::function<void()>& _onClick)
+					: m_Label(_label)
+					, m_OnClick(_onClick)
+				{}
+
+				ToggleButton(const std::string& _label, const std::function<void()>& _onClick, bool _active)
+					: m_Label(_label)
+					, m_OnClick(_onClick)
+					, m_Active(_active)
+				{}
+
+				void Render()
+				{
+					if (m_Active)
+					{
+						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.7f, 0.21f, 1.f));
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.8f, 0.3f, 1.f));
+					}
+					else
+					{
+						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.5f, 0.5f, 0.5f, 0.4f));
+						ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.6f, 0.6f, 0.6f, 0.45f));
+					}
+
+					if (ImGui::Button(m_Label.c_str()))
+					{
+						m_Active = !m_Active;
+
+						if (m_OnClick)
+							m_OnClick();
+					}
+
+					ImGui::PopStyleColor(2);
+				}
+				
+				bool IsActive() const { return m_Active; }
+
+				std::string m_Label = "Basic label";
+				std::function<void()> m_OnClick;
+				bool m_Active = false;
+			};
+		}
 
 		/////////////////////////////////////////////////////////
 		struct flags

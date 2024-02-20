@@ -99,6 +99,8 @@ namespace Assets
 		void PushTilesetInfo(const Serializable::Binary::TilesetInfo& _tileset_info);
 		std::shared_ptr<Serializable::Binary::TilesetsInfo>& GetTilesetsInfo();
 
+		const Serializable::Binary::TilesetInfo& FindTilesetInfo(Random::UUID _uuid) const;
+
 	private:
 
 
@@ -143,6 +145,8 @@ namespace Assets
  
 			void SetInitialized() { m_bInitialized = true; }
 			bool IsInitialized() const { return m_bInitialized; }
+
+			const sf::Texture& GetEmptyTexture() const { return m_EmptyTexture.GetConstResource(); }
 
 
 		private:

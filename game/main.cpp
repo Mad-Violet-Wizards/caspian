@@ -6,6 +6,7 @@
 #include "engine/Design-Patterns/Singleton.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Core/Level.hpp"
+#include "engine/Core/Rendering.hpp"
 
 int main()
 {
@@ -13,7 +14,7 @@ int main()
 
 	auto& main_instance = ApplicationSingleton::Instance();
 
-	auto& engine_module = main_instance.GetEngineModule();
+	auto& engine_module = main_instance.GetEngineController();
 
 	std::unique_ptr<Scenes::StateMachine> scenes_state_machine = std::make_unique<Scenes::StateMachine>();
 	engine_module.SetScenesStateMachine(std::move(scenes_state_machine));
@@ -31,6 +32,8 @@ int main()
 	main_instance.SetWorld(std::move(world));
 
 	// RENDERING
+	std::unique_ptr<Rendering::System> rendering_system = std::make_unique<Rendering::System>();
+	main_instance.SetRenderingSystem(std::move(rendering_system));
 
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();
@@ -85,7 +88,7 @@ int main()
 		}
 	}
 
-	main_instance.GetEngineModule().GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
+	main_instance.GetEngineController().GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
 	#endif
 	
 

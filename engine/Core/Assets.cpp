@@ -15,7 +15,7 @@ Assets::Storage::Storage()
 
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources")->GetPath();
 
 	for (auto& file : _files)
 	{
@@ -44,7 +44,7 @@ void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _fi
 
 void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources")->GetPath();
 
 	for (auto& file : _files)
 	{
@@ -70,7 +70,7 @@ void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files
 
 void Assets::Storage::LoadResourceAcceptableType(fs::IFile* _file)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources")->GetPath();
 
 	if (_file->IsOpen())
 	{
@@ -282,9 +282,12 @@ void Assets::Storage::LoadEmptyTexture()
 	{
 		for (auto x = 0; x < size; ++x)
 		{
-			bool is_even = (y / size) % 2 == 0 || (x / size) % 2 == 0;
+			const bool is_even_x = x % 2 == 0;
+			const bool is_even_y = y % 2 == 0;
 
-			image_buffer.setPixel(x, y, is_even ? sf::Color::Magenta : sf::Color(80, 80, 80));
+			sf::Color color = (is_even_x ^ is_even_y) ? sf::Color::Magenta : sf::Color(80, 80, 80);
+
+			image_buffer.setPixel(x, y, color);
 		}
 	}
 
@@ -317,4 +320,17 @@ void Assets::TilemapStorage::PushTilesetInfo(const Serializable::Binary::Tileset
 std::shared_ptr<Serializable::Binary::TilesetsInfo>& Assets::TilemapStorage::GetTilesetsInfo()
 {
 	return m_TilestsInfo;
+}
+
+const Serializable::Binary::TilesetInfo& Assets::TilemapStorage::FindTilesetInfo(Random::UUID _uuid) const
+{
+	for (const auto& tileset : m_TilestsInfo->m_Tilesets)
+	{
+		if (tileset.m_TilesetUUID == _uuid)
+		{
+			return tileset;
+		}
+	}
+
+	throw std::runtime_error("Tileset not found.");
 }

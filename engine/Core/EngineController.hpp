@@ -21,13 +21,13 @@ struct Project
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-class EngineModule
+class EngineController
 {
 
 	public:
 
-		EngineModule() = default;
-		~EngineModule() = default;
+		EngineController() = default;
+		~EngineController() = default;
 
 		void Update(float _dt);
 

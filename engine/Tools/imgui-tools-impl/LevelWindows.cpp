@@ -41,28 +41,24 @@ void NewLevelWindow::Render()
 			ImGuiFileDialog::Instance()->Close();
 		}
 
-		ImGui::InputText("Tile width", &m_nTileWidth);
-		ImGui::InputText("Tile height", &m_nTileHeight);
+		ImGui::InputText("Tile size", &m_TileSize);
 
-		const bool bTileWidthOk = utils::FilterDigitOnly(m_nTileWidth);
-		const bool bTileHeightOk = utils::FilterDigitOnly(m_nTileHeight);
+		const bool bTileSizeOk = utils::FilterDigitOnly(m_TileSize);
 		const bool bPatchValid = std::filesystem::exists(m_LevelPath);
 
 		const ImVec4 red_color { 1.f, 0.f, 0.f, 1.f };
 
-		if (!bTileWidthOk && !m_nTileHeight.empty()) ImGui::TextColored(red_color, "Tile width must be a number!");
-		if (!bTileHeightOk && !m_nTileHeight.empty()) ImGui::TextColored(red_color, "Tile height must be a number!");
+		if (!bTileSizeOk && !m_TileSize.empty()) ImGui::TextColored(red_color, "Tile size must be a number!");
 		if (!bPatchValid && !m_LevelPath.empty()) ImGui::TextColored(red_color, "Path is invalid!");
 
 		if (ImGui::Button("Create"))
 		{
-			if (bTileWidthOk && bTileHeightOk && bPatchValid)
+			if (bTileSizeOk && bPatchValid)
 			{ 
 				const std::string level_path = m_LevelPath + "\\" + m_LevelName + ".json";
-				const unsigned int tile_width = std::stoul(m_nTileWidth);
-				const unsigned int tile_height = std::stoul(m_nTileHeight);
+				const unsigned int tile_size = std::stoul(m_TileSize);
 
-				m_Manager->CreateNewLevelRequest(level_path, m_LevelName, tile_width, tile_height);
+				m_Manager->CreateNewLevelRequest(level_path, m_LevelName, tile_size);
 			}
 		}
 	}
@@ -122,7 +118,7 @@ void LoadLevelWindow::Render()
 /////////////////////////////////////////////////////////
 void TilesetListWindow::Update(float _dt)
 {
-	Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage();
+	Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
 	const auto& tiles_vec = assets_storage->GetTilemapStorage()->GetTilesetsVec();
 
 	// What's in tiles_vec should be in m_CachedTilesetRects
@@ -179,7 +175,7 @@ void TilesetListWindow::Render()
 				static std::optional<int> current_idx;
 				static std::string combo_preview_value;
 
-				const auto& tileset_vec = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage()->GetTilemapStorage()->GetTilesetsVec();
+				const auto& tileset_vec = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetTilemapStorage()->GetTilesetsVec();
 
 				if (current_idx.has_value())
 				{
@@ -218,7 +214,7 @@ void TilesetListWindow::Render()
 					const std::string& selected_tileset_path = tileset_vec.at(current_idx.value()).m_TilesetPath;
 					const unsigned int selected_tileset_tile_width = tileset_vec.at(current_idx.value()).m_TileWidth;
 					const unsigned int selected_tileset_tile_height = tileset_vec.at(current_idx.value()).m_TileHeight;
-					Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage();
+					Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
 
 					// Refresh m_Sprites only if selected tileset has changed.
 					if (m_PrevTilesetUUID != selected_tileset_uuid)
@@ -338,14 +334,14 @@ void TilesetListWindow::OnAssetSelected(const SelectedAssetData& data)
 {
 	m_QueuedToAddAsTileset = data;
 
-	auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
+	auto& engine_module = ApplicationSingleton::Instance().GetEngineController();
 	const std::string key{ data.m_RelativePath };
 	m_TilesetPreview = &engine_module.GetAssetsStorage()->GetConstTexture(key);
 }
 
 std::string TilesetListWindow::GetComboBoxTilesetName(Random::UUID _tileset_uuid) const
 {
-	const auto& assets_storage = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage();
+	const auto& assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
 	const auto& tilesets_vec = assets_storage->GetTilemapStorage()->GetTilesetsVec();
 	
 	for (auto& tileset : tilesets_vec)

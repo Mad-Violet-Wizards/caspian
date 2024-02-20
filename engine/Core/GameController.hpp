@@ -2,12 +2,12 @@
 
 #include "engine/Scenes/StateMachine.hpp"
 
-class GameModule
+class GameController
 {
 	public:
 
-		GameModule() = default;
-		~GameModule() = default;
+		GameController() = default;
+		~GameController() = default;
 
 	private:
 

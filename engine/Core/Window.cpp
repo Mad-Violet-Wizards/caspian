@@ -21,7 +21,7 @@ void Window::Update()
 		{
 			auto& main_instance = ApplicationSingleton::Instance();
 
-			Events::Dispatcher* event_dispatcher = main_instance.GetEngineModule().GetEventDispatcher();
+			Events::Dispatcher* event_dispatcher = main_instance.GetEngineController().GetEventDispatcher();
 
 			if (event_dispatcher)
 				event_dispatcher->ProcessEvent(event);

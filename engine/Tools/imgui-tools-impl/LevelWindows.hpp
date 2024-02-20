@@ -19,8 +19,7 @@ namespace Tools_Impl
 
 		std::string m_LevelName;
 		std::string m_LevelPath;
-		std::string m_nTileWidth;
-		std::string m_nTileHeight;
+		std::string m_TileSize;
 	};
 
 	/////////////////////////////////////////////////////////

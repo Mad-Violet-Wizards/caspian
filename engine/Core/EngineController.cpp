@@ -1,13 +1,13 @@
 #include "engine/pch.hpp"
 
-#include "EngineModule.hpp"
+#include "EngineController.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Filesystem/BinaryFilesystem.hpp"
 #include "engine/Filesystem/FilesystemMark.hpp"
 #include "engine/core/Level.hpp"
 #include <iostream>
 
-void EngineModule::Update(float _dt)
+void EngineController::Update(float _dt)
 {
 	if (m_ScenesStateMachine)
 	{
@@ -25,7 +25,7 @@ void EngineModule::Update(float _dt)
 	if (m_ProjectResourcesInitFinished)
 	{
 		auto& main_instance = ApplicationSingleton::Instance();
-		Assets::Storage* assets_storage = main_instance.GetEngineModule().GetAssetsStorage();
+		Assets::Storage* assets_storage = main_instance.GetEngineController().GetAssetsStorage();
 
 		std::cout << "EngineModule: Finished filling assets storage.\n"
 			<< "No. textures: " << assets_storage->GetTexturesCount() << "\n"
@@ -35,7 +35,7 @@ void EngineModule::Update(float _dt)
 	}
 }
 
-std::string EngineModule::GetEngineVersionString()
+std::string EngineController::GetEngineVersionString()
 {
 	const std::array<unsigned char, 4> engine_version_bytes = GetEngineVersion();
 
@@ -43,23 +43,23 @@ std::string EngineModule::GetEngineVersionString()
 	return "TODO";
 }
 
-void EngineModule::OnProjectChanged()
+void EngineController::OnProjectChanged()
 {
 	InitializeFilesystems();
 }
 
-void EngineModule::OnFilesystemsLoaded()
+void EngineController::OnFilesystemsLoaded()
 {
 	InitializeAssets();
 }
 
-void EngineModule::OnAssetsStorageLoaded()
+void EngineController::OnAssetsStorageLoaded()
 {
 	auto& main_instance = ApplicationSingleton::Instance(); 
-	main_instance.GetEngineModule().GetAssetsStorage()->SetInitialized();
+	main_instance.GetEngineController().GetAssetsStorage()->SetInitialized();
 }
 
-void EngineModule::InitializeFilesystems()
+void EngineController::InitializeFilesystems()
 {
 	if (m_ResourcesFsInitStarted || m_DataFsInitStarted)
 		return;
@@ -87,7 +87,7 @@ void EngineModule::InitializeFilesystems()
 
 		mutex.lock();
 		auto& main_instance = ApplicationSingleton::Instance();
-		main_instance.GetEngineModule().GetFilesystemManager()->Mount(_fs_alias, std::move(_fs));
+		main_instance.GetEngineController().GetFilesystemManager()->Mount(_fs_alias, std::move(_fs));
 		mutex.unlock();
 	};
 	
@@ -126,7 +126,7 @@ void EngineModule::InitializeFilesystems()
 	thread_data_fs.launch();
 }
 
-void EngineModule::InitializeAssets()
+void EngineController::InitializeAssets()
 {
 	auto fn_contains = [](const std::string_view _str1, const std::string_view _str2) -> bool
 	{
@@ -140,7 +140,7 @@ void EngineModule::InitializeAssets()
 	};
 
 	auto& main_instance = ApplicationSingleton::Instance();
-	fs::IFileSystem* resource_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("resources");
+	fs::IFileSystem* resource_fs = main_instance.GetEngineController().GetFilesystemManager()->Get("resources");
 	const std::vector<std::string> resources_file_aliases = resource_fs->GetFilesAliases();
 
 	std::vector<fs::IFile*> textures_files;
@@ -198,7 +198,7 @@ void EngineModule::InitializeAssets()
 			}
 		});
 
-	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");
+	fs::IFileSystem* data_fs = main_instance.GetEngineController().GetFilesystemManager()->Get("data");
 	const std::vector<std::string> data_file_aliases = data_fs->GetFilesAliases();
 
 	std::ranges::for_each(data_file_aliases.cbegin(),
@@ -214,7 +214,7 @@ void EngineModule::InitializeAssets()
 				{
 					case fs::IFile::EType::Data_Tilemaps:
 					{
-						Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineModule().GetAssetsStorage()->GetTilemapStorage();
+						Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineController().GetAssetsStorage()->GetTilemapStorage();
 
 						auto& tilemap_info = tilemap_storage->GetTilesetsInfo();
 						auto binary_data = std::dynamic_pointer_cast<ISerializable::Binary>(tilemap_info);
@@ -238,7 +238,7 @@ void EngineModule::InitializeAssets()
 			}
 		});
 
-	Assets::Storage* assets_storage = main_instance.GetEngineModule().GetAssetsStorage();
+	Assets::Storage* assets_storage = main_instance.GetEngineController().GetAssetsStorage();
 	sf::Mutex mutex;
 
 	auto f_close_files = [](std::vector<fs::IFile*> _files)
@@ -272,7 +272,7 @@ void EngineModule::InitializeAssets()
 	thread_load_resources.launch();
 }
 
-void EngineModule::LoadLevelData(const Serializable::JSON::LevelInfo& _lvl_info)
+void EngineController::LoadLevelData(const Serializable::JSON::LevelInfo& _lvl_info)
 {
 
 }

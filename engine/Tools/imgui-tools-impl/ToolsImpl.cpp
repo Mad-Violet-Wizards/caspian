@@ -26,7 +26,7 @@ void Toolbar::Render()
 	if (!m_Active)
 		return;
 
-	const bool bAssets_storage_initialized = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage()->IsInitialized();
+	const bool bAssets_storage_initialized = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->IsInitialized();
 
 	static auto flags = utils::flags();
 
@@ -88,15 +88,27 @@ void Toolbar::Render()
 		}
 
 		{
-			constexpr auto levels_popup_name = "LevelsPopup";
+			constexpr auto tools_popup_name = "ToolsPopup";
 
 		ImGui::SameLine();
 			if (ImGui::Button("Tools", styles.toolbar_button_size))
-				ImGui::OpenPopup(levels_popup_name);
+				ImGui::OpenPopup(tools_popup_name);
 
-			if (ImGui::BeginPopup(levels_popup_name))
+			if (ImGui::BeginPopup(tools_popup_name))
 			{
-				if (ImGui::Selectable("Level editor..."))
+				if (ImGui::Selectable("General Toolbox"))
+				{
+					if (bAssets_storage_initialized) // Maybe better check if level is active?
+					{
+						m_Manager->m_ToolboxWindow.m_Active = true;
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot open general toolbox\nwithout loading project first!");
+					}
+
+				}
+				else if (ImGui::Selectable("Level editor..."))
 				{
 					if (bAssets_storage_initialized)
 					{
@@ -107,6 +119,7 @@ void Toolbar::Render()
 						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot create new level\nwithout loading project first!");
 					}
 				}
+
 
 				ImGui::EndPopup();
 			}
@@ -225,6 +238,7 @@ Manager::Manager()
 	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
 	, m_LevelEditorWindow(this)
+	, m_ToolboxWindow(this)
 {
 
 }
@@ -243,6 +257,7 @@ void Manager::Update(float _dt)
 	m_NotificationManager.Update(_dt);
 	m_AssetListWindow.Update(_dt);
 	m_LevelEditorWindow.Update(_dt);
+	m_ToolboxWindow.Update(_dt);
 
 	//m_Toolbar.Update(_dt);
 	//m_ImportAssetWindow.Update(_dt);
@@ -262,6 +277,7 @@ void Manager::Render()
 	m_AssetListWindow.Render();
 	m_NewProjectWindow.Render();
 	m_LoadProjectWindow.Render();
+	m_ToolboxWindow.Render();
 
 	m_LevelEditorWindow.Render();
 }
@@ -278,7 +294,7 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 	auto& main_instance = ApplicationSingleton::Instance();
 
 	// TODO: Refactor to use cereal.
-	fs::IFileSystem* appdata_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
+	fs::IFileSystem* appdata_fs = main_instance.GetEngineController().GetFilesystemManager()->Get(Windows::S_ENGINE_APPDATA_ALIAS);
 
 	if (!appdata_fs->FileExists("projects.json"))
 	{
@@ -330,7 +346,7 @@ void Manager::CreateNewProjectRequest(const std::string& _project_name, const st
 			data_path /= "data";
 			data_folder_created = std::filesystem::create_directories(data_path);
 
-			Serializable::Binary::MagicFileInfo magic_file_info(ApplicationSingleton::Instance().GetEngineModule().GetEngineVersion());
+			Serializable::Binary::MagicFileInfo magic_file_info(ApplicationSingleton::Instance().GetEngineController().GetEngineVersion());
 
 			std::filesystem::path magic_number_path{ project_path };
 			magic_number_path /= _project_name + ".casp";
@@ -385,7 +401,7 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 			ShowNotification(ENotificationType::Error, "Invalid project file!");
 			return;
 		}
-		auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
+		auto& engine_module = ApplicationSingleton::Instance().GetEngineController();
 
 		if (magic_file_info.m_EngineVersion != engine_module.GetEngineVersion())
 		{
@@ -406,10 +422,10 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 	}
 }
 
-void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_width, unsigned int _tile_height)
+void Manager::CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_size)
 {
 	auto& main_instance = ApplicationSingleton::Instance();
-	const bool success = main_instance.GetWorld()->CreateNewLevel(_lvl_path, _lvl_name, _tile_width, _tile_height);
+	const bool success = main_instance.GetWorld()->CreateNewLevel(_lvl_path, _lvl_name, _tile_size);
 
 	if (success)
 	{
@@ -436,7 +452,7 @@ void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::stri
 {
 	auto& main_instance = ApplicationSingleton::Instance();
 
-	fs::IFileSystem* data_fs = main_instance.GetEngineModule().GetFilesystemManager()->Get("data");
+	fs::IFileSystem* data_fs = main_instance.GetEngineController().GetFilesystemManager()->Get("data");
 	const std::string tilemaps_storage_path = "tilemaps\\data.tilemaps";
 
 	bool tilemap_file_created = false;
@@ -449,7 +465,7 @@ void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::stri
 
 	if (std::shared_ptr<fs::IFile> tilemap_file = data_fs->OpenFile(tilemaps_storage_path, fs::io::OpenMode::ReadWrite))
 	{
-		Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineModule().GetAssetsStorage()->GetTilemapStorage();
+		Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineController().GetAssetsStorage()->GetTilemapStorage();
 		
 		const Serializable::Binary::TilesetInfo tileset_info(_tileset_key, _tileset_name, _tile_width, _tile_height);
 		tilemap_storage->PushTilesetInfo(tileset_info);
