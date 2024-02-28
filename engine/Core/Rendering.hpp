@@ -7,46 +7,6 @@ constexpr int SPATIAL_BUCKET_SIZE = 256;
 namespace Rendering
 {
 
-	///////////////////////////////////////////////////////
-	class TextureLayer
-	{
-		public:
-
-			TextureLayer(unsigned int _size = 0);
-			~TextureLayer() = default;
-			
-			void SetIndex(int _index) { m_LayerIndex = _index; }
-			int GetIndex() const { return m_LayerIndex; }
-
-			void AddSprite(sf::Sprite* _sprite);
-
-			const std::vector<sf::Sprite*>& GetSprites() const { return m_CachedSprites; }
-
-		private:
-
-			int m_LayerIndex;
-			std::vector<sf::Sprite*> m_CachedSprites;
-
-	};
-
-	////////////////////////////////////////////////////////////
-	class RenderChunk
-	{
-		public:
-
-			RenderChunk(Random::UUID _owning_chunk_uuid = Random::EMPTY_UUID);
-			~RenderChunk() = default;
-
-			void AddTextureLayer(TextureLayer& _texture_layer) { m_TextureLayers.push_back(_texture_layer); }
-			Random::UUID GetUUID() const { return m_OwningChunkUUID; }
-
-		private:
-
-			Random::UUID m_OwningChunkUUID;
-
-			std::vector<TextureLayer> m_TextureLayers;
-	};
-
 	////////////////////////////////////////////////////////////
 	using TileIndex = std::pair<int, int>;
 
@@ -64,18 +24,25 @@ namespace Rendering
 	{
 		public:
 
-			RenderTile(const sf::Vector2u& _world_position, const sf::IntRect& _texture_rect, Random::UUID _tileset_uuid);
+			RenderTile(int _layer_index, const sf::Vector2u& _world_position, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid);
 			~RenderTile() = default;
 
-			sf::Vector2u GetWorldPosition() const { return m_WorldPosition; }
-			sf::IntRect GetTextureRect() const { return m_TextureRect; }
+			int GetLayerIndex() const { return m_LayerIndex; }
+			const sf::Vector2u& GetWorldPosition() const { return m_WorldPosition; }
+			const sf::Vector2u& GetTilesetPosition() const { return m_TilesetPosition; }
 			Random::UUID GetTilesetUUID() const { return m_TilesetUUID; }
+
+			const std::array<sf::Vertex, 4>& GetVertices() const;
 
 		private:
 
+			int m_LayerIndex;
+
 			sf::Vector2u m_WorldPosition;
-			sf::IntRect m_TextureRect;
+			sf::Vector2u m_TilesetPosition;
 			Random::UUID m_TilesetUUID;
+
+			std::array<sf::Vertex, 4> m_Vertices;
 	};
 
 	class SpatialHashGrid
@@ -85,18 +52,21 @@ namespace Rendering
 			SpatialHashGrid() = default;
 			~SpatialHashGrid() = default;
 
-			void ProcessTextureTileLayer(const TextureLayer& _texture_layer);
+			void ProcessRenderTile(const RenderTile& _render_tile);
 
 			bool Contains(const TileIndex& _index) const { return m_SpatialHash.find(_index) != m_SpatialHash.end(); }
-			const std::vector<sf::Sprite*>& FindSpatialBucket(const TileIndex& _index) const;
+			const std::vector<RenderTile>& GetTiles(const TileIndex& _index) const { return m_SpatialHash.at(_index); }
 
-			TileIndex GetTileIndex(const sf::Vector2f& _pos) const;
+			TileIndex GetTileIndex(const sf::Vector2u& _pos) const;
+			TileIndex GetTileIndexVecFloat(const sf::Vector2f& _pos) const;
 
 			size_t GetSize() const { return m_SpatialHash.size(); }
 
+			void Clear();
+
 		private:
 
-			std::unordered_map<TileIndex, std::vector<sf::Sprite*>, TileIndexHash> m_SpatialHash;
+			std::unordered_map<TileIndex, std::vector<RenderTile>, TileIndexHash> m_SpatialHash;
 
 	};
 
@@ -109,16 +79,26 @@ namespace Rendering
 			~LevelRendering() = default;
 
 			void Render(sf::RenderWindow& _window);
-			bool ContainsChunk(Random::UUID _chunk_uuid) const;
-			void AddChunk(RenderChunk _chunk) { m_RenderChunks.push_back(_chunk); }
-			bool IsEmpty() const { return m_RenderChunks.empty(); }
 
-			void AddToSpatialHash(const TextureLayer& _texture_layer);
+			void MarkChunk(Random::UUID _chunk_uuid);
+			bool ContainsChunk(Random::UUID _chunk_uuid) const;
+			bool IsEmpty() const { return m_CurrentChunks.empty(); }
+
+			SpatialHashGrid& GetSpatialHashGrid() { return m_SpatialHashGrid; }
+
+			void Clear();
+
+	private:
+
+			// Method return ALL visible tiles, including even those overlapped by other tiles on different layers.
+			std::vector<RenderTile> GetVisibleTiles() const;
+
+			std::map<std::pair<int, Random::UUID>, std::vector<RenderTile>> GroupTilesByLayer(const std::vector<RenderTile>& _visible_tiles) const;
 
 		private:
 
 			SpatialHashGrid m_SpatialHashGrid;
-			std::vector<RenderChunk> m_RenderChunks;
+			std::vector<Random::UUID> m_CurrentChunks;
 	};
 
 
@@ -133,13 +113,15 @@ namespace Rendering
 			void Render(sf::RenderWindow& _window);
 			
 			void OnLevelActivated(Level::Level* _level);
+			void OnLevelDeactivated(Level::Level* _level);
 
-			void ProcessChunk(Level::Chunk* _level_chunk);
+			void ProcessLevelChunk(Level::Chunk* _level_chunk);
+
+			static unsigned int s_LevelTileSize;
+			static sf::Vector2f s_RenderSize;
 
 		private:
 			
 			LevelRendering m_LevelRendering;
-
-			static unsigned int s_TileSize;
 	};
 }

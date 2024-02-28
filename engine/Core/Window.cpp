@@ -5,7 +5,7 @@
 #include <imgui-SFML/imgui-SFML.h>
 
 Window::Window(const std::string& windowName)
-	: m_renderWindow(sf::VideoMode(800, 600), windowName)
+	: m_renderWindow(sf::VideoMode(1280, 720), windowName)
 {
 }
 

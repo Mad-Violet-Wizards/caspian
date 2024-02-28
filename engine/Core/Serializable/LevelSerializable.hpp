@@ -58,10 +58,10 @@ namespace Serializable
 
 			Random::UUID m_TilesetUUID = Random::EMPTY_UUID;
 			Random::UUID m_TileUUID = Random::EMPTY_UUID;
-			unsigned int m_TilesetRow;
-			unsigned int m_TilesetColumn;
-			unsigned int m_TilePositionX;
-			unsigned int m_TilePositionY;
+			unsigned int m_TilesetRow = 0;
+			unsigned int m_TilesetColumn = 0;
+			unsigned int m_TilePositionX = 0;
+			unsigned int m_TilePositionY = 0;
 
 			template<class Archive>
 			void serialize(Archive& archive)

@@ -31,6 +31,8 @@ void Application::MainLoop()
 	LateUpdate();
 	Draw();
 	CalculateDeltaTime();
+
+	std::cout << "Fps: " << 1.f / m_deltaTime << "\n";
 }
 
 void Application::Update()

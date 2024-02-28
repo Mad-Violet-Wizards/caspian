@@ -47,8 +47,6 @@ class CameraDebugController : public IDebugController
 
 		sf::Vector2i m_LastMousePos;
 		sf::Vector2i m_MouseDelta;
-		
-		std::unique_ptr<Events::Listener> m_mouseScrollListener;
 };
 
 

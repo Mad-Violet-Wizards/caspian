@@ -76,10 +76,6 @@ void CameraToolbox::Render()
 				const sf::Vector2f& camera_pos = camera->GetPosition();
 				const std::string camera_pos_text = std::format("Camera position (center): (x: {}, y: {})", camera_pos.x, camera_pos.y);
 				ImGui::Text(camera_pos_text.c_str());
-
-				const float camera_zoom = camera->GetZoom();
-				const std::string camera_zoom_text = std::format("Camera zoom: {}", camera_zoom);
-				ImGui::Text(camera_zoom_text.c_str());
 			}
 		}
 

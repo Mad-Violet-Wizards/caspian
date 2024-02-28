@@ -273,7 +273,7 @@ std::vector<std::string> Assets::Storage::GetFontKeys() const
 
 void Assets::Storage::LoadEmptyTexture()
 {
-	const auto size = 1024;
+	const auto size = 32;
 
 	sf::Image image_buffer;
 	image_buffer.create(size, size);

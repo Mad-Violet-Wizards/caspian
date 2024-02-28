@@ -46,7 +46,11 @@ namespace Level
 
 	void World::DeactivateLevel(const std::string& _level_name)
 	{
+		auto& level = m_CachedLevels[_level_name];
+		m_ActiveLevel.clear();
 
+		Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
+		rendering_system->OnLevelDeactivated(level.get());
 	}
 
 	bool World::IsLevelCached(const std::string& _level_name) const
@@ -64,15 +68,13 @@ namespace Level
 		chunk_root_path /= _chunk_root_name;
 
 		// Load chunk root file.
-		if (std::shared_ptr<fs::IFile> chunk_root_file = data_fs->OpenFile(chunk_root_path.string(), fs::io::OpenMode::ReadWrite))
+		if (std::shared_ptr<fs::IFile> chunk_root_file = data_fs->OpenFile(chunk_root_path.string(), fs::io::OpenMode::In | fs::io::OpenMode::Binary))
 		{
 			auto& chunk_root_info = loaded_level->GetChunksManager()->GetChunkRootInfo();
 			auto binary_data = std::dynamic_pointer_cast<ISerializable::Binary>(chunk_root_info);
 			chunk_root_file->Seek(0, fs::io::Origin::Begin);
 			chunk_root_file->DeserializeBinary(binary_data);
 			chunk_root_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkRootInfo>(binary_data);
-
-			const sf::Vector2f& camera_pos = m_Camera->GetPosition();
 
 #define CAST_INT(x) static_cast<int>(x)
 
@@ -86,14 +88,14 @@ namespace Level
 					std::filesystem::path chunk_path = "levels";
 					chunk_path /= chunk_info.m_RelativePath;
 
-					if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_path.string(), fs::io::OpenMode::ReadWrite))
+					if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_path.string(), fs::io::OpenMode::In | fs::io::OpenMode::Binary))
 					{
 						std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>(chunk_rect);
-						auto& chunk_info = chunk->GetChunkInfo();
-						auto binary_data = std::dynamic_pointer_cast<ISerializable::Binary>(chunk_info);
+						auto& parsed_chunk_info = chunk->GetChunkInfo();
+						auto binary_chunk_data = std::dynamic_pointer_cast<ISerializable::Binary>(parsed_chunk_info);
 						chunk_file->Seek(0, fs::io::Origin::Begin);
-						chunk_file->DeserializeBinary(binary_data);
-						chunk_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkInfo>(binary_data);
+						chunk_file->DeserializeBinary(binary_chunk_data);
+						parsed_chunk_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkInfo>(binary_chunk_data);
 
 						loaded_level->GetChunksManager()->PushChunk(std::move(chunk));
 
@@ -103,7 +105,6 @@ namespace Level
 						data_fs->CloseFile(chunk_file);
 
 						// TODO: For now we can break, in future we need to load neighbouring chunks.
-						break;
 					}
 
 				data_fs->CloseFile(chunk_root_file);
@@ -126,14 +127,20 @@ namespace Level
 		// Check JSON for chunk root file.
 		for (const auto& level_info : m_InitialLevelsData)
 		{
-			if (IsLevelCached(_level_name))
+			if (level_info.m_LevelName == _level_name)
 			{
-				ActivateLevel(_level_name);
-			}
-			else
-			{
-				LoadLevel(_level_name, level_info.m_ChunkRootFile, level_info.m_TileSize);
-				ActivateLevel(_level_name);
+				if (!m_ActiveLevel.empty())
+					DeactivateLevel(m_ActiveLevel);
+
+				if (IsLevelCached(_level_name))
+				{
+					ActivateLevel(_level_name);
+				}
+				else
+				{
+					LoadLevel(_level_name, level_info.m_ChunkRootFile, level_info.m_TileSize);
+					ActivateLevel(_level_name);
+				}
 			}
 		}
 	}
@@ -182,7 +189,7 @@ namespace Level
 		bool file_closed_successfully = false;
 		bool json_serialized = false;
 
-		if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::ReadWrite))
+		if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::Out))
 		{
 			const std::string& root_chunk_file_name = _level_name + ".rootchunk";
 			std::shared_ptr<ISerializable::JSON> level_data = std::make_shared<Serializable::JSON::LevelInfo>(_level_name, root_chunk_file_name, _tile_size);
@@ -277,7 +284,7 @@ namespace Level
 		const sf::IntRect chunk_area(_x, _y, _width_pixels, _height_pixels);
 		std::unique_ptr<Chunk> new_chunk = std::make_unique<Chunk>(chunk_area);
 
-		if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_file_path.string(), fs::io::OpenMode::ReadWrite | fs::io::OpenMode::Binary))
+		if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_file_path.string(), fs::io::OpenMode::Out | fs::io::OpenMode::Binary))
 		{
 			auto& chunk_info = new_chunk->GetChunkInfo();
 			chunk_info->m_ChunkUUID = new_chunk_uuid;
@@ -288,22 +295,38 @@ namespace Level
 			const unsigned int final_x = _x + _width_pixels;
 			const unsigned int final_y = _y + _height_pixels;
 
-			//default_layer.m_Tiles.resize( (_width_pixels / _tile_size) + (_height_pixels * _tile_size) );
-
 			for (unsigned int i = _x; i < final_x; i += _tile_size)
 			{
 				for (unsigned int j = _y; j < final_y; j += _tile_size)
 				{
 					Serializable::Binary::TextureTileInfo tile;
-					tile.m_TilesetColumn = -1;
-					tile.m_TilesetRow = -1;
+					tile.m_TilesetColumn = 0;
+					tile.m_TilesetRow = 0;
 					tile.m_TilePositionX = i;
 					tile.m_TilePositionY = j;
 					default_layer.m_Tiles.push_back(tile);
 				}
 			}
 
+			Serializable::Binary::TextureLayerInfo extra_layer;
+			extra_layer.m_LayerIndex = 1;
+
+			for (unsigned int i = _x; i < final_x; i += _tile_size)
+			{
+				for (unsigned int j = _y; j < final_y; j += _tile_size)
+				{
+					Serializable::Binary::TextureTileInfo tile;
+					tile.m_TilesetColumn = 0;
+					tile.m_TilesetRow = 0;
+					tile.m_TilePositionX = i;
+					tile.m_TilePositionY = j;
+					extra_layer.m_Tiles.push_back(tile);
+				}
+			}
+
+			
 			chunk_info->m_TileLayers.push_back(default_layer);
+			chunk_info->m_TileLayers.push_back(extra_layer);
 
 			chunk_file->SerializeBinary(chunk_info);
 

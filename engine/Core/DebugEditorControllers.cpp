@@ -58,39 +58,20 @@ const sf::Vector2i& CameraDebugController::GetMouseDelta() const
 
 void CameraDebugController::OnZoomChanged(float _delta)
 {
-	auto& main_instance = ApplicationSingleton::Instance();
 
-	if (main_instance.GetWorld())
-	{
-		if (auto camera = main_instance.GetWorld()->GetCamera())
-		{
-			camera->AddZoom(_delta);
-		}
-	}
 }
  
 void CameraDebugController::InitializeEventListeners()
 {
-	m_mouseScrollListener = std::make_unique<Events::Listener>();
-	m_mouseScrollListener->NotifyOn(sf::Event::MouseWheelScrolled);
 
-	m_mouseScrollListener->SetCallback([&](const sf::Event& _event)
-		{
-			if (_event.mouseWheelScroll.delta > 0)
-				OnZoomChanged(0.01f);
-			else
-				OnZoomChanged(-0.01f);
-		});
 }
 
 void CameraDebugController::OnActivated()
 {
-	ApplicationSingleton::Instance().GetEngineController().GetEventDispatcher()->AddObserver(m_mouseScrollListener.get());
 }
 
 void CameraDebugController::OnDeactivated()
 {
-	ApplicationSingleton::Instance().GetEngineController().GetEventDispatcher()->RemoveObserver(m_mouseScrollListener.get());
 }
 
 /////////////////////////////////////////////////////////////
