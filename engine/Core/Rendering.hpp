@@ -19,7 +19,6 @@ namespace Rendering
 		}
 	};
 
-	// TODO: VERTEX BUFFER RENDERING!!!
 	class RenderTile
 	{
 		public:
@@ -52,10 +51,10 @@ namespace Rendering
 			SpatialHashGrid() = default;
 			~SpatialHashGrid() = default;
 
-			void ProcessRenderTile(const RenderTile& _render_tile);
+			void ProcessRenderTile(RenderTile* _render_tile);
 
 			bool Contains(const TileIndex& _index) const { return m_SpatialHash.find(_index) != m_SpatialHash.end(); }
-			const std::vector<RenderTile>& GetTiles(const TileIndex& _index) const { return m_SpatialHash.at(_index); }
+			const std::vector<RenderTile*>& GetTiles(const TileIndex& _index) const { return m_SpatialHash.at(_index); }
 
 			TileIndex GetTileIndex(const sf::Vector2u& _pos) const;
 			TileIndex GetTileIndexVecFloat(const sf::Vector2f& _pos) const;
@@ -66,7 +65,7 @@ namespace Rendering
 
 		private:
 
-			std::unordered_map<TileIndex, std::vector<RenderTile>, TileIndexHash> m_SpatialHash;
+			std::unordered_map<TileIndex, std::vector<RenderTile*>, TileIndexHash> m_SpatialHash;
 
 	};
 
@@ -90,14 +89,14 @@ namespace Rendering
 
 	private:
 
-			// Method return ALL visible tiles, including even those overlapped by other tiles on different layers.
-			std::vector<RenderTile> GetVisibleTiles() const;
+			std::vector<RenderTile*> GetTilesInViewport();
+			std::map<std::pair<int, Random::UUID>, std::vector<RenderTile*>> GroupTilesByLayer(const std::vector<RenderTile*>& _visible_tiles) const;
 
-			std::map<std::pair<int, Random::UUID>, std::vector<RenderTile>> GroupTilesByLayer(const std::vector<RenderTile>& _visible_tiles) const;
 
 		private:
 
 			SpatialHashGrid m_SpatialHashGrid;
+
 			std::vector<Random::UUID> m_CurrentChunks;
 	};
 

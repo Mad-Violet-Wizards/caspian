@@ -26,9 +26,7 @@ void Rendering::System::OnLevelActivated(Level::Level* _level)
 	s_LevelTileSize = _level->GetTilesSize();
 
 	for (const auto& chunk : chunk_manager->GetChunks())
-	{
 		ProcessLevelChunk(chunk.get());
-	}
 }
 
 void Rendering::System::OnLevelDeactivated(Level::Level* _level)
@@ -42,25 +40,25 @@ void Rendering::System::ProcessLevelChunk(Level::Chunk* _level_chunk)
 
 	m_LevelRendering.MarkChunk(chunk_info->m_ChunkUUID);
 
-	for (const Serializable::Binary::TextureLayerInfo& tile_layer_info : chunk_info->m_TileLayers)
+	for (auto reverse_it = chunk_info->m_TileLayers.rbegin(); reverse_it != chunk_info->m_TileLayers.rend(); ++reverse_it)
 	{
+		const Serializable::Binary::TextureLayerInfo& tile_layer_info = *reverse_it;
+
 		for (const auto& _tile_info : tile_layer_info.m_Tiles)
 		{
 			const sf::Vector2u tile_world_pos { _tile_info.m_TilePositionX, _tile_info.m_TilePositionY };
 			const sf::Vector2u tile_position_in_tileset { _tile_info.m_TilesetRow, _tile_info.m_TilesetColumn };
 
-			Rendering::RenderTile _render_tile(tile_layer_info.m_LayerIndex, tile_world_pos, tile_position_in_tileset, _tile_info.m_TilesetUUID);
+			Rendering::RenderTile* tile = new Rendering::RenderTile(tile_layer_info.m_LayerIndex, tile_world_pos, tile_position_in_tileset, _tile_info.m_TilesetUUID);
 
-			m_LevelRendering.GetSpatialHashGrid().ProcessRenderTile(_render_tile);
+			m_LevelRendering.GetSpatialHashGrid().ProcessRenderTile(tile);
 		}
 	}
 }
 
-std::vector<Rendering::RenderTile> Rendering::LevelRendering::GetVisibleTiles() const
+std::vector<Rendering::RenderTile*> Rendering::LevelRendering::GetTilesInViewport()
 {
-	std::vector<RenderTile> visible_tiles;
-
-	auto camera = ApplicationSingleton::Instance().GetWorld()->GetCamera();
+	const auto& camera = ApplicationSingleton::Instance().GetWorld()->GetCamera();
 
 	const sf::Vector2f screen_size
 	{
@@ -80,25 +78,27 @@ std::vector<Rendering::RenderTile> Rendering::LevelRendering::GetVisibleTiles() 
 	const TileIndex top_left = m_SpatialHashGrid.GetTileIndexVecFloat({ camera_rect.left, camera_rect.top });
 	const TileIndex bottom_right = m_SpatialHashGrid.GetTileIndexVecFloat({ camera_rect.left + camera_rect.width, camera_rect.top + camera_rect.height });
 
+	std::vector<RenderTile*> tiles_in_viewport;
+
 	for (auto x = top_left.first; x < bottom_right.first; ++x)
 	{
 		for (auto y = top_left.second; y < bottom_right.second; ++y)
 		{
-			const auto& tiles = m_SpatialHashGrid.GetTiles({ x, y });
-			visible_tiles.insert(visible_tiles.end(), tiles.begin(), tiles.end());
+			std::vector<RenderTile*> tiles = m_SpatialHashGrid.GetTiles({ x, y });
+			tiles_in_viewport.insert(tiles_in_viewport.end(), tiles.begin(), tiles.end());
 		}
 	}
 
-	return visible_tiles;
+	return tiles_in_viewport;
 }
 
-std::map<std::pair<int, Random::UUID>, std::vector<Rendering::RenderTile>> Rendering::LevelRendering::GroupTilesByLayer(const std::vector<RenderTile>& _visible_tiles) const
+std::map<std::pair<int, Random::UUID>, std::vector<Rendering::RenderTile*>> Rendering::LevelRendering::GroupTilesByLayer(const std::vector<RenderTile*>& _visible_tiles) const
 {
-	std::map<std::pair<int, Random::UUID>, std::vector<Rendering::RenderTile>> tiles_by_layer;
+	std::map<std::pair<int, Random::UUID>, std::vector<Rendering::RenderTile*>> tiles_by_layer;
 
 	for (const auto& render_tile : _visible_tiles)
 	{
-		tiles_by_layer[{render_tile.GetLayerIndex(), render_tile.GetTilesetUUID()}].push_back(render_tile);
+		tiles_by_layer[{render_tile->GetLayerIndex(), render_tile->GetTilesetUUID()}].push_back(render_tile);
 	}
 
 	return tiles_by_layer;
@@ -109,8 +109,8 @@ void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
 	if (m_SpatialHashGrid.GetSize() == 0)
 		return;
 
-	const auto visible_tiles = GetVisibleTiles();
-	const auto tiles_by_layer = GroupTilesByLayer(visible_tiles);
+	std::vector<RenderTile*> tiles_in_viewport = GetTilesInViewport();
+	const auto tiles_by_layer = GroupTilesByLayer(tiles_in_viewport);
 
 	const Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
 
@@ -118,7 +118,7 @@ void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
 	{
 		sf::VertexBuffer vertex_buffer(sf::Quads, sf::VertexBuffer::Static);
 
-		const std::vector<RenderTile>& tiles = tiles_group.second;
+		const std::vector<RenderTile*>& tiles = tiles_group.second;
 
 		std::vector<sf::Vertex> vertices;
 		vertices.reserve(tiles.size() * 4);
@@ -126,7 +126,7 @@ void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
 		const Random::UUID tileset_uuid = tiles_group.first.second;
 
 		for (const auto& tile : tiles)
-			for (const auto& vertex : tile.GetVertices())
+			for (const auto& vertex : tile->GetVertices())
 				vertices.push_back(vertex);
 
 		vertex_buffer.create(tiles.size() * 4);
@@ -162,9 +162,9 @@ void Rendering::LevelRendering::Clear()
 	m_SpatialHashGrid.Clear();
 }
 
-void Rendering::SpatialHashGrid::ProcessRenderTile(const RenderTile& _render_tile)
+void Rendering::SpatialHashGrid::ProcessRenderTile(RenderTile* _render_tile)
 {
-	const TileIndex& tile_index = GetTileIndex(_render_tile.GetWorldPosition());
+	const TileIndex& tile_index = GetTileIndex(_render_tile->GetWorldPosition());
 	m_SpatialHash[tile_index].push_back(_render_tile);
 }
 
@@ -215,4 +215,3 @@ const std::array<sf::Vertex, 4>& Rendering::RenderTile::GetVertices() const
 {
 	return m_Vertices;
 }
-
