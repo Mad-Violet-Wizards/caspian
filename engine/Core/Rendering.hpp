@@ -31,17 +31,17 @@ namespace Rendering
 			const sf::Vector2u& GetTilesetPosition() const { return m_TilesetPosition; }
 			Random::UUID GetTilesetUUID() const { return m_TilesetUUID; }
 
-			const std::array<sf::Vertex, 4>& GetVertices() const;
+			const sf::Sprite& GetSprite() const { return *m_Sprite; }
 
 		private:
+
+			sf::Sprite* m_Sprite;
 
 			int m_LayerIndex;
 
 			sf::Vector2u m_WorldPosition;
 			sf::Vector2u m_TilesetPosition;
 			Random::UUID m_TilesetUUID;
-
-			std::array<sf::Vertex, 4> m_Vertices;
 	};
 
 	class SpatialHashGrid
@@ -49,7 +49,7 @@ namespace Rendering
 		public:
 
 			SpatialHashGrid() = default;
-			~SpatialHashGrid() = default;
+			~SpatialHashGrid();
 
 			void ProcessRenderTile(RenderTile* _render_tile);
 
@@ -86,12 +86,6 @@ namespace Rendering
 			SpatialHashGrid& GetSpatialHashGrid() { return m_SpatialHashGrid; }
 
 			void Clear();
-
-	private:
-
-			std::vector<RenderTile*> GetTilesInViewport();
-			std::map<std::pair<int, Random::UUID>, std::vector<RenderTile*>> GroupTilesByLayer(const std::vector<RenderTile*>& _visible_tiles) const;
-
 
 		private:
 

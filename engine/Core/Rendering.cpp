@@ -56,18 +56,21 @@ void Rendering::System::ProcessLevelChunk(Level::Chunk* _level_chunk)
 	}
 }
 
-std::vector<Rendering::RenderTile*> Rendering::LevelRendering::GetTilesInViewport()
+void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
 {
+	if (m_SpatialHashGrid.GetSize() == 0)
+		return;
+
 	const auto& camera = ApplicationSingleton::Instance().GetWorld()->GetCamera();
 
 	const sf::Vector2f screen_size
 	{
 		static_cast<float>(sf::VideoMode::getDesktopMode().width),
-		static_cast<float>(sf::VideoMode::getDesktopMode().height) 
+		static_cast<float>(sf::VideoMode::getDesktopMode().height)
 	};
 
 
-	sf::FloatRect camera_rect{ camera->GetPosition().x - System::s_RenderSize.x, 
+	sf::FloatRect camera_rect{ camera->GetPosition().x - System::s_RenderSize.x,
 														 camera->GetPosition().y - System::s_RenderSize.y,
 														 screen_size.x,
 														 screen_size.y };
@@ -78,65 +81,15 @@ std::vector<Rendering::RenderTile*> Rendering::LevelRendering::GetTilesInViewpor
 	const TileIndex top_left = m_SpatialHashGrid.GetTileIndexVecFloat({ camera_rect.left, camera_rect.top });
 	const TileIndex bottom_right = m_SpatialHashGrid.GetTileIndexVecFloat({ camera_rect.left + camera_rect.width, camera_rect.top + camera_rect.height });
 
-	std::vector<RenderTile*> tiles_in_viewport;
-
 	for (auto x = top_left.first; x < bottom_right.first; ++x)
 	{
 		for (auto y = top_left.second; y < bottom_right.second; ++y)
 		{
 			std::vector<RenderTile*> tiles = m_SpatialHashGrid.GetTiles({ x, y });
-			tiles_in_viewport.insert(tiles_in_viewport.end(), tiles.begin(), tiles.end());
+
+			for (RenderTile* tile : tiles)
+				_window.draw(tile->GetSprite());
 		}
-	}
-
-	return tiles_in_viewport;
-}
-
-std::map<std::pair<int, Random::UUID>, std::vector<Rendering::RenderTile*>> Rendering::LevelRendering::GroupTilesByLayer(const std::vector<RenderTile*>& _visible_tiles) const
-{
-	std::map<std::pair<int, Random::UUID>, std::vector<Rendering::RenderTile*>> tiles_by_layer;
-
-	for (const auto& render_tile : _visible_tiles)
-	{
-		tiles_by_layer[{render_tile->GetLayerIndex(), render_tile->GetTilesetUUID()}].push_back(render_tile);
-	}
-
-	return tiles_by_layer;
-}
-
-void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
-{
-	if (m_SpatialHashGrid.GetSize() == 0)
-		return;
-
-	std::vector<RenderTile*> tiles_in_viewport = GetTilesInViewport();
-	const auto tiles_by_layer = GroupTilesByLayer(tiles_in_viewport);
-
-	const Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
-
-	for (const auto& tiles_group : tiles_by_layer)
-	{
-		sf::VertexBuffer vertex_buffer(sf::Quads, sf::VertexBuffer::Static);
-
-		const std::vector<RenderTile*>& tiles = tiles_group.second;
-
-		std::vector<sf::Vertex> vertices;
-		vertices.reserve(tiles.size() * 4);
-
-		const Random::UUID tileset_uuid = tiles_group.first.second;
-
-		for (const auto& tile : tiles)
-			for (const auto& vertex : tile->GetVertices())
-				vertices.push_back(vertex);
-
-		vertex_buffer.create(tiles.size() * 4);
-		vertex_buffer.update(vertices.data());
-
-		sf::RenderStates render_states;
-		if (tileset_uuid == Random::EMPTY_UUID)
-			render_states.texture = &assets_storage->GetEmptyTexture();
-
-		_window.draw(vertex_buffer, render_states);
 	}
 }
 
@@ -160,6 +113,18 @@ void Rendering::LevelRendering::Clear()
 {
 	m_CurrentChunks.clear();
 	m_SpatialHashGrid.Clear();
+}
+
+Rendering::SpatialHashGrid::~SpatialHashGrid()
+{
+	for (auto& [key, value] : m_SpatialHash)
+	{
+		for (auto& tile : value)
+			delete tile;
+		value.clear();
+	}
+
+	m_SpatialHash.clear();
 }
 
 void Rendering::SpatialHashGrid::ProcessRenderTile(RenderTile* _render_tile)
@@ -192,26 +157,16 @@ Rendering::RenderTile::RenderTile(int _layer_index, const sf::Vector2u& _world_p
 	sf::Vertex top_left, top_right, bottom_left, bottom_right;
 
 	const sf::Vector2f world_position_f = { static_cast<float>(_world_position.x), static_cast<float>(_world_position.y) };
-	const float tile_size_f = static_cast<float>(Rendering::System::s_LevelTileSize);
-	const sf::Vector2f tileset_pos_f = { static_cast<float>(_tileset_pos.x) * tile_size_f, static_cast<float>(_tileset_pos.y) * tile_size_f };
+	//const float tile_size_f = static_cast<float>(Rendering::System::s_LevelTileSize);
+	//const sf::Vector2f tileset_pos_f = { static_cast<float>(_tileset_pos.x) * tile_size_f, static_cast<float>(_tileset_pos.y) * tile_size_f };
 
-	top_left.position = { world_position_f.x, world_position_f.y };
-	top_right.position = { world_position_f.x + tile_size_f, world_position_f.y };
-	bottom_right.position = { world_position_f.x + tile_size_f, world_position_f.y + tile_size_f };
-	bottom_left.position = { world_position_f.x, world_position_f.y + tile_size_f };
-
-	top_left.texCoords = { tileset_pos_f.x, tileset_pos_f.y };
-	top_right.texCoords = { tileset_pos_f.x + tile_size_f, tileset_pos_f.y };
-	bottom_right.texCoords = { tileset_pos_f.x + tile_size_f, tileset_pos_f.y + tile_size_f };
-	bottom_left.texCoords = { tileset_pos_f.x, tileset_pos_f.y + tile_size_f };
-
-	m_Vertices[0] = top_left;
-	m_Vertices[1] = top_right;
-	m_Vertices[2] = bottom_right;
-	m_Vertices[3] = bottom_left;
-}
-
-const std::array<sf::Vertex, 4>& Rendering::RenderTile::GetVertices() const
-{
-	return m_Vertices;
+	if (m_TilesetUUID == Random::EMPTY_UUID)
+	{
+		m_Sprite = new sf::Sprite(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetEmptyTexture());
+		m_Sprite->setPosition(world_position_f);
+	}
+	else
+	{
+		m_Sprite = nullptr;
+	}
 }
