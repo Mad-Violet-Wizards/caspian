@@ -5,7 +5,7 @@
 #include <imgui-SFML/imgui-SFML.h>
 
 Window::Window(const std::string& windowName)
-	: m_renderWindow(sf::VideoMode(800, 600), windowName)
+	: m_renderWindow(sf::VideoMode(1280, 720), windowName)
 {
 }
 
@@ -21,7 +21,7 @@ void Window::Update()
 		{
 			auto& main_instance = ApplicationSingleton::Instance();
 
-			Events::Dispatcher* event_dispatcher = main_instance.GetEventDispatcher();
+			Events::Dispatcher* event_dispatcher = main_instance.GetEngineController().GetEventDispatcher();
 
 			if (event_dispatcher)
 				event_dispatcher->ProcessEvent(event);

@@ -21,6 +21,5 @@ namespace Scenes
 		virtual void Update(float deltaTime) = 0;
 		virtual void LateUpdate(float deltaTime) = 0;
 
-		virtual void Draw(Window& window) = 0;
 	};
 };

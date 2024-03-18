@@ -28,7 +28,6 @@ namespace moc
 
 			void Update(float deltaTime) override {}
 			void LateUpdate(float deltaTime) override {}
-			void Draw(Window& window) override {}
 
 			bool m_wasCreated : 1;
 			bool m_wasDestroyed : 1;
@@ -55,7 +54,6 @@ namespace moc
 
 			void Update(float deltaTime) override {}
 			void LateUpdate(float deltaTime) override {}
-			void Draw(Window& window) override {}
 
 			bool m_wasCreated : 1;
 			bool m_wasDestroyed : 1;

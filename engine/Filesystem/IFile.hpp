@@ -58,6 +58,7 @@ namespace fs
 				Data,
 					Data_LevelRootChunk,
 					Data_LevelChunk,
+					Data_Tilemaps,
 				Directory
 			};
 
@@ -76,6 +77,7 @@ namespace fs
 					case EType::Data:      return ".pak";
 					case EType::Data_LevelRootChunk: return ".rootchunk";
 					case EType::Data_LevelChunk:		 return ".chunk";
+					case EType::Data_Tilemaps:			 return ".tilemaps";
 					default:												 return S_UNKNOWN_ETYPE_STR;
 				}
 			}
@@ -92,6 +94,7 @@ namespace fs
 				if (_type == ".pak")			 return EType::Data;
 				if (_type == ".rootchunk") return EType::Data_LevelRootChunk;
 				if (_type == ".chunk")		 return EType::Data_LevelChunk;
+				if (_type == ".tilemaps") 	 return EType::Data_Tilemaps;
 				return EType::Unknown;
 			}
 
@@ -108,6 +111,7 @@ namespace fs
 				if (_str == "Directory")						return EType::Directory;
 				if (_str == "Data_LevelRootChunk")	return EType::Data_LevelRootChunk;
 				if (_str == "Data_LevelChunk")			return EType::Data_LevelChunk;
+				if (_str == "Tilemaps")							return EType::Data_Tilemaps;
 				return EType::Unknown;
 			}
 
@@ -118,6 +122,7 @@ namespace fs
 					case EType::Data:
 					case EType::Data_LevelRootChunk:
 					case EType::Data_LevelChunk:
+					case EType::Data_Tilemaps:
 						return true;
 					default:
 						return false;
@@ -143,11 +148,13 @@ namespace fs
 			virtual std::string_view GetPath() const { return m_Path; };
 			virtual EType GetType() const = 0;
 
+			
+			// TODO: Think of a better way than const & to shared-ptr.
 			virtual void DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json) = 0;
 			virtual void SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json) = 0;
 
 			virtual void DeserializeBinary(std::shared_ptr<ISerializable::Binary>& _binary) = 0;
-			virtual void SerializeBinary(std::shared_ptr<ISerializable::Binary> _binary) = 0;
+			virtual void SerializeBinary(const std::shared_ptr<ISerializable::Binary>& _binary) = 0;
 
 			template<typename T>
 			bool Read(T& _target, size_t _size)

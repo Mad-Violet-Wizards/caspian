@@ -16,12 +16,6 @@ void StateMachine::LateUpdate(float deltaTime)
 		m_currentScene->LateUpdate(deltaTime);
 }
 
-void StateMachine::Draw(Window& window)
-{
-	if (m_currentScene)
-		m_currentScene->Draw(window);
-}
-
 bool StateMachine::Add(ESceneID id, std::shared_ptr<IScene> scene)
 {
 	auto it = m_scenes.try_emplace(id, scene);

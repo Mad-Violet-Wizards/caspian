@@ -93,7 +93,7 @@ void ImportAssetWindow::Render()
 			std::string dest_relative_path;
 			bool copy_success = false;
 
-			auto& engine_module = ApplicationSingleton::Instance().GetEngineModule();
+			auto& engine_module = ApplicationSingleton::Instance().GetEngineController();
 			fs::IFileSystem* resources_fs = engine_module.GetFilesystemManager()->Get("resources");
 
 			copy_file_async(m_srcPath, m_destPath, [this, resources_fs, &copy_success,  &dest_relative_path]
@@ -157,7 +157,7 @@ void AssetsListWindow::Update(float _dt)
 	if (!m_Active)
 		return;
 
-	Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage();
+	Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
 	size_t assets_storage_count = assets_storage->GetTotalResourcesCount();
 
 	// TODO: It might be good to do some benchmarking as now 
@@ -174,7 +174,7 @@ void AssetsListWindow::Update(float _dt)
 		std::ranges::move(assets_storage->GetTexturesKeys(), std::back_inserter(registered_assets));
 		std::ranges::move(assets_storage->GetFontKeys(),		 std::back_inserter(registered_assets));
 
-		fs::IFileSystem* resource_fs = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources");
+		fs::IFileSystem* resource_fs = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources");
 
 		for (const std::string& asset_name : registered_assets)
 		{
@@ -208,10 +208,10 @@ void AssetsListWindow::Update(float _dt)
 						const Internal_AssetToDelete& asset_to_delete = m_AssetSelectedToDelete.value();
 
 						auto file_etype = fs::IFile::ETypeFromString(asset_to_delete.m_Type);
-						Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineModule().GetAssetsStorage();
+						Assets::Storage* assets_storage = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage();
 						assets_storage->DeleteResource(asset_to_delete.m_Name, file_etype);
 
-						fs::IFileSystem* resource_fs = ApplicationSingleton::Instance().GetEngineModule().GetFilesystemManager()->Get("resources");
+						fs::IFileSystem* resource_fs = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources");
 						const bool file_deleted_successfully = resource_fs->RemoveFile(asset_to_delete.m_Name);
 
 						asset_to_delete.m_OnDelete(file_deleted_successfully);
@@ -264,7 +264,7 @@ void AssetsListWindow::Render()
 			ImGui::TableNextColumn();
 			ImGui::Text("Asset name");
 			ImGui::TableNextColumn();
-			ImGui::Text("Asset relative path");
+			ImGui::Text("Asset relative path / Assets Storage Key");
 			ImGui::TableNextColumn();
 			ImGui::Text("Asset absolute path");
 			ImGui::TableNextColumn();
@@ -290,28 +290,32 @@ void AssetsListWindow::Render()
 				ImGui::TableNextColumn();
 				ImGui::Text(asset.m_AbsolutePath.c_str());
 				ImGui::TableNextColumn();
-				ImGui::PushID(i);
-				if (ImGui::Button("Delete"))
+				if (m_ActionListener)
 				{
-					auto on_delete = [&](bool _success)
-						{
-							if (_success)
-								m_Manager->ShowNotification(ENotificationType::Success, "Asset deleted successfully.");
-							else
-								m_Manager->ShowNotification(ENotificationType::Error, "Asset couldn't be deleted.");
-						};
+					ImGui::PushID(i);
 
-					Internal_AssetToDelete asset_to_delete{ asset.m_Name, asset.m_Type, on_delete };
-					m_AssetSelectedToDelete.emplace(asset_to_delete);
+					if (ImGui::Button("Delete"))
+					{
+						auto on_delete = [&](bool _success)
+							{
+								if (_success)
+									m_Manager->ShowNotification(ENotificationType::Success, "Asset deleted successfully.");
+								else
+									m_Manager->ShowNotification(ENotificationType::Error, "Asset couldn't be deleted.");
+							};
+
+						Internal_AssetToDelete asset_to_delete{ asset.m_Name, asset.m_Type, on_delete };
+						m_AssetSelectedToDelete.emplace(asset_to_delete);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Select"))
+					{
+						SelectedAssetData data;
+						data.m_RelativePath = asset.m_RelativePath;
+						NotifyAssetSelected(data);
+					}
+					ImGui::PopID();
 				}
-				ImGui::SameLine();
-				if (ImGui::Button("Select"))
-				{
-					SelectedAssetData data;
-					data.m_RelativePath = asset.m_RelativePath;
-					NotifyAssetSelected(data);
-				}
-				ImGui::PopID();
 				ImGui::TableNextRow();
 			}
 
@@ -327,4 +331,6 @@ void AssetsListWindow::NotifyAssetSelected(const SelectedAssetData& _data)
 		return;
 
 	m_ActionListener->OnAssetSelected(_data);
+
+	m_ActionListener = nullptr;
 }

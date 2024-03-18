@@ -7,6 +7,7 @@ namespace fs
 	IFileSystem::IFileSystem(std::string_view _path)
 		: m_IsInitialized(false)
 		, m_Path(_path)
+		, m_ProjectFilesystem(false)
 	{ }
 
 	const std::vector<std::string> IFileSystem::GetFilesAliases() const

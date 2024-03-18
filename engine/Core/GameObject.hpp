@@ -8,15 +8,10 @@ class GameObject
 	public:
 
 		GameObject();
-
 		~GameObject();
-
-		void Awake();
-		void Start();
 
 		void Update(float deltaTime);
 		void LateUpdate(float deltaTime);
-		void Draw(Window& window);
 
 		bool QueuedForRemoval() const;
 		void QueueForRemoval();
@@ -39,8 +34,8 @@ class GameObject
 		[[nodiscard]] std::shared_ptr<T> GetComponent()
 		{
 			for (const auto& existingComponent : m_components)
-				if (std::dynamic_pointer_cast<T>(existingComponent))
-					return existingComponent;
+				if (auto casted_component = std::dynamic_pointer_cast<T>(existingComponent))
+					return casted_component;
 
 			return nullptr;
 		}

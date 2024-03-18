@@ -33,12 +33,16 @@ namespace fs
 
 			[[nodiscard]] virtual std::vector<std::string> BuildFilesList(std::string_view _path) const;
 
+			void SetProjectFilesystem(bool _project_fs) { m_ProjectFilesystem = _project_fs; }
+			bool IsProjectFilesystem() const { return m_ProjectFilesystem; }
+
 	protected:
 
 			std::unordered_map<std::string, std::shared_ptr<IFile>> m_Files;
 			std::vector<std::shared_ptr<IFile>> m_OpenedFiles;
 
 			bool m_IsInitialized;
+			bool m_ProjectFilesystem;
 
 			std::string m_Path;
 	};

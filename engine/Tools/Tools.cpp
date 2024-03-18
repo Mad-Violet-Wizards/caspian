@@ -42,7 +42,7 @@ void Manager::InitializeEventListeners()
 	{
 		auto& main_instance = ApplicationSingleton::Instance();
 
-		main_instance.GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
+		main_instance.GetEngineController().GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
 	}
 }
 
