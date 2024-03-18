@@ -96,7 +96,7 @@ void Toolbar::Render()
 
 			if (ImGui::BeginPopup(tools_popup_name))
 			{
-				if (ImGui::Selectable("General Toolbox"))
+				if (ImGui::Selectable("General"))
 				{
 					if (bAssets_storage_initialized) // Maybe better check if level is active?
 					{

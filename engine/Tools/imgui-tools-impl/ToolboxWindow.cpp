@@ -8,6 +8,7 @@ using namespace Tools_Impl;
 ToolboxWindow::ToolboxWindow(Manager* _mgr)
 	: IWindow(_mgr)
 	, m_CameraToolbox(_mgr)
+	, m_LevelToolbox(_mgr)
 	, m_FpsCountLimit(120)
 {
 	m_SavedFps.reserve(m_FpsCountLimit);
@@ -26,7 +27,7 @@ void ToolboxWindow::Render()
 	if (!m_Active)
 		return;
 
-	ImGui::Begin("Camera Toolbox", &m_Active);
+	ImGui::Begin("Toolbox", &m_Active);
 	{
 		if (ImGui::CollapsingHeader("Debug info"))
 		{
@@ -51,8 +52,9 @@ void ToolboxWindow::Render()
 		}
 
 		ImGui::Dummy(ImVec2(0, 10));
-
 		m_CameraToolbox.Render();
+		ImGui::Dummy(ImVec2(0, 10));
+		m_LevelToolbox.Render();
 
 		ImGui::End();
 	}
@@ -92,10 +94,66 @@ CameraToolbox::CameraToolbox(Manager* _mgr)
 
 void CameraToolbox::OnMoveCameraToggled()
 {
-	const bool active = m_MoveCameraButton.IsActive();
+	auto& main_instance = ApplicationSingleton::Instance();
+	main_instance.GetDebugControllers().GetCameraController()->SetActive(m_MoveCameraButton.IsActive());
 
+}
+
+/////////////////////////////////////////////////////////
+LevelToolbox::LevelToolbox(Manager* _mgr)
+	: IWindow(_mgr)
+	, m_PlaceTileButton("Place Tile", std::bind(&LevelToolbox::OnPlaceTileToggled, this), false)
+	, m_EraseTileButton("Erase Tile", std::bind(&LevelToolbox::OnEraseTileToggled, this), false)
+{
+
+}
+
+void LevelToolbox::Update(float _dt)
+{
+}
+
+void LevelToolbox::Render()
+{
+	if (ImGui::CollapsingHeader("Level Toolbox"))
+	{
+		m_PlaceTileButton.Render();
+		ImGui::SameLine();
+		m_EraseTileButton.Render();
+	}
+}
+
+void LevelToolbox::OnPlaceTileToggled()
+{
 	auto& main_instance = ApplicationSingleton::Instance();
 
-	main_instance.GetDebugControllers().GetCameraController()->SetActive(active);
+	const bool is_active = m_PlaceTileButton.IsActive();
+	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
 
+	if (is_active)
+	{
+		m_EraseTileButton.m_Active = false;
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::Place);
+	}
+	else
+	{
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::None);
+	}
+}
+
+void LevelToolbox::OnEraseTileToggled()
+{
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	const bool is_active = m_PlaceTileButton.IsActive();
+	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
+
+	if (is_active)
+	{
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::Erase);
+		m_PlaceTileButton.m_Active = false;
+	}
+	else
+	{
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::None);
+	}
 }

@@ -32,11 +32,13 @@ namespace Rendering
 			Random::UUID GetTilesetUUID() const { return m_TilesetUUID; }
 
 			const sf::Sprite& GetSprite() const { return *m_Sprite; }
+			bool HasTransparentPixel() const { return m_AnyTransparentPixel; }
 
 		private:
 
 			sf::Sprite* m_Sprite;
 
+			bool m_AnyTransparentPixel;
 			int m_LayerIndex;
 
 			sf::Vector2u m_WorldPosition;
@@ -65,6 +67,7 @@ namespace Rendering
 
 		private:
 
+			std::unordered_map<TileIndex, bool, TileIndexHash> m_Chimneys;
 			std::unordered_map<TileIndex, std::vector<RenderTile*>, TileIndexHash> m_SpatialHash;
 
 	};

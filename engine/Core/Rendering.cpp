@@ -85,7 +85,7 @@ void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
 	{
 		for (auto y = top_left.second; y < bottom_right.second; ++y)
 		{
-			std::vector<RenderTile*> tiles = m_SpatialHashGrid.GetTiles({ x, y });
+			const std::vector<RenderTile*>& tiles = m_SpatialHashGrid.GetTiles({ x, y });
 
 			for (RenderTile* tile : tiles)
 				_window.draw(tile->GetSprite());
@@ -129,8 +129,18 @@ Rendering::SpatialHashGrid::~SpatialHashGrid()
 
 void Rendering::SpatialHashGrid::ProcessRenderTile(RenderTile* _render_tile)
 {
-	const TileIndex& tile_index = GetTileIndex(_render_tile->GetWorldPosition());
-	m_SpatialHash[tile_index].push_back(_render_tile);
+	const TileIndex chimney_idx = { _render_tile->GetWorldPosition().x, _render_tile->GetWorldPosition().y };
+
+	if (m_Chimneys.find(chimney_idx) == m_Chimneys.end() || m_Chimneys[chimney_idx] == false)
+	{
+		const TileIndex tile_index = GetTileIndex(_render_tile->GetWorldPosition());
+
+		m_SpatialHash[tile_index].push_back(_render_tile);
+	}
+	else
+	{
+		delete _render_tile;
+	}
 }
 
 Rendering::TileIndex Rendering::SpatialHashGrid::GetTileIndex(const sf::Vector2u& _pos) const
@@ -164,6 +174,7 @@ Rendering::RenderTile::RenderTile(int _layer_index, const sf::Vector2u& _world_p
 	{
 		m_Sprite = new sf::Sprite(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetEmptyTexture());
 		m_Sprite->setPosition(world_position_f);
+		m_AnyTransparentPixel = false;
 	}
 	else
 	{

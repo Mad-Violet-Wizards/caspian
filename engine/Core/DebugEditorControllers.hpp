@@ -49,10 +49,34 @@ class CameraDebugController : public IDebugController
 		sf::Vector2i m_MouseDelta;
 };
 
+///////////////////////////////////////////////////////////////////
+enum class ELevelDebugControllerMode
+{
+	None,
+	Place,
+	Erase
+};
+
+class LevelDebugController : public IDebugController
+{
+	public:
+
+		LevelDebugController();
+		~LevelDebugController();
+
+		void Update(float _dt) override;
+		void SetMode(ELevelDebugControllerMode _mode);
+
+	private:
+
+		ELevelDebugControllerMode m_Mode;
+};
+
 
 enum class EDebugControllerType
 {
-	Camera
+	Camera,
+	Level
 };
 
 //////////////////////////////////////////////////////////////////
@@ -66,6 +90,7 @@ class DebugEditorControllers
 		void Update(float _dt);
 
 		CameraDebugController* GetCameraController() const;
+		LevelDebugController* GetLevelController() const;
 
 	private:
 

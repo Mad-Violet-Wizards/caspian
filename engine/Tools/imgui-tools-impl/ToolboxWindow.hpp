@@ -21,6 +21,26 @@ namespace Tools_Impl
 
 			utils::widgets::ToggleButton m_MoveCameraButton;
 	};
+	/////////////////////////////////////////////////////////
+	class LevelToolbox : public IWindow
+	{
+		public:
+
+			LevelToolbox(Manager* _mgr);
+			~LevelToolbox() = default;
+
+			void Update(float _dt);
+			void Render();
+
+			void OnPlaceTileToggled();
+			void OnEraseTileToggled();
+
+		private:
+
+			utils::widgets::ToggleButton m_PlaceTileButton;
+			utils::widgets::ToggleButton m_EraseTileButton;
+
+	};
 
 	/////////////////////////////////////////////////////////
 	class ToolboxWindow : public IWindow
@@ -42,5 +62,6 @@ namespace Tools_Impl
 			std::vector<int> m_SavedFps;
 
 			CameraToolbox m_CameraToolbox;
+			LevelToolbox m_LevelToolbox;
 	};
 }

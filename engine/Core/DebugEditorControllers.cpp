@@ -6,6 +6,7 @@
 DebugEditorControllers::DebugEditorControllers()
 {
 	m_DebugControllers[EDebugControllerType::Camera] = std::make_unique<CameraDebugController>();
+	m_DebugControllers[EDebugControllerType::Level] = std::make_unique<LevelDebugController>();
 }
 
 void DebugEditorControllers::Update(float _dt)
@@ -19,6 +20,11 @@ void DebugEditorControllers::Update(float _dt)
 CameraDebugController* DebugEditorControllers::GetCameraController() const
 {
 	return static_cast<CameraDebugController*>(m_DebugControllers.at(EDebugControllerType::Camera).get());
+}
+
+LevelDebugController* DebugEditorControllers::GetLevelController() const
+{
+		return static_cast<LevelDebugController*>(m_DebugControllers.at(EDebugControllerType::Level).get());
 }
 
 /////////////////////////////////////////////////////////////
@@ -72,6 +78,29 @@ void CameraDebugController::OnActivated()
 
 void CameraDebugController::OnDeactivated()
 {
+}
+
+/////////////////////////////////////////////////////////////
+LevelDebugController::LevelDebugController()
+	: m_Mode(ELevelDebugControllerMode::None)
+{
+
+}
+
+
+LevelDebugController::~LevelDebugController()
+{
+
+}
+
+void LevelDebugController::Update(float _dt)
+{
+
+}
+
+void LevelDebugController::SetMode(ELevelDebugControllerMode _mode)
+{
+		m_Mode = _mode;
 }
 
 /////////////////////////////////////////////////////////////

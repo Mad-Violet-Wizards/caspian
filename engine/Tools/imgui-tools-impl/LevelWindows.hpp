@@ -56,6 +56,8 @@ namespace Tools_Impl
 			void Update(float _dt) override;
 			void Render() override;
 
+			SelectedTileInfo* GetSelectedTileInfo() { return m_SelectedTileInfo; }
+
 	private:
 
 		std::string GetComboBoxTilesetName(Random::UUID _tileset_uuid) const;
