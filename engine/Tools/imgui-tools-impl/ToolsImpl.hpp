@@ -8,6 +8,7 @@
 #include "ProjectWindows.hpp"
 #include "NotificationWindows.hpp"
 #include "LevelWindows.hpp"
+#include "ToolboxWindow.hpp"
 
 namespace Tools_Impl
 {
@@ -67,6 +68,7 @@ namespace Tools_Impl
 			~Manager() = default;
 
 			void ToggleActiveState();
+			bool IsActive() const;
 
 			void Update(float _dt);
 			void Render();
@@ -78,7 +80,10 @@ namespace Tools_Impl
 			void CreateNewProjectRequest(const std::string& _project_name, const std::string& _project_path);
 			void LoadProjectRequest(const std::string& _project_name, const std::string& _project_path);
 
-			void CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_width, unsigned int _tile_height);
+			void CreateNewLevelRequest(const std::string& _lvl_path, const std::string& _lvl_name, unsigned int _tile_size);
+
+			void AddTilesetRequest(const std::string& _tileset_key, const std::string& _tileset_name, unsigned int _tile_width, unsigned int _tile_height);
+
 
 		public:
 
@@ -91,6 +96,7 @@ namespace Tools_Impl
 			LevelEditorWindow m_LevelEditorWindow;
 
 			NotificationsManager m_NotificationManager;
+			ToolboxWindow m_ToolboxWindow;
 
 		private:
 

@@ -2,156 +2,130 @@
 #include "engine/Filesystem/FilesystemMark.hpp"
 #include "engine/Core/Serializable/LevelSerializable.hpp"
 
+class Camera;
+
 namespace Level
 {
-	namespace Data
-	{
-		// TODO: Deserialize/Serializer json struct wrapper.
-		struct JsonRootFileData
-		{
-			JsonRootFileData(const std::string& _level_name, 
-											 const std::string& _chunk_root_file, 
-											 unsigned int _tile_width, 
-											 unsigned int _tile_height)
-				: m_LevelName{ _level_name }
-				, m_ChunkRootFile{ _chunk_root_file }
-				, m_TileWidth{ _tile_width }
-				, m_TileHeight{ _tile_height }
-			{
-			}
-
-			JsonRootFileData(nlohmann::json& _json)
-				: m_LevelName { _json["name"].get<std::string>() }
-				, m_ChunkRootFile{ _json["chunk_root_file"].get<std::string>() }
-				, m_TileWidth{ _json["tile_width"].get<unsigned int>() }
-				, m_TileHeight{ _json["tile_height"].get<unsigned int>() }
-			{
-			}
-
-			nlohmann::json Deserialize() const
-			{
-				nlohmann::json res;
-				res["name"] = m_LevelName;
-				res["chunk_root_file"] = m_ChunkRootFile;
-				res["tile_width"] = m_TileWidth;
-				res["tile_height"] = m_TileHeight;
-				res["fs_mark"] = fs::EFilesystemMarkToHash(fs::EFilesystemMark::Level);
-
-				return res;
-			}
-
-			std::string m_LevelName;
-			std::string m_ChunkRootFile;
-			unsigned int m_TileWidth;
-			unsigned int m_TileHeight;
-		};
-
-		class ChunkRootFile
-		{
-				ChunkRootFile() = default;
-		};
-	}
-
-	class Tile
-	{
-	public:
-
-		Tile(unsigned int _tileset_id, size_t _tileset_x, size_t _tileset_y, size_t width, size_t height);
-		~Tile() = default;
-
-		unsigned int GetTilesetID() const { return m_TilesetID; }
-		unsigned int GetTilesetX() const { return m_TilesetX; }
-		unsigned int GetTilesetY() const { return m_TilesetY; }
-		unsigned int GetID() const { return m_ID; }
-		unsigned int GetWidth() const { return m_Width; }
-		unsigned int GetHeight() const { return m_Height; }
-
-		void Draw(Window& _window);
-
-	private:
-
-		unsigned int m_TilesetID;
-		unsigned int m_ID;
-		unsigned int m_TilesetX;
-		unsigned int m_TilesetY;
-		unsigned int m_Width;
-		unsigned int m_Height;
-	};
-
-
-	class Layer
-	{
-	public:
-
-		Layer(size_t width, size_t height);
-		~Layer() = default;
-
-	private:
-
-		unsigned int m_Width;
-		unsigned int m_Heihght;
-
-		std::vector<std::vector<Tile>> m_Tiles;
-
-	};
-
-	class Tileset
+	////////////////////////////////////////////////
+	class Chunk
 	{
 		public:
 
-			Tileset(const std::string& _path);
-			~Tileset() = default;
+			Chunk(const sf::IntRect& _area);
+			~Chunk() = default;
 
-		private:
+			void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer, unsigned int _tiles_size);
 
-			unsigned int m_ID;
-			unsigned int m_TileCount;
-			unsigned int m_TileWidth;
-			unsigned int m_TileHeight;
-			unsigned int m_TileSpacing;
-			unsigned int m_TileMargin;
-			unsigned int m_ImageWidth;
-			unsigned int m_ImageHeight;
+			void EraseTile(const sf::Vector2u& _position, unsigned int _layer, unsigned int _tiles_size);
 
-			std::string m_ImagePath;
-	};
+			const sf::IntRect& GetArea() const { return m_Area; }
 
-	class Level
-	{
-	public:
-
-		Level() = default;
-		~Level() = default;
-
-		void Draw(Window& _window);
-		void Update(float _dt);
+			std::shared_ptr<Serializable::Binary::ChunkInfo>& GetChunkInfo() { return m_ChunkInfo; }
 
 	private:
 
-		std::vector<Layer> m_layers;
+			Serializable::Binary::TextureTileInfo* FindTileInfo(const sf::Vector2u& position, unsigned int _tiles_size, unsigned int _layer);
+
+			void PerformSave();
+
+
+			sf::IntRect m_Area;
+			std::shared_ptr<Serializable::Binary::ChunkInfo> m_ChunkInfo;
 	};
 
+	////////////////////////////////////////////////
+	class ChunksManager
+	{
+	public:
+
+		ChunksManager();
+		~ChunksManager() = default;
+
+		bool GenerateNewChunk(unsigned int _x, unsigned int _y, unsigned int _width_pixels, unsigned int _height_pixels, unsigned int _tile_size, const std::string& _lvl_name);
+		void PushChunk(std::unique_ptr<Chunk>&& _chunk);
+		const std::vector<std::unique_ptr<Chunk>>& GetChunks() const { return m_Chunks; }
+		bool IsChunkRootInfoEmpty() const;
+
+		std::shared_ptr<Serializable::Binary::ChunkRootInfo>& GetChunkRootInfo() { return m_ChunkRootInfo; }
+
+		void Clear();
+
+	private:
+
+		std::shared_ptr<Serializable::Binary::ChunkRootInfo> m_ChunkRootInfo;
+		std::vector<std::unique_ptr<Chunk>> m_Chunks;
+	};
+	////////////////////////////////////////////////
+	class Level
+	{
+		public:
+
+			Level();
+			~Level() = default;
+
+			void Update(float _dt);
+
+			ChunksManager* GetChunksManager() { return m_ChunksManager.get(); }
+
+			void SetLevelBounds(const sf::FloatRect& _level_bounds) { m_LevelBounds = _level_bounds; }
+			const sf::FloatRect& GetLevelBounds() const { return m_LevelBounds; }
+
+			void SetTilesSize(unsigned int _tile_size);
+			unsigned int GetTilesSize() const;
+
+			void SetNoLayers(unsigned int _no_layers);
+			unsigned int GetNoLayers() const;
+
+		private:
+
+			sf::FloatRect m_LevelBounds;
+			std::string m_LevelName;
+			std::unique_ptr<ChunksManager> m_ChunksManager;
+
+			unsigned int m_TilesSize;
+			unsigned int m_NoLayers;
+
+	};
+
+
+	///////////////////////////////////////////////
 	class World
 	{
 	public:
 
-		World() = default;
+		World();
 		~World() = default;
 
-		void ActivateLevel(const std::string& _level_name);
-		void DeactivateLevel(const std::string& _level_name);
 
-		void SwitchToLevel(const std::string& _level_name);
-
-		void Draw();
 		void Update(float _dt);
 
 		void PushInitialLevelData(std::shared_ptr<Serializable::JSON::LevelInfo>& _level_info);
 		const std::vector<Serializable::JSON::LevelInfo>& GetInitialLevelsData() const { return m_InitialLevelsData; }
 
+		bool CreateNewLevel(const std::string& _lvl_path, const std::string& _level_name, unsigned int _tile_size);
+		void SwitchToLevel(const std::string& _level_name);
+
+		std::shared_ptr<Camera> GetCamera() { return m_Camera; }
+
+		Level* GetActiveLevel() const;
+		unsigned int GetActiveLevelNoLayers() const;
+
+		void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer);
+		void EraseTile(const sf::Vector2u& _position, unsigned int _layer);
+
 	private:
 
-		std::unordered_map<std::string, Level> m_levels;
+		void ActivateLevel(const std::string& _level_name);
+		void DeactivateLevel(const std::string& _level_name);
+
+		bool IsLevelCached(const std::string& _level_name) const;
+		void LoadLevel(const std::string& _level_name, const std::string& _chunk_root_name, unsigned int _tile_size);
+
+	private:
+
+		std::shared_ptr<Camera> m_Camera;
+		std::unordered_map<std::string, std::unique_ptr<Level>> m_CachedLevels;
+		std::string m_ActiveLevel;
 
 		std::vector<Serializable::JSON::LevelInfo> m_InitialLevelsData;
 	};

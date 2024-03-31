@@ -3,9 +3,19 @@
 #include "Assets.hpp"
 #include <iostream>
 
+#include "engine/Default/default_font.inc"
+
+Assets::Storage::Storage()
+{
+	m_TilemapStorage = std::make_unique<TilemapStorage>();
+
+	LoadEmptyTexture();
+	LoadDefaultFont();
+}
+
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources")->GetPath();
 
 	for (auto& file : _files)
 	{
@@ -34,7 +44,7 @@ void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _fi
 
 void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources")->GetPath();
 
 	for (auto& file : _files)
 	{
@@ -60,7 +70,7 @@ void Assets::Storage::LoadFontFsFilesBatch(const std::vector<fs::IFile*>& _files
 
 void Assets::Storage::LoadResourceAcceptableType(fs::IFile* _file)
 {
-	const std::string resources_fs_path = ApplicationSingleton::Instance().GetFilesystemManager()->Get("resources")->GetPath();
+	const std::string resources_fs_path = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("resources")->GetPath();
 
 	if (_file->IsOpen())
 	{
@@ -148,6 +158,20 @@ void Assets::Storage::DeleteResource(const std::string& _key, fs::IFile::EType _
 			break;
 		}
 	}
+}
+
+ sf::Vector2u Assets::Storage::GetTextureSize(const std::string& _path) const
+{
+	sf::Lock lock(m_Mutex);
+
+	if (m_textures.find(_path) != m_textures.end())
+	{
+		return m_textures.at(_path).GetConstResource().getSize();
+	}
+
+	// Otherwise we'll report default asset.
+	std::cout << "ERROR: Texture " << _path << " not found.\n";
+	throw std::runtime_error("Texture wasn't found.");
 }
 
 sf::Texture& Assets::Storage::GetTexture(const std::string& _path)
@@ -245,4 +269,95 @@ std::vector<std::string> Assets::Storage::GetFontKeys() const
 	});
 
 	return keys;
+}
+
+void Assets::Storage::LoadEmptyTexture()
+{
+	const auto size = 32;
+
+	sf::Image image_buffer;
+	image_buffer.create(size, size);
+
+	for (auto y = 0; y < size; ++y)
+	{
+		for (auto x = 0; x < size; ++x)
+		{
+			const bool is_even_x = x % 2 == 0;
+			const bool is_even_y = y % 2 == 0;
+
+			sf::Color color = (is_even_x ^ is_even_y) ? sf::Color::Magenta : sf::Color(80, 80, 80);
+
+			image_buffer.setPixel(x, y, color);
+		}
+	}
+
+	m_EmptyTexture.LoadFromImage(image_buffer);
+}
+
+void Assets::Storage::LoadDefaultFont()
+{
+	std::vector<uint8_t> data(default_font, default_font + default_font_size);
+	m_DefaultFont.LoadFromData(data);
+}
+
+Assets::TilemapStorage::TilemapStorage()
+{
+	m_TilestsInfo = std::make_shared<Serializable::Binary::TilesetsInfo>();
+}
+
+const std::vector<Serializable::Binary::TilesetInfo>& Assets::TilemapStorage::GetTilesetsVec() const
+{
+	return m_TilestsInfo->m_Tilesets;
+}
+
+void Assets::TilemapStorage::PushTilesetInfo(const Serializable::Binary::TilesetInfo& _tileset_info)
+{
+	// TODO: Check for duplicates!
+
+	m_TilestsInfo->m_Tilesets.push_back(_tileset_info);
+}
+
+std::shared_ptr<Serializable::Binary::TilesetsInfo>& Assets::TilemapStorage::GetTilesetsInfo()
+{
+	return m_TilestsInfo;
+}
+
+const Serializable::Binary::TilesetInfo& Assets::TilemapStorage::FindTilesetInfo(Random::UUID _uuid) const
+{
+	for (const auto& tileset : m_TilestsInfo->m_Tilesets)
+	{
+		if (tileset.m_TilesetUUID == _uuid)
+		{
+			return tileset;
+		}
+	}
+
+	throw std::runtime_error("Tileset not found.");
+}
+
+void Assets::TilemapStorage::InitImageBuffers()
+{
+	for (const auto& tileset : m_TilestsInfo->m_Tilesets)
+	{
+		sf::Image image_buffer = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetConstTexture(tileset.m_TilesetPath).copyToImage();
+		m_ImageBuffers[tileset.m_TilesetUUID] = image_buffer;
+	}
+}
+
+bool Assets::TilemapStorage::CheckForTransparency(Random::UUID _uuid, const sf::Vector2u& _tile_pos, unsigned int _tile_size) const
+{
+	const sf::Image& image_buffer = m_ImageBuffers.at(_uuid);
+
+	for (unsigned int x = _tile_pos.x; x < _tile_pos.x + _tile_size; ++x)
+	{
+		for (unsigned int y = _tile_pos.y; y < _tile_pos.y + _tile_size; ++y)
+		{
+			if (image_buffer.getPixel(x, y).a < 255)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
 }

@@ -6,6 +6,7 @@
 #include "engine/Design-Patterns/Singleton.hpp"
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Core/Level.hpp"
+#include "engine/Core/Rendering.hpp"
 
 int main()
 {
@@ -13,19 +14,26 @@ int main()
 
 	auto& main_instance = ApplicationSingleton::Instance();
 
+	auto& engine_module = main_instance.GetEngineController();
+
+	std::unique_ptr<Scenes::StateMachine> scenes_state_machine = std::make_unique<Scenes::StateMachine>();
+	engine_module.SetScenesStateMachine(std::move(scenes_state_machine));
+
 	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
-	main_instance.SetEventDispatcher(std::move(event_dispatcher_system));
+	engine_module.SetEventDispatcher(std::move(event_dispatcher_system));
 
 	std::unique_ptr<fs::Manager> filesystem_manager = std::make_unique<fs::Manager>();
-	main_instance.SetFilesystemManager(std::move(filesystem_manager));
+	engine_module.SetFilesystemManager(std::move(filesystem_manager));
 
 	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
-	main_instance.SetAssetsStorage(std::move(assets_storage));
-
-	// Rendering system must initialize somewhere around here.
+	engine_module.SetAssetsStorage(std::move(assets_storage));
 
 	std::unique_ptr<Level::World> world = std::make_unique<Level::World>();
 	main_instance.SetWorld(std::move(world));
+
+	// RENDERING
+	std::unique_ptr<Rendering::System> rendering_system = std::make_unique<Rendering::System>();
+	main_instance.SetRenderingSystem(std::move(rendering_system));
 
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();
@@ -36,7 +44,7 @@ int main()
 
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
 	tools_manager->InitializeEventListeners();
-	main_instance.SetToolsManager(std::move(tools_manager));
+	engine_module.SetToolsManager(std::move(tools_manager));
 	#endif
 
 	#if defined (_WIN32)
@@ -62,6 +70,8 @@ int main()
 						<< "DEBUG: [Main] Engine appdata alias: " << Windows::S_ENGINE_APPDATA_ALIAS << "\n";
 
 	std::unique_ptr<fs::NativeFileSystem> engine_appdata_fs = std::make_unique<fs::NativeFileSystem>(engine_appdata_path);
+	engine_appdata_fs->SetProjectFilesystem(false);
+
 	engine_appdata_fs->Initialize();
 
 	if (engine_appdata_fs->FileExists("projects.json"))
@@ -78,7 +88,7 @@ int main()
 		}
 	}
 
-	main_instance.GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
+	main_instance.GetEngineController().GetFilesystemManager()->Mount(Windows::S_ENGINE_APPDATA_ALIAS, std::move(engine_appdata_fs));	
 	#endif
 	
 

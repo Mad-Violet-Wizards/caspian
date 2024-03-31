@@ -41,9 +41,15 @@ void Application::Update()
 
 	ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
 
-	m_engineModule.Update();
+	m_engineController.Update(m_deltaTime);
+	m_debugControllers.Update(m_deltaTime);
 
-	if (auto tools_mgr = m_engineModule.GetToolsManager())
+	if (m_World)
+	{
+		m_World->Update(m_deltaTime);
+	}
+
+	if (auto tools_mgr = m_engineController.GetToolsManager())
 	{
 		tools_mgr->Update(m_deltaTime, Tools::EToolsSystem::ImGui);
 	}
@@ -53,7 +59,7 @@ void Application::Update()
 void Application::LateUpdate()
 {
 #if defined(DEBUG)
-	if (auto tools_mgr = m_engineModule.GetToolsManager())
+	if (auto tools_mgr = m_engineController.GetToolsManager())
 	{
 		tools_mgr->Render(Tools::EToolsSystem::ImGui);
 	}
@@ -63,6 +69,11 @@ void Application::LateUpdate()
 void Application::Draw()
 {
 	m_window.BeginDraw();
+
+	if (m_RenderingSystem)
+	{
+		m_RenderingSystem->Render(m_window.GetRenderWindow());
+	}
 
 #if defined(DEBUG)
 		ImGui::SFML::Render(m_window.GetRenderWindow());
@@ -82,6 +93,17 @@ bool Application::IsRunning() const
 }
 
 
+sf::Vector2i Application::GetMousePosition()
+{
+	return sf::Mouse::getPosition(m_window.GetRenderWindow());
+}
+
+sf::Vector2f Application::GetMousePositionWorld()
+{
+	sf::Vector2i mousePos = GetMousePosition();
+	return m_window.GetRenderWindow().mapPixelToCoords(mousePos);
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /* DEBUG */
 #if defined(DEBUG)
@@ -97,6 +119,6 @@ bool Application::IsRunning() const
 
 		auto& main_instance = ApplicationSingleton::Instance();
 
-		main_instance.GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
+		main_instance.GetEngineController().GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
 	}
 #endif
