@@ -31,8 +31,6 @@ void Application::MainLoop()
 	LateUpdate();
 	Draw();
 	CalculateDeltaTime();
-
-	std::cout << "Fps: " << 1.f / m_deltaTime << "\n";
 }
 
 void Application::Update()
@@ -98,6 +96,12 @@ bool Application::IsRunning() const
 sf::Vector2i Application::GetMousePosition()
 {
 	return sf::Mouse::getPosition(m_window.GetRenderWindow());
+}
+
+sf::Vector2f Application::GetMousePositionWorld()
+{
+	sf::Vector2i mousePos = GetMousePosition();
+	return m_window.GetRenderWindow().mapPixelToCoords(mousePos);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

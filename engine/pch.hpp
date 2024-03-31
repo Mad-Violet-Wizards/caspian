@@ -33,6 +33,7 @@
 #include "game/Application.hpp"
 #include "engine/Core/Random/Random.hpp"
 #include "engine/Core/Camera.hpp"
+#include "engine/Core/Math.hpp"
 
 // WARNING C4603.
 #if(defined DEBUG)

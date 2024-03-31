@@ -57,6 +57,7 @@ void EngineController::OnAssetsStorageLoaded()
 {
 	auto& main_instance = ApplicationSingleton::Instance(); 
 	main_instance.GetEngineController().GetAssetsStorage()->SetInitialized();
+	main_instance.GetEngineController().GetAssetsStorage()->GetTilemapStorage()->InitImageBuffers();
 }
 
 void EngineController::InitializeFilesystems()

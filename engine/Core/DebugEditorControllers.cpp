@@ -83,6 +83,10 @@ void CameraDebugController::OnDeactivated()
 /////////////////////////////////////////////////////////////
 LevelDebugController::LevelDebugController()
 	: m_Mode(ELevelDebugControllerMode::None)
+	, m_TilesetUUID(Random::EMPTY_UUID)
+	, m_TileSize(0)
+	, m_TileX(0)
+	, m_TileY(0)
 {
 
 }
@@ -95,12 +99,116 @@ LevelDebugController::~LevelDebugController()
 
 void LevelDebugController::Update(float _dt)
 {
+	if (!m_Active)
+		return;
 
+	if (ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->IsImGuiActive())
+		return;
+
+	UpdateHighlightTile();
+
+	switch (m_Mode)
+	{
+		case ELevelDebugControllerMode::Paint:
+		{
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{
+				OnPaint();
+			}
+			break;
+		}
+		case ELevelDebugControllerMode::Erase:
+			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+			{	
+				OnErase();
+			}
+			break;
+		case ELevelDebugControllerMode::None:
+		{
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 void LevelDebugController::SetMode(ELevelDebugControllerMode _mode)
 {
-		m_Mode = _mode;
+	if (_mode == ELevelDebugControllerMode::Erase)
+	{
+		ApplicationSingleton::Instance().GetRenderingSystem()->ClearHighlightTile();
+	}
+
+	m_Mode = _mode;
+}
+
+void LevelDebugController::SetWorkingLayer(unsigned int _layer)
+{
+	m_WorkingLayer = _layer;
+}
+	
+void LevelDebugController::OnTilesetTileSelected(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y)
+{
+	if (!m_Active)
+	{
+		return;
+	}
+
+	m_TilesetUUID = _tilesetId;
+	m_TileX = _tile_x;
+	m_TileY = _tile_y;
+
+	ApplicationSingleton::Instance().GetRenderingSystem()->RefreshHighlightTileSprite(m_TilesetUUID, m_TileX, m_TileY, m_TileSize);
+}
+
+void LevelDebugController::OnLevelActivated(Level::Level* _level)
+{
+		m_TileSize = _level->GetTilesSize();
+}
+
+const sf::Vector2u LevelDebugController::RoundMouseWorldPosition(const sf::Vector2f& _pos, unsigned int _tileSize) const
+{
+	if (_tileSize == 0)
+		return sf::Vector2u(0, 0);
+
+	const sf::Vector2u rounded_pos
+	{
+		Math::round_up(static_cast<unsigned int>(_pos.x), _tileSize) - _tileSize,
+		Math::round_up(static_cast<unsigned int>(_pos.y), _tileSize) - _tileSize
+	};
+
+	return rounded_pos;
+}
+
+void LevelDebugController::OnPaint()
+{
+	const sf::Vector2u tileset_tile_pos{ m_TileX, m_TileY };
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+
+	if (m_TileSize == 0 || m_TilesetUUID == Random::EMPTY_UUID) return;
+
+	ApplicationSingleton::Instance().GetWorld()->PaintTile(mouse_world_pos_rounded, m_TilesetUUID, tileset_tile_pos, m_WorkingLayer);
+}
+
+void LevelDebugController::OnErase()
+{
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+
+	if (m_WorkingLayer == -1)
+		return;
+
+	ApplicationSingleton::Instance().GetWorld()->EraseTile(mouse_world_pos_rounded, m_WorkingLayer);
+}
+
+void LevelDebugController::UpdateHighlightTile()
+{
+	if (m_TileSize == 0)
+		return;
+
+	const sf::Vector2u highlight_tile_pos = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+
+	ApplicationSingleton::Instance().GetRenderingSystem()->RefreshHighlightTilePosition(highlight_tile_pos);
+
 }
 
 /////////////////////////////////////////////////////////////

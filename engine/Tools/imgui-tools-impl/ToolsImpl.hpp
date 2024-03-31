@@ -68,6 +68,7 @@ namespace Tools_Impl
 			~Manager() = default;
 
 			void ToggleActiveState();
+			bool IsActive() const;
 
 			void Update(float _dt);
 			void Render();

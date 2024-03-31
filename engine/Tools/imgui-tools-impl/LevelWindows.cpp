@@ -232,6 +232,8 @@ void TilesetListWindow::Render()
 							sprite.setTextureRect(rect);
 
 							tile_info.m_Sprite = sprite;
+							tile_info.m_TilesetUUID = selected_tileset_uuid;
+							tile_info.m_Rect = rect;
 							m_CachedTilesetSprites.emplace_back(tile_info);
 							m_PrevTilesetUUID = selected_tileset_uuid;
 							m_CurrentTilesetHeight = assets_storage->GetTexture(selected_tileset_path).getSize().y;
@@ -267,6 +269,7 @@ void TilesetListWindow::Render()
 
 								m_SelectedTileInfo = &tile_info;
 								m_SelectedTileInfo->m_Selected = true;
+								ApplicationSingleton::Instance().GetDebugControllers().GetLevelController()->OnTilesetTileSelected(m_SelectedTileInfo->m_TilesetUUID, m_SelectedTileInfo->m_Rect.left, m_SelectedTileInfo->m_Rect.top);
 							}
 
 							ImGui::PopStyleVar();

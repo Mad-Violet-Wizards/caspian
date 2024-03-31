@@ -101,10 +101,16 @@ namespace Assets
 
 		const Serializable::Binary::TilesetInfo& FindTilesetInfo(Random::UUID _uuid) const;
 
+		void InitImageBuffers();
+
+		bool CheckForTransparency(Random::UUID _uuid, const sf::Vector2u& _tile_pos, unsigned int _tile_size) const;
+
 	private:
 
 
 		std::shared_ptr<Serializable::Binary::TilesetsInfo> m_TilestsInfo = nullptr;
+
+		std::map<Random::UUID, sf::Image> m_ImageBuffers;
 
 	};
 

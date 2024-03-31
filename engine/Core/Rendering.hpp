@@ -24,19 +24,22 @@ namespace Rendering
 		public:
 
 			RenderTile(int _layer_index, const sf::Vector2u& _world_position, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid);
-			~RenderTile() = default;
+			~RenderTile();
 
 			int GetLayerIndex() const { return m_LayerIndex; }
+
+			void RefreshSprite(const sf::Vector2f& _world_pos, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid);
+			void SetWorldPosition(const sf::Vector2u& _world_position);
 			const sf::Vector2u& GetWorldPosition() const { return m_WorldPosition; }
 			const sf::Vector2u& GetTilesetPosition() const { return m_TilesetPosition; }
 			Random::UUID GetTilesetUUID() const { return m_TilesetUUID; }
 
-			const sf::Sprite& GetSprite() const { return *m_Sprite; }
+			const sf::Sprite& GetSprite() const { return m_Sprite; }
 			bool HasTransparentPixel() const { return m_AnyTransparentPixel; }
-
+			
 		private:
 
-			sf::Sprite* m_Sprite;
+			sf::Sprite m_Sprite;
 
 			bool m_AnyTransparentPixel;
 			int m_LayerIndex;
@@ -54,6 +57,12 @@ namespace Rendering
 			~SpatialHashGrid();
 
 			void ProcessRenderTile(RenderTile* _render_tile);
+			void RefreshHighlightTileSprite(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y, unsigned int _tile_size);
+			void RefreshHighlightTilePosition(const sf::Vector2u& _position);
+			void ClearHighlightTile();
+			void RefreshRenderTile(const sf::Vector2u& _position, Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y, unsigned int _tile_size, unsigned int _layer);
+
+			RenderTile* GetHighlightTile() const { return m_HighlightTile; }
 
 			bool Contains(const TileIndex& _index) const { return m_SpatialHash.find(_index) != m_SpatialHash.end(); }
 			const std::vector<RenderTile*>& GetTiles(const TileIndex& _index) const { return m_SpatialHash.at(_index); }
@@ -69,6 +78,8 @@ namespace Rendering
 
 			std::unordered_map<TileIndex, bool, TileIndexHash> m_Chimneys;
 			std::unordered_map<TileIndex, std::vector<RenderTile*>, TileIndexHash> m_SpatialHash;
+
+			RenderTile* m_HighlightTile = nullptr;
 
 	};
 
@@ -113,8 +124,14 @@ namespace Rendering
 
 			void ProcessLevelChunk(Level::Chunk* _level_chunk);
 
+			void RefreshHighlightTileSprite(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y, unsigned int _tile_size);
+			void RefreshHighlightTilePosition(const sf::Vector2u& _position);
+			void RefreshRenderTile(const sf::Vector2u& _position, Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y, unsigned int _tile_size, unsigned int _layer);
+			void ClearHighlightTile();
+
 			static unsigned int s_LevelTileSize;
 			static sf::Vector2f s_RenderSize;
+			static bool s_RenderEmptyTiles;
 
 		private:
 			

@@ -53,7 +53,7 @@ class CameraDebugController : public IDebugController
 enum class ELevelDebugControllerMode
 {
 	None,
-	Place,
+	Paint,
 	Erase
 };
 
@@ -66,10 +66,28 @@ class LevelDebugController : public IDebugController
 
 		void Update(float _dt) override;
 		void SetMode(ELevelDebugControllerMode _mode);
+		void SetWorkingLayer(unsigned int _layer);
+		void OnTilesetTileSelected(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y);
+
+		void OnLevelActivated(Level::Level* _level);
 
 	private:
 
+		const sf::Vector2u RoundMouseWorldPosition(const sf::Vector2f& _pos, unsigned int _tileSize) const;
+
+	private:
+
+		void OnPaint();
+		void OnErase();
+		void UpdateHighlightTile();
+
 		ELevelDebugControllerMode m_Mode;
+		unsigned int m_WorkingLayer = -1;
+
+		Random::UUID m_TilesetUUID;
+		unsigned int m_TileSize;
+		unsigned int m_TileX;
+		unsigned int m_TileY;
 };
 
 

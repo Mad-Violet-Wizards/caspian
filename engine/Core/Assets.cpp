@@ -334,3 +334,30 @@ const Serializable::Binary::TilesetInfo& Assets::TilemapStorage::FindTilesetInfo
 
 	throw std::runtime_error("Tileset not found.");
 }
+
+void Assets::TilemapStorage::InitImageBuffers()
+{
+	for (const auto& tileset : m_TilestsInfo->m_Tilesets)
+	{
+		sf::Image image_buffer = ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetConstTexture(tileset.m_TilesetPath).copyToImage();
+		m_ImageBuffers[tileset.m_TilesetUUID] = image_buffer;
+	}
+}
+
+bool Assets::TilemapStorage::CheckForTransparency(Random::UUID _uuid, const sf::Vector2u& _tile_pos, unsigned int _tile_size) const
+{
+	const sf::Image& image_buffer = m_ImageBuffers.at(_uuid);
+
+	for (unsigned int x = _tile_pos.x; x < _tile_pos.x + _tile_size; ++x)
+	{
+		for (unsigned int y = _tile_pos.y; y < _tile_pos.y + _tile_size; ++y)
+		{
+			if (image_buffer.getPixel(x, y).a < 255)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}

@@ -31,6 +31,16 @@ namespace Level
 		return m_TilesSize;
 	}
 
+	void Level::SetNoLayers(unsigned int _no_layers)
+	{
+		m_NoLayers = _no_layers;
+	}
+
+	unsigned int Level::GetNoLayers() const
+	{
+		return m_NoLayers;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// WORLD
 	void World::ActivateLevel(const std::string& _level_name)
@@ -42,6 +52,9 @@ namespace Level
 
 		Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
 		rendering_system->OnLevelActivated(level.get());
+
+		LevelDebugController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
+		level_controller->OnLevelActivated(level.get());
 	}
 
 	void World::DeactivateLevel(const std::string& _level_name)
@@ -95,7 +108,11 @@ namespace Level
 						auto binary_chunk_data = std::dynamic_pointer_cast<ISerializable::Binary>(parsed_chunk_info);
 						chunk_file->Seek(0, fs::io::Origin::Begin);
 						chunk_file->DeserializeBinary(binary_chunk_data);
+
 						parsed_chunk_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkInfo>(binary_chunk_data);
+						parsed_chunk_info->m_ChunkUUID = chunk_info.m_ChunkUUID;
+
+						loaded_level->SetNoLayers(chunk->GetChunkInfo()->m_TileLayers.size());
 
 						loaded_level->GetChunksManager()->PushChunk(std::move(chunk));
 
@@ -140,6 +157,62 @@ namespace Level
 				{
 					LoadLevel(_level_name, level_info.m_ChunkRootFile, level_info.m_TileSize);
 					ActivateLevel(_level_name);
+				}
+			}
+		}
+	}
+
+	Level* World::GetActiveLevel() const
+	{
+		for (const auto& [level_name, level] : m_CachedLevels)
+		{
+		if (level_name == m_ActiveLevel)
+		{
+				return level.get();
+			}
+		}
+	}
+
+	unsigned int World::GetActiveLevelNoLayers() const
+	{
+		for (const auto& [level_name, level] : m_CachedLevels)
+		{
+			if (level_name == m_ActiveLevel)
+			{
+				return level->GetNoLayers();
+			}
+		}
+
+		return 0;
+	}
+
+	void World::PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer)
+	{
+		if (Level* current_level = GetActiveLevel())
+		{
+			const std::vector<std::unique_ptr<Chunk>>& chunks = current_level->GetChunksManager()->GetChunks();
+
+			for (const auto& chunk : chunks)
+			{
+				if (chunk->GetArea().contains(sf::Vector2i(position)))
+				{
+					chunk->PaintTile(position, _tilset_uuid, tileset_tile_pos, _layer, current_level->GetTilesSize());
+				}
+			}
+		}
+	}
+
+	void World::EraseTile(const sf::Vector2u& _position, unsigned int _layer)
+	{
+		if (Level* current_level = GetActiveLevel())
+		{
+			const std::vector<std::unique_ptr<Chunk>>& chunks = current_level->GetChunksManager()->GetChunks();
+
+			for (const auto& chunk : chunks)
+			{
+				if (chunk->GetArea().contains(sf::Vector2i(_position)))
+				{
+					chunk->EraseTile(_position, _layer, current_level->GetTilesSize());
 				}
 			}
 		}
@@ -245,6 +318,95 @@ namespace Level
 		m_ChunkInfo = std::make_shared<Serializable::Binary::ChunkInfo>();
 	}
 
+	void Chunk::PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer, unsigned int _tiles_size)
+	{
+		if (Serializable::Binary::TextureTileInfo* tile_info = FindTileInfo(position, _tiles_size, _layer))
+		{
+			tile_info->m_TilesetUUID = _tilset_uuid;
+			tile_info->m_TilePositionX = position.x;
+			tile_info->m_TilePositionY = position.y;
+			tile_info->m_TilesetColumn = tileset_tile_pos.x;
+			tile_info->m_TilesetRow = tileset_tile_pos.y;
+
+			Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
+
+			if (rendering_system)
+			{
+				rendering_system->RefreshRenderTile(position, _tilset_uuid, tileset_tile_pos.x, tileset_tile_pos.y, _tiles_size, _layer);
+			}
+		}
+
+		PerformSave();
+	}
+
+	void Chunk::EraseTile(const sf::Vector2u& _position, unsigned int _layer, unsigned int _tiles_size)
+	{
+		if (Serializable::Binary::TextureTileInfo* tile_info = FindTileInfo(_position, _tiles_size, _layer))
+		{
+			tile_info->m_TilesetUUID = Random::EMPTY_UUID;
+			tile_info->m_TilesetColumn = 0;
+			tile_info->m_TilesetRow = 0;
+
+			Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
+
+			if (rendering_system)
+			{
+				rendering_system->RefreshRenderTile(_position, Random::EMPTY_UUID, 0, 0, _tiles_size, _layer);
+			}
+		}
+
+		PerformSave();
+	}
+
+	Serializable::Binary::TextureTileInfo* Chunk::FindTileInfo(const sf::Vector2u& position, unsigned int _tiles_size, unsigned int _layer)
+	{
+		if (m_ChunkInfo)
+		{
+			for (LayerInfo& layer_info : m_ChunkInfo->m_TileLayers)
+			{
+				if (layer_info.m_LayerIndex == _layer)
+				{
+					for (Serializable::Binary::TextureTileInfo& tile_info : layer_info.m_Tiles)
+					{
+						if (tile_info.m_TilePositionX == position.x && tile_info.m_TilePositionY == position.y)
+						{
+							return &tile_info;
+						}
+					}
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	void Chunk::PerformSave()
+	{
+		bool chunk_file_closed = false; // ;_;
+
+		if (Level* level = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel())
+		{
+			auto& chunk_root_chunk_info = level->GetChunksManager()->GetChunkRootInfo();
+
+			for (const auto& chunk_info : chunk_root_chunk_info->m_ChunksInfoVec)
+			{
+				if (chunk_info.m_ChunkUUID == m_ChunkInfo->m_ChunkUUID)
+				{
+					std::filesystem::path chunk_path = "levels";
+					chunk_path /= chunk_info.m_RelativePath;
+
+					fs::IFileSystem* data_fs = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("data");
+
+					if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_path.string(), fs::io::OpenMode::Out | fs::io::OpenMode::Binary))
+					{
+						chunk_file->Seek(0, fs::io::Origin::Begin);
+						chunk_file->SerializeBinary(m_ChunkInfo);
+					}
+				}
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////
 	// CHUNK MANAGER
 	ChunksManager::ChunksManager()
@@ -255,8 +417,6 @@ namespace Level
 	bool ChunksManager::GenerateNewChunk(unsigned int _x, unsigned int _y, unsigned int _width_pixels, unsigned int _height_pixels, unsigned int _tile_size, const std::string& _lvl_name)
 	{
 		Random::UUID new_chunk_uuid;
-
-		// For now let's consider the tile size is same - so width=height.
 
 		const std::string chunk_file_name = Random::GenerateRandomString(16) + fs::IFile::TypeToStringExt(fs::IFile::EType::Data_LevelChunk);
 
@@ -289,7 +449,7 @@ namespace Level
 			auto& chunk_info = new_chunk->GetChunkInfo();
 			chunk_info->m_ChunkUUID = new_chunk_uuid;
 
-			Serializable::Binary::TextureLayerInfo default_layer;
+			Serializable::Binary::LayerInfo default_layer;
 			default_layer.m_LayerIndex = 0;
 
 			const unsigned int final_x = _x + _width_pixels;
@@ -308,7 +468,7 @@ namespace Level
 				}
 			}
 
-			Serializable::Binary::TextureLayerInfo extra_layer;
+			Serializable::Binary::LayerInfo extra_layer;
 			extra_layer.m_LayerIndex = 1;
 
 			for (unsigned int i = _x; i < final_x; i += _tile_size)

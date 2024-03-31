@@ -484,3 +484,8 @@ void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::stri
 		ShowNotification(ENotificationType::Error, "Failed to add tileset! :(");
 	}
 }
+
+bool Manager::IsActive() const
+{
+	return m_Active;
+}

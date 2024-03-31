@@ -59,6 +59,8 @@ class DebugHelper
 		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
 
 		sf::Vector2i GetMousePosition();
+		sf::Vector2f GetMousePositionWorld();
+
 		const sf::View& GetView() const { return m_window.GetView(); }
 			 
 	private:

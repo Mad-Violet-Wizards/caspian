@@ -7,8 +7,14 @@ namespace Random
 		public:
 			
 			UUID();
-			UUID(uint64_t _uuid);
-			UUID(const UUID&) = default;
+			UUID(uint64_t _uuid_int64);
+			UUID& operator=(uint64_t _uuid_int64);
+
+			UUID(const UUID& _other);
+			UUID(UUID&& _other) noexcept;
+
+			UUID& operator=(const UUID& _other);
+			UUID& operator=(UUID&& _other) noexcept;
 
 			~UUID() = default;
 

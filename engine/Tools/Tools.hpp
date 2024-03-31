@@ -27,6 +27,8 @@ namespace Tools
 			void ShowNotification(Tools_Impl::ENotificationType _type, std::string_view _msg);
 			void InitializeEventListeners();
 
+			bool IsImGuiActive() const { return m_ImplManager.IsActive();  }
+
 		private:
 
 			Tools_Impl::Manager m_ImplManager;

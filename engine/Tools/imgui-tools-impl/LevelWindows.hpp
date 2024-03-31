@@ -40,6 +40,9 @@ namespace Tools_Impl
 			struct SelectedTileInfo
 			{
 				sf::Sprite m_Sprite;
+
+				sf::IntRect m_Rect;
+				Random::UUID m_TilesetUUID;
 				bool m_Selected = false;
 			};
 

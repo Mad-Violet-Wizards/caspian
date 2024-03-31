@@ -22,10 +22,12 @@ namespace Serializable
 				, m_TileWidth(_width)
 				, m_TileHeight(_height)
 			{}
+			TilesetInfo(const TilesetInfo& _other);
+			TilesetInfo(TilesetInfo&& _other) noexcept;
 
 				void dummy() override {}
 
-				Random::UUID m_TilesetUUID;
+				uint64_t m_TilesetUUID;
 				std::string m_TilesetPath;
 				std::string m_TilesetName;
 				unsigned int m_TileWidth;
@@ -34,7 +36,7 @@ namespace Serializable
 				template<class Archive>
 				void serialize(Archive& archive)
 				{
-					archive(cereal::make_nvp("UUID", m_TilesetUUID.GetUUID()),
+					archive(cereal::make_nvp("UUID", m_TilesetUUID),
 									cereal::make_nvp("Key", m_TilesetPath), 
 									cereal::make_nvp("Name", m_TilesetName),
 									cereal::make_nvp("Width", m_TileWidth),

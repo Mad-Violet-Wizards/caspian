@@ -14,11 +14,20 @@ namespace Level
 			Chunk(const sf::IntRect& _area);
 			~Chunk() = default;
 
+			void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer, unsigned int _tiles_size);
+
+			void EraseTile(const sf::Vector2u& _position, unsigned int _layer, unsigned int _tiles_size);
+
 			const sf::IntRect& GetArea() const { return m_Area; }
 
 			std::shared_ptr<Serializable::Binary::ChunkInfo>& GetChunkInfo() { return m_ChunkInfo; }
 
 	private:
+
+			Serializable::Binary::TextureTileInfo* FindTileInfo(const sf::Vector2u& position, unsigned int _tiles_size, unsigned int _layer);
+
+			void PerformSave();
+
 
 			sf::IntRect m_Area;
 			std::shared_ptr<Serializable::Binary::ChunkInfo> m_ChunkInfo;
@@ -35,7 +44,6 @@ namespace Level
 		bool GenerateNewChunk(unsigned int _x, unsigned int _y, unsigned int _width_pixels, unsigned int _height_pixels, unsigned int _tile_size, const std::string& _lvl_name);
 		void PushChunk(std::unique_ptr<Chunk>&& _chunk);
 		const std::vector<std::unique_ptr<Chunk>>& GetChunks() const { return m_Chunks; }
-
 		bool IsChunkRootInfoEmpty() const;
 
 		std::shared_ptr<Serializable::Binary::ChunkRootInfo>& GetChunkRootInfo() { return m_ChunkRootInfo; }
@@ -65,6 +73,8 @@ namespace Level
 			void SetTilesSize(unsigned int _tile_size);
 			unsigned int GetTilesSize() const;
 
+			void SetNoLayers(unsigned int _no_layers);
+			unsigned int GetNoLayers() const;
 
 		private:
 
@@ -73,6 +83,7 @@ namespace Level
 			std::unique_ptr<ChunksManager> m_ChunksManager;
 
 			unsigned int m_TilesSize;
+			unsigned int m_NoLayers;
 
 	};
 
@@ -95,6 +106,12 @@ namespace Level
 		void SwitchToLevel(const std::string& _level_name);
 
 		std::shared_ptr<Camera> GetCamera() { return m_Camera; }
+
+		Level* GetActiveLevel() const;
+		unsigned int GetActiveLevelNoLayers() const;
+
+		void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer);
+		void EraseTile(const sf::Vector2u& _position, unsigned int _layer);
 
 	private:
 

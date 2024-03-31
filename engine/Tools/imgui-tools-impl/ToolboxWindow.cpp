@@ -45,6 +45,7 @@ void ToolboxWindow::Render()
 				m_Fps = *std::min_element(m_SavedFps.begin(), m_SavedFps.end());
 				frame_count = 0;
 				m_SavedFps.clear();
+				m_SavedFps.reserve(m_FpsCountLimit);
 
 			}
 			const std::string fps_text = std::format("FPS: {}", m_Fps);
@@ -119,6 +120,24 @@ void LevelToolbox::Render()
 		m_PlaceTileButton.Render();
 		ImGui::SameLine();
 		m_EraseTileButton.Render();
+
+		auto& main_instance = ApplicationSingleton::Instance();
+		const unsigned int active_level_layers = main_instance.GetWorld()->GetActiveLevelNoLayers();
+
+		static std::optional<int> selected_layer = std::nullopt;
+
+		if (ImGui::CollapsingHeader("Layers"))
+		{
+			for (unsigned int i = 0; i < active_level_layers; i++)
+			{
+				const std::string layer_text = std::format("Layer {}", i);
+				if (ImGui::Selectable(layer_text.c_str(), selected_layer == i))
+				{
+					selected_layer = i;
+					main_instance.GetDebugControllers().GetLevelController()->SetWorkingLayer(i);
+				}
+			}
+		}
 	}
 }
 
@@ -132,7 +151,7 @@ void LevelToolbox::OnPlaceTileToggled()
 	if (is_active)
 	{
 		m_EraseTileButton.m_Active = false;
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::Place);
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::Paint);
 	}
 	else
 	{
@@ -144,7 +163,7 @@ void LevelToolbox::OnEraseTileToggled()
 {
 	auto& main_instance = ApplicationSingleton::Instance();
 
-	const bool is_active = m_PlaceTileButton.IsActive();
+	const bool is_active = m_EraseTileButton.IsActive();
 	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
 
 	if (is_active)
@@ -157,3 +176,4 @@ void LevelToolbox::OnEraseTileToggled()
 		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::None);
 	}
 }
+
