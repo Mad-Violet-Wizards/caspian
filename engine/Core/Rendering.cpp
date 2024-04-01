@@ -1,6 +1,7 @@
 #include "engine/pch.hpp"
 
 #include "Rendering.hpp"
+#include "engine/Core/Components/C_Transform.hpp"
 
 unsigned int Rendering::System::s_LevelTileSize = 0;
 sf::Vector2f Rendering::System::s_RenderSize = { 1280.f, 720.f };
@@ -43,7 +44,7 @@ void Rendering::System::ProcessLevelChunk(Level::Chunk* _level_chunk)
 
 	for (auto reverse_it = chunk_info->m_TileLayers.rbegin(); reverse_it != chunk_info->m_TileLayers.rend(); ++reverse_it)
 	{
-		const Serializable::Binary::LayerInfo& tile_layer_info = *reverse_it;
+		const Serializable::Binary::TextureLayerInfo& tile_layer_info = *reverse_it;
 
 		for (const auto& _tile_info : tile_layer_info.m_Tiles)
 		{
@@ -81,6 +82,26 @@ void Rendering::System::RefreshRenderTile(const sf::Vector2u& _position, Random:
 void Rendering::System::ClearHighlightTile()
 {
 	m_LevelRendering.GetSpatialHashGrid().ClearHighlightTile();
+}
+
+void Rendering::System::RenderCollisionEdit(bool _state)
+{
+	m_LevelRendering.OnCollisionEditStateChanged(_state);
+}
+
+void Rendering::System::PushCollisionTile(const sf::Vector2u& _pos)
+{
+	m_LevelRendering.PushCollisionTile(_pos);
+}
+
+void Rendering::System::PopCollisionTile(const sf::Vector2u& _pos)
+{
+	m_LevelRendering.PopCollisionTile(_pos);
+}
+
+void Rendering::System::RenderCollisionDebug(bool _state)
+{
+
 }
 
 void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
@@ -127,6 +148,12 @@ void Rendering::LevelRendering::Render(sf::RenderWindow& _window)
 	{
 		_window.draw(highlight_tile->GetSprite());
 	}
+
+	if (m_CollisionEditTiles.size() > 0)
+	{
+		for (RenderTile* tile : m_CollisionEditTiles)
+			_window.draw(tile->GetSprite());
+	}
 }
 
 void Rendering::LevelRendering::MarkChunk(Random::UUID _chunk_uuid)
@@ -143,6 +170,51 @@ bool Rendering::LevelRendering::ContainsChunk(Random::UUID _chunk_uuid) const
 	}
 
 	return false;
+}
+
+void Rendering::LevelRendering::OnCollisionEditStateChanged(bool _state)
+{
+	if (_state)
+	{
+		const std::vector<GameObject*>& collidable_game_objects = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetCollidableGameObjects();
+
+		for (GameObject* game_object : collidable_game_objects)
+		{
+			if (auto go_transform_component_sPtr = game_object->GetComponent<C_Transform>())
+			{
+				const sf::Vector2f world_position = go_transform_component_sPtr->GetPosition();
+
+				CollisionEditTile* collision_edit_tile = new CollisionEditTile(0, (sf::Vector2u) world_position);
+				m_CollisionEditTiles.push_back(collision_edit_tile);
+			}
+		}
+	}
+	else
+	{
+		for (RenderTile* collision_edit_tile : m_CollisionEditTiles)
+			delete collision_edit_tile;
+
+		m_CollisionEditTiles.clear();
+	}
+}
+
+void Rendering::LevelRendering::PushCollisionTile(const sf::Vector2u& _pos)
+{
+	CollisionEditTile* collision_edit_tile = new CollisionEditTile(0, _pos);
+	m_CollisionEditTiles.push_back(collision_edit_tile);
+}
+
+void Rendering::LevelRendering::PopCollisionTile(const sf::Vector2u& _pos)
+{
+	for (auto it = m_CollisionEditTiles.begin(); it != m_CollisionEditTiles.end(); ++it)
+	{
+		if ((*it)->GetWorldPosition() == _pos)
+		{
+			delete *it;
+			m_CollisionEditTiles.erase(it);
+			break;
+		}
+	}
 }
 
 void Rendering::LevelRendering::Clear()
@@ -257,12 +329,7 @@ Rendering::RenderTile::RenderTile(int _layer_index, const sf::Vector2u& _world_p
 	, m_TilesetPosition(_tileset_pos)
 	, m_TilesetUUID(_tileset_uuid)
 {
-	sf::Vertex top_left, top_right, bottom_left, bottom_right;
-
-	const sf::Vector2f world_position_f = { static_cast<float>(_world_position.x), static_cast<float>(_world_position.y) };
-	const float tile_size_f = static_cast<float>(Rendering::System::s_LevelTileSize);
-
-	RefreshSprite(world_position_f, m_TilesetPosition, m_TilesetUUID);
+	RefreshSprite((sf::Vector2f)_world_position, m_TilesetPosition, m_TilesetUUID);
 }
 
 Rendering::RenderTile::~RenderTile()
@@ -297,4 +364,17 @@ void Rendering::RenderTile::SetWorldPosition(const sf::Vector2u& _world_position
 {
 	m_WorldPosition = _world_position;
 	m_Sprite.setPosition({ static_cast<float>(_world_position.x), static_cast<float>(_world_position.y) });
+}
+
+Rendering::CollisionEditTile::CollisionEditTile(int _layer_index, const sf::Vector2u& _world_pos)
+	: RenderTile(_layer_index, _world_pos, { 0, 0}, Random::EMPTY_UUID)
+{
+	RefreshSprite((sf::Vector2f)_world_pos, { 0, 0 }, Random::EMPTY_UUID);
+}
+
+void Rendering::CollisionEditTile::RefreshSprite(const sf::Vector2f& _world_pos, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid)
+{
+	m_Sprite.setTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetEmptyTexture());
+	m_Sprite.setPosition(_world_pos);
+	m_AnyTransparentPixel = false;
 }

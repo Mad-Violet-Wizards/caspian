@@ -1,11 +1,11 @@
 #pragma once
 ///////////////////////////////////////////////////////////////////
-class IDebugController
+class IEditorController
 {
 	public:
 	
-		IDebugController() = default;
-		virtual ~IDebugController() = default;
+		IEditorController() = default;
+		virtual ~IEditorController() = default;
 
 		virtual void Update(float _dt) = 0;
 
@@ -21,12 +21,12 @@ class IDebugController
 };
 
 ///////////////////////////////////////////////////////////////////
-class CameraDebugController : public IDebugController
+class CameraEditController : public IEditorController
 {
 	public:
 
-		CameraDebugController();
-		~CameraDebugController() = default;
+		CameraEditController();
+		~CameraEditController() = default;
 
 		void OnActivated() override;
 		void OnDeactivated() override;
@@ -50,38 +50,46 @@ class CameraDebugController : public IDebugController
 };
 
 ///////////////////////////////////////////////////////////////////
-enum class ELevelDebugControllerMode
+enum class ELevelEditControllerMode
 {
 	None,
-	Paint,
+	PaintTile,
+	EditCollisions,
 	Erase
 };
 
-class LevelDebugController : public IDebugController
+class LevelEditController : public IEditorController
 {
 	public:
 
-		LevelDebugController();
-		~LevelDebugController();
+		LevelEditController();
+		~LevelEditController();
 
 		void Update(float _dt) override;
-		void SetMode(ELevelDebugControllerMode _mode);
+		void SetMode(ELevelEditControllerMode _mode);
 		void SetWorkingLayer(unsigned int _layer);
 		void OnTilesetTileSelected(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y);
 
 		void OnLevelActivated(Level::Level* _level);
+		void OnLevelDeactivated();
 
 	private:
 
+		void OnStateChanged();
 		const sf::Vector2u RoundMouseWorldPosition(const sf::Vector2f& _pos, unsigned int _tileSize) const;
 
 	private:
 
 		void OnPaint();
 		void OnErase();
+
+		void OnPlaceNewCollision();
+		void OnRemoveCollision();
+
 		void UpdateHighlightTile();
 
-		ELevelDebugControllerMode m_Mode;
+		ELevelEditControllerMode m_Mode;
+		ELevelEditControllerMode m_PrevMode;
 		unsigned int m_WorkingLayer = -1;
 
 		Random::UUID m_TilesetUUID;
@@ -98,19 +106,19 @@ enum class EDebugControllerType
 };
 
 //////////////////////////////////////////////////////////////////
-class DebugEditorControllers
+class EditControllersManager
 {
 	public:
 
-		DebugEditorControllers();
-		~DebugEditorControllers() = default;
+		EditControllersManager();
+		~EditControllersManager() = default;
 
 		void Update(float _dt);
 
-		CameraDebugController* GetCameraController() const;
-		LevelDebugController* GetLevelController() const;
+		CameraEditController* GetCameraController() const;
+		LevelEditController* GetLevelController() const;
 
 	private:
 
-		std::unordered_map<EDebugControllerType, std::unique_ptr<IDebugController>> m_DebugControllers;
+		std::unordered_map<EDebugControllerType, std::unique_ptr<IEditorController>> m_DebugControllers;
 };

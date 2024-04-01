@@ -28,6 +28,7 @@ class GameObject
 
 			std::shared_ptr<T> newComponent = std::make_shared<T>(this, std::forward<Args>(args)...);
 			m_components.push_back(newComponent);
+			return newComponent;
 		}
 
 		template<typename T>

@@ -59,6 +59,7 @@ namespace fs
 					Data_LevelRootChunk,
 					Data_LevelChunk,
 					Data_Tilemaps,
+					Data_Collisions,
 				Directory
 			};
 
@@ -78,6 +79,7 @@ namespace fs
 					case EType::Data_LevelRootChunk: return ".rootchunk";
 					case EType::Data_LevelChunk:		 return ".chunk";
 					case EType::Data_Tilemaps:			 return ".tilemaps";
+					case EType::Data_Collisions: 		 return ".collisions";
 					default:												 return S_UNKNOWN_ETYPE_STR;
 				}
 			}
@@ -94,7 +96,8 @@ namespace fs
 				if (_type == ".pak")			 return EType::Data;
 				if (_type == ".rootchunk") return EType::Data_LevelRootChunk;
 				if (_type == ".chunk")		 return EType::Data_LevelChunk;
-				if (_type == ".tilemaps") 	 return EType::Data_Tilemaps;
+				if (_type == ".tilemaps")  return EType::Data_Tilemaps;
+				if (_type == ".collisions") return EType::Data_Collisions;
 				return EType::Unknown;
 			}
 
@@ -111,6 +114,7 @@ namespace fs
 				if (_str == "Directory")						return EType::Directory;
 				if (_str == "Data_LevelRootChunk")	return EType::Data_LevelRootChunk;
 				if (_str == "Data_LevelChunk")			return EType::Data_LevelChunk;
+				if (_str == "Data_Collisions")			return EType::Data_Collisions;
 				if (_str == "Tilemaps")							return EType::Data_Tilemaps;
 				return EType::Unknown;
 			}
@@ -123,6 +127,7 @@ namespace fs
 					case EType::Data_LevelRootChunk:
 					case EType::Data_LevelChunk:
 					case EType::Data_Tilemaps:
+					case EType::Data_Collisions:
 						return true;
 					default:
 						return false;

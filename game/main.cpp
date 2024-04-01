@@ -31,9 +31,15 @@ int main()
 	std::unique_ptr<Level::World> world = std::make_unique<Level::World>();
 	main_instance.SetWorld(std::move(world));
 
-	// RENDERING
+	std::unique_ptr<Collisions::Manager> collisions_manager = std::make_unique<Collisions::Manager>();
+	collisions_manager->SetCollisionSolver(Collisions::ECollisionSolver::BruteForce);
+	engine_module.SetCollisionsManager(std::move(collisions_manager));
+
 	std::unique_ptr<Rendering::System> rendering_system = std::make_unique<Rendering::System>();
 	main_instance.SetRenderingSystem(std::move(rendering_system));
+
+	std::unique_ptr<GameObjectCollection> game_objects = std::make_unique<GameObjectCollection>();
+	engine_module.SetGameObjectStorage(std::move(game_objects));
 
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();

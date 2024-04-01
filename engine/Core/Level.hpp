@@ -60,8 +60,11 @@ namespace Level
 	{
 		public:
 
-			Level();
+			Level(const std::string& _level_name);
 			~Level() = default;
+
+			void OnLevelActivated();
+			void OnLevelDeactivated();
 
 			void Update(float _dt);
 
@@ -75,6 +78,8 @@ namespace Level
 
 			void SetNoLayers(unsigned int _no_layers);
 			unsigned int GetNoLayers() const;
+
+			const std::string& GetLevelName() const;
 
 		private:
 
@@ -108,6 +113,8 @@ namespace Level
 		std::shared_ptr<Camera> GetCamera() { return m_Camera; }
 
 		Level* GetActiveLevel() const;
+		bool IsLevelActive() const;
+
 		unsigned int GetActiveLevelNoLayers() const;
 
 		void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer);
@@ -116,16 +123,18 @@ namespace Level
 	private:
 
 		void ActivateLevel(const std::string& _level_name);
-		void DeactivateLevel(const std::string& _level_name);
+		void DeactivateCurrentLevel();
 
 		bool IsLevelCached(const std::string& _level_name) const;
-		void LoadLevel(const std::string& _level_name, const std::string& _chunk_root_name, unsigned int _tile_size);
+		void LoadLevel(const Serializable::JSON::LevelInfo& _entry_level_info);
 
 	private:
 
 		std::shared_ptr<Camera> m_Camera;
+
+		Level* m_ActiveLevelPtr;
+
 		std::unordered_map<std::string, std::unique_ptr<Level>> m_CachedLevels;
-		std::string m_ActiveLevel;
 
 		std::vector<Serializable::JSON::LevelInfo> m_InitialLevelsData;
 	};

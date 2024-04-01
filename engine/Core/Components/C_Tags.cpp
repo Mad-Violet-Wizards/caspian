@@ -2,8 +2,9 @@
 
 #include "C_Tags.hpp"
 
-C_Tags::C_Tags(ETag _initial_tags)
-	: m_Tags(_initial_tags)
+C_Tags::C_Tags(GameObject* _owner, ETag _initial_tags)
+	: IComponent(_owner)
+	, m_Tags(_initial_tags)
 {
 
 }

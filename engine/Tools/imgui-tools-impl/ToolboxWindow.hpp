@@ -34,11 +34,13 @@ namespace Tools_Impl
 
 			void OnPlaceTileToggled();
 			void OnEraseTileToggled();
+			void OnPlaceCollisionTileToggled();
 
 		private:
 
 			utils::widgets::ToggleButton m_PlaceTileButton;
 			utils::widgets::ToggleButton m_EraseTileButton;
+			utils::widgets::ToggleButton m_EditCollisionTileButton;
 
 	};
 

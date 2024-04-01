@@ -106,5 +106,39 @@ namespace Tools_Impl
 			ImGui::End();
 			ImGui::PopStyleColor(2);
 		}
+
+		InfoNotificationWindow::InfoNotificationWindow(Manager* _mgr)
+			: INotificationWindow(_mgr)
+		{
+
+		}
+
+		void InfoNotificationWindow::Render()
+		{
+			if (!m_Active)
+				return;
+
+			static auto flags = utils::flags();
+
+			float alpha = 1.f - m_DisplayTime / m_MaxDisplayTime;
+
+			if (alpha < utils::TOOLS_NOTIFICATION_MIN_ALPHA)
+				alpha = utils::TOOLS_NOTIFICATION_MIN_ALPHA;
+
+			ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, alpha));
+			ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.2f, 0.36f, 0.67f, alpha));
+
+			if (ImGui::Begin("Info Window", &m_Active, flags.message_window_flags))
+			{
+				ImGui::SetWindowPos(m_Pos);
+				ImGui::SetWindowSize(utils::TOOLS_NOTIFICATION_SIZE);
+
+				ImGui::Text(&m_message[0]);
+			}
+
+			ImGui::End();
+			ImGui::PopStyleColor(2);
+		}
+
 	}
 }

@@ -8,13 +8,25 @@ namespace Level
 	World::World()
 	{
 		m_Camera = std::make_shared<Camera>();
+		m_ActiveLevelPtr = nullptr;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	// LEVEL
-	Level::Level()
+	Level::Level(const std::string& _level_name)
+		: m_LevelName(_level_name)
 	{
 		m_ChunksManager = std::make_unique<ChunksManager>();
+	}
+
+	void Level::OnLevelActivated()
+	{
+
+	}
+
+	void Level::OnLevelDeactivated()
+	{
+
 	}
 
 	void Level::Update(float _dt)
@@ -41,29 +53,33 @@ namespace Level
 		return m_NoLayers;
 	}
 
+	const std::string& Level::GetLevelName() const
+	{
+		return m_LevelName;
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	// WORLD
 	void World::ActivateLevel(const std::string& _level_name)
 	{
-		m_ActiveLevel = _level_name;
-		auto& level = m_CachedLevels[_level_name];
+		m_ActiveLevelPtr = m_CachedLevels[_level_name].get();
 
-		m_Camera->SetLevelBounds(level->GetLevelBounds());
+		m_Camera->SetLevelBounds(m_ActiveLevelPtr->GetLevelBounds());
 
 		Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
-		rendering_system->OnLevelActivated(level.get());
+		rendering_system->OnLevelActivated(m_ActiveLevelPtr);
 
-		LevelDebugController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
-		level_controller->OnLevelActivated(level.get());
+		LevelEditController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
+		level_controller->OnLevelActivated(m_ActiveLevelPtr);
 	}
 
-	void World::DeactivateLevel(const std::string& _level_name)
+	void World::DeactivateCurrentLevel()
 	{
-		auto& level = m_CachedLevels[_level_name];
-		m_ActiveLevel.clear();
-
 		Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
-		rendering_system->OnLevelDeactivated(level.get());
+		rendering_system->OnLevelDeactivated(m_ActiveLevelPtr);
+
+		LevelEditController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
+		level_controller->OnLevelDeactivated();
 	}
 
 	bool World::IsLevelCached(const std::string& _level_name) const
@@ -71,14 +87,38 @@ namespace Level
 		return m_CachedLevels.find(_level_name) != m_CachedLevels.end();
 	}
 
-	void World::LoadLevel(const std::string& _level_name, const std::string& _chunk_root_name, unsigned int _tile_size)
+	void World::LoadLevel(const Serializable::JSON::LevelInfo& _entry_level_info)
 	{
-		std::unique_ptr<Level> loaded_level = std::make_unique<Level>();
+		std::unique_ptr<Level> loaded_level = std::make_unique<Level>(_entry_level_info.m_LevelName);
 		sf::FloatRect level_bounds(0.f, 0.f, 0.f, 0.f);
 
 		fs::IFileSystem* data_fs = ApplicationSingleton::Instance().GetEngineController().GetFilesystemManager()->Get("data");
+		std::filesystem::path collisions_path = "levels";
+		collisions_path /= _entry_level_info.m_CollisionsInfoFile;
+
+		// Load collisions file.
+		if (std::shared_ptr<fs::IFile> collision_file = data_fs->OpenFile(collisions_path.string(), fs::io::OpenMode::In | fs::io::OpenMode::Binary))
+		{
+			Collisions::Manager* collisions_manager = ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager();
+			
+			std::shared_ptr<Serializable::Binary::CollisionLayerInfo> collision_layer_info = std::make_shared<Serializable::Binary::CollisionLayerInfo>();
+
+			if (collision_file->Size() > 0)
+			{
+				auto binary_data = std::dynamic_pointer_cast<ISerializable::Binary>(collision_layer_info);
+				collision_file->Seek(0, fs::io::Origin::Begin);
+				collision_file->DeserializeBinary(binary_data);
+				collision_layer_info = std::dynamic_pointer_cast<Serializable::Binary::CollisionLayerInfo>(binary_data);
+			}
+
+			collisions_manager->AddCachedInfo(_entry_level_info.m_LevelName, collision_layer_info);
+
+
+			collision_file->Close();
+		}
+
 		std::filesystem::path chunk_root_path = "levels";
-		chunk_root_path /= _chunk_root_name;
+		chunk_root_path /= _entry_level_info.m_ChunkRootFile;
 
 		// Load chunk root file.
 		if (std::shared_ptr<fs::IFile> chunk_root_file = data_fs->OpenFile(chunk_root_path.string(), fs::io::OpenMode::In | fs::io::OpenMode::Binary))
@@ -93,52 +133,55 @@ namespace Level
 
 			for (const auto& chunk_info : chunk_root_info->m_ChunksInfoVec)
 			{
-				const sf::IntRect chunk_rect = { CAST_INT(chunk_info.m_ChunkPosX.x), 
-																				 CAST_INT(chunk_info.m_ChunkPosY.x), 
-																				 CAST_INT(chunk_info.m_ChunkPosX.y), 
+				const sf::IntRect chunk_rect = { CAST_INT(chunk_info.m_ChunkPosX.x),
+																				 CAST_INT(chunk_info.m_ChunkPosY.x),
+																				 CAST_INT(chunk_info.m_ChunkPosX.y),
 																				 CAST_INT(chunk_info.m_ChunkPosY.y) };
 
-					std::filesystem::path chunk_path = "levels";
-					chunk_path /= chunk_info.m_RelativePath;
+				std::filesystem::path chunk_path = "levels";
+				chunk_path /= chunk_info.m_RelativePath;
 
-					if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_path.string(), fs::io::OpenMode::In | fs::io::OpenMode::Binary))
-					{
-						std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>(chunk_rect);
-						auto& parsed_chunk_info = chunk->GetChunkInfo();
-						auto binary_chunk_data = std::dynamic_pointer_cast<ISerializable::Binary>(parsed_chunk_info);
-						chunk_file->Seek(0, fs::io::Origin::Begin);
-						chunk_file->DeserializeBinary(binary_chunk_data);
+				if (std::shared_ptr<fs::IFile> chunk_file = data_fs->OpenFile(chunk_path.string(), fs::io::OpenMode::In | fs::io::OpenMode::Binary))
+				{
+					std::unique_ptr<Chunk> chunk = std::make_unique<Chunk>(chunk_rect);
+					auto& parsed_chunk_info = chunk->GetChunkInfo();
+					auto binary_chunk_data = std::dynamic_pointer_cast<ISerializable::Binary>(parsed_chunk_info);
+					chunk_file->Seek(0, fs::io::Origin::Begin);
+					chunk_file->DeserializeBinary(binary_chunk_data);
 
-						parsed_chunk_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkInfo>(binary_chunk_data);
-						parsed_chunk_info->m_ChunkUUID = chunk_info.m_ChunkUUID;
+					parsed_chunk_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkInfo>(binary_chunk_data);
+					parsed_chunk_info->m_ChunkUUID = chunk_info.m_ChunkUUID;
 
-						loaded_level->SetNoLayers(chunk->GetChunkInfo()->m_TileLayers.size());
+					loaded_level->SetNoLayers(chunk->GetChunkInfo()->m_TileLayers.size());
 
-						loaded_level->GetChunksManager()->PushChunk(std::move(chunk));
+					loaded_level->GetChunksManager()->PushChunk(std::move(chunk));
 
-						level_bounds.width += chunk_rect.width;
-						level_bounds.height += chunk_rect.height;
+					level_bounds.width += chunk_rect.width;
+					level_bounds.height += chunk_rect.height;
 
-						data_fs->CloseFile(chunk_file);
+					data_fs->CloseFile(chunk_file);
 
-						// TODO: For now we can break, in future we need to load neighbouring chunks.
-					}
+					// TODO: For now we can break, in future we need to load neighbouring chunks.
+				}
 
 				data_fs->CloseFile(chunk_root_file);
 			}
 		}
 
 		loaded_level->SetLevelBounds(level_bounds);
-		loaded_level->SetTilesSize(_tile_size);
-		m_CachedLevels.insert({ _level_name, std::move(loaded_level) });
+		loaded_level->SetTilesSize(_entry_level_info.m_TileSize);
+		m_CachedLevels.insert({ _entry_level_info.m_LevelName, std::move(loaded_level) });
 	}
 
 	void World::SwitchToLevel(const std::string& _level_name)
 	{
-		if (_level_name == m_ActiveLevel)
+		if (m_ActiveLevelPtr)
 		{
-			std::cout << "[WORLD] Cannot switch to level: " << _level_name << " because it's already active.";
-			return;
+			if (_level_name == m_ActiveLevelPtr->GetLevelName())
+			{
+				std::cout << "[WORLD] Cannot switch to level: " << _level_name << " because it's already active.";
+				return;
+			}
 		}
 
 		// Check JSON for chunk root file.
@@ -146,8 +189,8 @@ namespace Level
 		{
 			if (level_info.m_LevelName == _level_name)
 			{
-				if (!m_ActiveLevel.empty())
-					DeactivateLevel(m_ActiveLevel);
+				if (m_ActiveLevelPtr)
+					DeactivateCurrentLevel();
 
 				if (IsLevelCached(_level_name))
 				{
@@ -155,7 +198,7 @@ namespace Level
 				}
 				else
 				{
-					LoadLevel(_level_name, level_info.m_ChunkRootFile, level_info.m_TileSize);
+					LoadLevel(level_info);
 					ActivateLevel(_level_name);
 				}
 			}
@@ -164,26 +207,22 @@ namespace Level
 
 	Level* World::GetActiveLevel() const
 	{
-		for (const auto& [level_name, level] : m_CachedLevels)
-		{
-		if (level_name == m_ActiveLevel)
-		{
-				return level.get();
-			}
-		}
+		return m_ActiveLevelPtr;
+	}
+
+	bool World::IsLevelActive() const
+	{
+		return m_ActiveLevelPtr != nullptr;
 	}
 
 	unsigned int World::GetActiveLevelNoLayers() const
 	{
-		for (const auto& [level_name, level] : m_CachedLevels)
+		if (IsLevelActive())
 		{
-			if (level_name == m_ActiveLevel)
-			{
-				return level->GetNoLayers();
-			}
+			return m_ActiveLevelPtr->GetNoLayers();
 		}
 
-		return 0;
+		return -1;
 	}
 
 	void World::PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer)
@@ -221,25 +260,20 @@ namespace Level
 	void World::Update(float _dt)
 	{
 		m_Camera->Update(_dt);
-
-		for (const auto& [level_name, level] : m_CachedLevels)
-		{
-			if (level_name == m_ActiveLevel)
-			{
-				level->Update(_dt);
-			}
-		}
+		
+		if (m_ActiveLevelPtr)
+			m_ActiveLevelPtr->Update(_dt);
 	}
 
 	// TODO: Waste of memory & dandlding std::shared_ptr...
 	void World::PushInitialLevelData(std::shared_ptr<Serializable::JSON::LevelInfo>& _level_info)
 	{
-		m_InitialLevelsData.push_back({ _level_info->m_LevelName, _level_info->m_ChunkRootFile, _level_info->m_TileSize });
+		m_InitialLevelsData.push_back({ _level_info->m_LevelName, _level_info->m_ChunkRootFile, _level_info->m_CollisionsInfoFile, _level_info->m_TileSize });
 	}
 
 	bool World::CreateNewLevel(const std::string& _lvl_path, const std::string& _level_name, unsigned int _tile_size)
 	{
-		std::unique_ptr<Level> new_level = std::make_unique<Level>();
+		std::unique_ptr<Level> new_level = std::make_unique<Level>(_level_name);
 
 		auto& main_instance = ApplicationSingleton::Instance();
 		fs::IFileSystem* resource_fs = main_instance.GetEngineController().GetFilesystemManager()->Get("resources");
@@ -262,10 +296,12 @@ namespace Level
 		bool file_closed_successfully = false;
 		bool json_serialized = false;
 
+		const std::string& collisions_file_name = _level_name + fs::IFile::TypeToStringExt(fs::IFile::EType::Data_Collisions);
+
 		if (std::shared_ptr<fs::IFile> level_json_file = resource_fs->OpenFile(relative_lvl_path, fs::io::OpenMode::Out))
 		{
-			const std::string& root_chunk_file_name = _level_name + ".rootchunk";
-			std::shared_ptr<ISerializable::JSON> level_data = std::make_shared<Serializable::JSON::LevelInfo>(_level_name, root_chunk_file_name, _tile_size);
+			const std::string& root_chunk_file_name = _level_name + fs::IFile::TypeToStringExt(fs::IFile::EType::Data_LevelRootChunk);
+			std::shared_ptr<ISerializable::JSON> level_data = std::make_shared<Serializable::JSON::LevelInfo>(_level_name, root_chunk_file_name, collisions_file_name, _tile_size);
 			level_json_file->SerializeJson(level_data);
 
 			std::shared_ptr<Serializable::JSON::LevelInfo> level_info = std::dynamic_pointer_cast<Serializable::JSON::LevelInfo>(level_data);
@@ -282,14 +318,20 @@ namespace Level
 			data_fs->CreateFile("levels", fs::IFile::EType::Directory);
 		}
 
+		// Create chunk from scratch as map is empty.
 		ChunksManager* chunks_manager = new_level->GetChunksManager();
-
 		bool chunk_processed = false;
-
 		if (chunks_manager->IsChunkRootInfoEmpty())
 		{
-			// Create chunk from scratch as map is empty.
 			chunk_processed = chunks_manager->GenerateNewChunk(0, 0, 8192, 8192, _tile_size, _level_name);
+		}
+
+		std::filesystem::path collisions_file_path = "levels";
+		collisions_file_path /= collisions_file_name;
+
+		if (!data_fs->FileExists(collisions_file_path.string()))
+		{
+			data_fs->CreateFile(collisions_file_path.string(), fs::IFile::EType::Data_Collisions);
 		}
 
 		const bool success = json_created_succesfully && file_closed_successfully && json_serialized && chunk_processed;
@@ -362,7 +404,7 @@ namespace Level
 	{
 		if (m_ChunkInfo)
 		{
-			for (LayerInfo& layer_info : m_ChunkInfo->m_TileLayers)
+			for (TextureLayerInfo& layer_info : m_ChunkInfo->m_TileLayers)
 			{
 				if (layer_info.m_LayerIndex == _layer)
 				{
@@ -449,7 +491,7 @@ namespace Level
 			auto& chunk_info = new_chunk->GetChunkInfo();
 			chunk_info->m_ChunkUUID = new_chunk_uuid;
 
-			Serializable::Binary::LayerInfo default_layer;
+			Serializable::Binary::TextureLayerInfo default_layer;
 			default_layer.m_LayerIndex = 0;
 
 			const unsigned int final_x = _x + _width_pixels;
@@ -468,7 +510,7 @@ namespace Level
 				}
 			}
 
-			Serializable::Binary::LayerInfo extra_layer;
+			Serializable::Binary::TextureLayerInfo extra_layer;
 			extra_layer.m_LayerIndex = 1;
 
 			for (unsigned int i = _x; i < final_x; i += _tile_size)

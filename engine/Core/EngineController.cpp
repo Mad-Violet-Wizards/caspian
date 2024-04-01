@@ -14,6 +14,12 @@ void EngineController::Update(float _dt)
 		m_ScenesStateMachine->Update(_dt);
 	}
 
+	if (m_GameObjectCollection)
+	{
+		m_GameObjectCollection->Update(_dt);
+		m_GameObjectCollection->LateUpdate(_dt);
+	}
+
 	if (m_ResourcesFsInitFinished && m_DataFsInitFinished)
 	{
 		m_toolsManager->ShowNotification(Tools_Impl::ENotificationType::Success, "FS: Filesystems initialized.\nResources & data.");

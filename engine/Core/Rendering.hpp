@@ -24,11 +24,11 @@ namespace Rendering
 		public:
 
 			RenderTile(int _layer_index, const sf::Vector2u& _world_position, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid);
-			~RenderTile();
+			virtual ~RenderTile();
 
 			int GetLayerIndex() const { return m_LayerIndex; }
 
-			void RefreshSprite(const sf::Vector2f& _world_pos, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid);
+			virtual void RefreshSprite(const sf::Vector2f& _world_pos, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid);
 			void SetWorldPosition(const sf::Vector2u& _world_position);
 			const sf::Vector2u& GetWorldPosition() const { return m_WorldPosition; }
 			const sf::Vector2u& GetTilesetPosition() const { return m_TilesetPosition; }
@@ -37,7 +37,7 @@ namespace Rendering
 			const sf::Sprite& GetSprite() const { return m_Sprite; }
 			bool HasTransparentPixel() const { return m_AnyTransparentPixel; }
 			
-		private:
+		protected:
 
 			sf::Sprite m_Sprite;
 
@@ -47,6 +47,15 @@ namespace Rendering
 			sf::Vector2u m_WorldPosition;
 			sf::Vector2u m_TilesetPosition;
 			Random::UUID m_TilesetUUID;
+	};
+
+	class CollisionEditTile : public RenderTile
+	{
+	public:
+
+		CollisionEditTile(int _layer_index, const sf::Vector2u& _world_pos);
+
+		virtual void RefreshSprite(const sf::Vector2f& _world_pos, const sf::Vector2u& _tileset_pos, Random::UUID _tileset_uuid) override;
 	};
 
 	class SpatialHashGrid
@@ -99,11 +108,16 @@ namespace Rendering
 
 			SpatialHashGrid& GetSpatialHashGrid() { return m_SpatialHashGrid; }
 
+			void OnCollisionEditStateChanged(bool _state);
+			void PushCollisionTile(const sf::Vector2u& _pos);
+			void PopCollisionTile(const sf::Vector2u& _pos);
+
 			void Clear();
 
 		private:
 
 			SpatialHashGrid m_SpatialHashGrid;
+			std::vector<RenderTile*> m_CollisionEditTiles;
 
 			std::vector<Random::UUID> m_CurrentChunks;
 	};
@@ -128,6 +142,12 @@ namespace Rendering
 			void RefreshHighlightTilePosition(const sf::Vector2u& _position);
 			void RefreshRenderTile(const sf::Vector2u& _position, Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y, unsigned int _tile_size, unsigned int _layer);
 			void ClearHighlightTile();
+
+			void RenderCollisionEdit(bool _state);
+			void PushCollisionTile(const sf::Vector2u& _pos);
+			void PopCollisionTile(const sf::Vector2u& _pos);
+
+			void RenderCollisionDebug(bool _state);
 
 			static unsigned int s_LevelTileSize;
 			static sf::Vector2f s_RenderSize;

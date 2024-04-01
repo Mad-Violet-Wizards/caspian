@@ -21,6 +21,9 @@ class C_Transform : public IComponent
 
 		const sf::Vector2f& GetPosition() const;
 
+		virtual void Update([[maybe_unused]] float _dt) override {};
+		virtual void LateUpdate([[maybe_unused]] float _dt) override {}
+
 	private:
 		
 		sf::Vector2f m_Position;

@@ -6,7 +6,7 @@
 #include "engine/Core/Level.hpp"
 #include "engine/Core/Projects.hpp"
 #include "engine/Core/Rendering.hpp"
-#include "engine/Core/DebugEditorControllers.hpp"
+#include "engine/Core/EditControllers.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 #if defined(DEBUG)
@@ -45,7 +45,7 @@ class DebugHelper
 		float GetDeltaTime() const { return m_deltaTime; }
 
 		EngineController& GetEngineController() { return m_engineController; }
-		DebugEditorControllers& GetDebugControllers() { return m_debugControllers; }
+		EditControllersManager& GetDebugControllers() { return m_debugControllers; }
 
 		void SetWorld(std::unique_ptr<Level::World> _world) { m_World = std::move(_world); }
 		Level::World* const GetWorld() { return m_World.get(); }
@@ -68,7 +68,7 @@ class DebugHelper
 		Window m_window;
 
 		EngineController m_engineController;
-		DebugEditorControllers m_debugControllers;
+		EditControllersManager m_debugControllers;
 
 		std::unique_ptr<Level::World> m_World = nullptr;
 		std::unique_ptr<Projects::Manager> m_ProjectsManager;

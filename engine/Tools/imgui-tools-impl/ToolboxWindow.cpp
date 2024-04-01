@@ -105,6 +105,7 @@ LevelToolbox::LevelToolbox(Manager* _mgr)
 	: IWindow(_mgr)
 	, m_PlaceTileButton("Place Tile", std::bind(&LevelToolbox::OnPlaceTileToggled, this), false)
 	, m_EraseTileButton("Erase Tile", std::bind(&LevelToolbox::OnEraseTileToggled, this), false)
+	, m_EditCollisionTileButton("Edit Collisions", std::bind(&LevelToolbox::OnPlaceCollisionTileToggled, this), false)
 {
 
 }
@@ -120,6 +121,8 @@ void LevelToolbox::Render()
 		m_PlaceTileButton.Render();
 		ImGui::SameLine();
 		m_EraseTileButton.Render();
+		ImGui::SameLine();
+		m_EditCollisionTileButton.Render();
 
 		auto& main_instance = ApplicationSingleton::Instance();
 		const unsigned int active_level_layers = main_instance.GetWorld()->GetActiveLevelNoLayers();
@@ -151,11 +154,12 @@ void LevelToolbox::OnPlaceTileToggled()
 	if (is_active)
 	{
 		m_EraseTileButton.m_Active = false;
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::Paint);
+		m_EditCollisionTileButton.m_Active = false;
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::PaintTile);
 	}
 	else
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::None);
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
 	}
 }
 
@@ -168,12 +172,39 @@ void LevelToolbox::OnEraseTileToggled()
 
 	if (is_active)
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::Erase);
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::Erase);
+		m_PlaceTileButton.m_Active = false;
+		m_EditCollisionTileButton.m_Active = false;
+	}
+	else
+	{
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
+	}
+}
+
+void LevelToolbox::OnPlaceCollisionTileToggled()
+{
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	if (main_instance.GetWorld()->GetActiveLevel() == nullptr)
+	{
+		m_Manager->ShowNotification(ENotificationType::Error, "You must activate level first.");
+		m_EditCollisionTileButton.m_Active = false;	
+		return;
+	}
+	
+	const bool is_active = m_EditCollisionTileButton.IsActive();
+	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
+
+	if (is_active)
+	{
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::EditCollisions);
+		m_EraseTileButton.m_Active = false;
 		m_PlaceTileButton.m_Active = false;
 	}
 	else
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelDebugControllerMode::None);
+		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
 	}
 }
 

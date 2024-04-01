@@ -37,5 +37,15 @@ namespace Tools_Impl
 
 				void Render() override;
 		};
+
+		class InfoNotificationWindow : public INotificationWindow
+		{
+			public:
+
+				InfoNotificationWindow(Manager* _mgr);
+				~InfoNotificationWindow() = default;
+
+				void Render() override;
+		};
 	}
 }
