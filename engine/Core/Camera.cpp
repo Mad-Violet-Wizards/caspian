@@ -2,9 +2,6 @@
 
 #include "Camera.hpp"
 
-#include "engine/Core/Components/C_Tags.hpp"
-#include "engine/Core/Components/C_Transform.hpp"
-
 Camera::Camera()
 	: m_OwningGameObject(nullptr)
 	, m_Position(0, 0)

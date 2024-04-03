@@ -220,8 +220,8 @@ const sf::Vector2u LevelEditController::RoundMouseWorldPosition(const sf::Vector
 
 	const sf::Vector2u rounded_pos
 	{
-		Math::round_up(static_cast<unsigned int>(_pos.x), _tileSize) - _tileSize,
-		Math::round_up(static_cast<unsigned int>(_pos.y), _tileSize) - _tileSize
+		Math::tile_round_up(static_cast<unsigned int>(_pos.x), _tileSize),
+		Math::tile_round_up(static_cast<unsigned int>(_pos.y), _tileSize)
 	};
 
 	return rounded_pos;

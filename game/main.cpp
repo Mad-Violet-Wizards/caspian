@@ -22,6 +22,9 @@ int main()
 	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
 	engine_module.SetEventDispatcher(std::move(event_dispatcher_system));
 
+	// App Event Listeners;
+	main_instance.InitializeAppEventListeners();
+
 	std::unique_ptr<fs::Manager> filesystem_manager = std::make_unique<fs::Manager>();
 	engine_module.SetFilesystemManager(std::move(filesystem_manager));
 
@@ -44,9 +47,6 @@ int main()
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();
 	main_instance.SetProjectsManager(std::move(projects_manager));
-
-	std::unique_ptr<DebugHelper> game_debug_helper = std::make_unique<DebugHelper>();
-	game_debug_helper->InitializeDebugEventListeners();
 
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
 	tools_manager->InitializeEventListeners();

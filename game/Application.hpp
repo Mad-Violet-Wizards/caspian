@@ -8,22 +8,6 @@
 #include "engine/Core/Rendering.hpp"
 #include "engine/Core/EditControllers.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
-#if defined(DEBUG)
-class DebugHelper
-{
-	public:
-
-		DebugHelper() = default;
-		~DebugHelper() = default;
-
-		void InitializeDebugEventListeners();
-
-	private:
-
-		std::unique_ptr<Events::Listener> m_keyReleasedListener = nullptr;
-	};
-	#endif
 
 	////////////////////////////////////////////////////////////////////////////////
 	class Application
@@ -40,6 +24,8 @@ class DebugHelper
 		void Draw();
 		void CalculateDeltaTime();
 		bool IsRunning() const;
+
+		void InitializeAppEventListeners();
 
 		// Use for debug purposes only!
 		float GetDeltaTime() const { return m_deltaTime; }
@@ -62,6 +48,9 @@ class DebugHelper
 		sf::Vector2f GetMousePositionWorld();
 
 		const sf::View& GetView() const { return m_window.GetView(); }
+
+		void SetWindowFocused(bool _focus) { m_window.SetHasFocus(_focus); }
+		bool GetWindowFocused() const { return m_window.GetHasFocus(); }
 			 
 	private:
 
@@ -74,8 +63,11 @@ class DebugHelper
 		std::unique_ptr<Projects::Manager> m_ProjectsManager;
 		std::unique_ptr<Rendering::System> m_RenderingSystem;
 
+		std::vector<std::unique_ptr<Events::Listener>> m_AppEventListeners;
+
 		sf::Clock m_clock;
 		float m_deltaTime;
+		bool m_WindowFocused;
 	};
 
 namespace Windows

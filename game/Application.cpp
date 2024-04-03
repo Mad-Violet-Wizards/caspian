@@ -42,7 +42,11 @@ void Application::Update()
 	ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
 
 	m_engineController.Update(m_deltaTime);
-	m_debugControllers.Update(m_deltaTime);
+
+	if (GetWindowFocused())
+	{
+		m_debugControllers.Update(m_deltaTime);
+	}
 
 	if (m_World)
 	{
@@ -93,6 +97,31 @@ bool Application::IsRunning() const
 }
 
 
+void Application::InitializeAppEventListeners()
+{
+	std::unique_ptr<Events::Listener> focusGainedListener = std::make_unique<Events::Listener>();
+	focusGainedListener->NotifyOn(sf::Event::GainedFocus);
+	focusGainedListener->SetCallback([this](const sf::Event& event)
+		{
+			std::cout << "DEBUG: Focus gained.\n";
+			SetWindowFocused(true);
+		});
+
+	std::unique_ptr<Events::Listener> focusLostListener = std::make_unique<Events::Listener>();
+	focusLostListener->NotifyOn(sf::Event::LostFocus);
+	focusLostListener->SetCallback([this](const sf::Event& event)
+		{
+			std::cout << "DEBUG: Focus lost.\n";
+			SetWindowFocused(false);
+		});
+	
+	GetEngineController().GetEventDispatcher()->AddObserver(focusGainedListener.get());
+	GetEngineController().GetEventDispatcher()->AddObserver(focusLostListener.get());
+
+	m_AppEventListeners.push_back(std::move(focusGainedListener));
+	m_AppEventListeners.push_back(std::move(focusLostListener));
+}
+
 sf::Vector2i Application::GetMousePosition()
 {
 	return sf::Mouse::getPosition(m_window.GetRenderWindow());
@@ -103,22 +132,3 @@ sf::Vector2f Application::GetMousePositionWorld()
 	sf::Vector2i mousePos = GetMousePosition();
 	return m_window.GetRenderWindow().mapPixelToCoords(mousePos);
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/* DEBUG */
-#if defined(DEBUG)
-	void DebugHelper::InitializeDebugEventListeners()
-	{
-		m_keyReleasedListener = std::make_unique<Events::Listener>();
-		m_keyReleasedListener->NotifyOn(sf::Event::KeyReleased);
-
-		m_keyReleasedListener->SetCallback([](const sf::Event& event)
-			{
-				std::cout << "DEBUG: [EventListener] Key released: " << event.key.code << "\n";
-			});
-
-		auto& main_instance = ApplicationSingleton::Instance();
-
-		main_instance.GetEngineController().GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
-	}
-#endif

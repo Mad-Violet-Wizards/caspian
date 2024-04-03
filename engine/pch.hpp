@@ -35,6 +35,12 @@
 #include "engine/Core/Camera.hpp"
 #include "engine/Core/Math.hpp"
 
+// COMPONENTS
+
+#include "engine/Core/Components/C_Sprite.hpp"
+#include "engine/Core/Components/C_Transform.hpp"
+#include "engine/Core/Components/C_Tags.hpp"
+
 // WARNING C4603.
 #if(defined DEBUG)
 	#if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)

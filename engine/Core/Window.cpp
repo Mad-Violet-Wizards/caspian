@@ -61,3 +61,13 @@ void Window::UpdateTitle(const std::string& _title)
 {
 	m_renderWindow.setTitle(_title);
 }
+
+void Window::SetHasFocus(bool _focus)
+{
+	m_HasFocus = _focus;
+}
+
+bool Window::GetHasFocus() const
+{
+	return m_HasFocus;
+}

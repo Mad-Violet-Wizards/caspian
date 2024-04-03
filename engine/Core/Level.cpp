@@ -66,8 +66,22 @@ namespace Level
 
 		m_Camera->SetLevelBounds(m_ActiveLevelPtr->GetLevelBounds());
 
-		Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
-		rendering_system->OnLevelActivated(m_ActiveLevelPtr);
+		GameObjectCollection* game_objects_collection = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage();
+		game_objects_collection->SortDrawablesOnDirtyFlag(false);
+		for (const auto& chunk : m_ActiveLevelPtr->GetChunksManager()->GetChunks())
+		{
+			const auto& chunk_info = chunk->GetChunkInfo();
+			for (auto reverse_it = chunk_info->m_TileLayers.rbegin(); reverse_it != chunk_info->m_TileLayers.rend(); ++reverse_it)
+			{
+				const Serializable::Binary::TextureLayerInfo& tile_layer_info = *reverse_it;
+
+				for (const auto& tile_info : tile_layer_info.m_Tiles)
+					if (tile_info.m_TilesetUUID != Random::EMPTY_UUID)
+						game_objects_collection->ConstructNew(tile_info, m_ActiveLevelPtr->GetTilesSize(), tile_layer_info.m_LayerIndex);
+				}
+			}
+		game_objects_collection->SortDrawablesOnDirtyFlag(true);
+
 
 		LevelEditController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
 		level_controller->OnLevelActivated(m_ActiveLevelPtr);
@@ -370,11 +384,32 @@ namespace Level
 			tile_info->m_TilesetColumn = tileset_tile_pos.x;
 			tile_info->m_TilesetRow = tileset_tile_pos.y;
 
-			Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
+			SpatialHashGrid& spatial_hash_grid = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetSpatialHashGrid();
 
-			if (rendering_system)
+			const TileIndex tile_index = spatial_hash_grid.CalculateTileIndex(position.x, position.y);
+
+			bool tile_replaced = false;
+
+			for (GameObject* game_object : spatial_hash_grid.GetRefToBucket(tile_index))
 			{
-				rendering_system->RefreshRenderTile(position, _tilset_uuid, tileset_tile_pos.x, tileset_tile_pos.y, _tiles_size, _layer);
+				if (auto sprite_component_sPtr = game_object->GetComponent<C_Sprite>())
+				{
+					if (sprite_component_sPtr->GetLayer() == _layer)
+					{
+						if ((sf::Vector2u)game_object->GetComponent<C_Transform>()->GetPosition() == position)
+						{
+							game_object->QueueForRemoval();
+							ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(*tile_info, _tiles_size, _layer);
+							tile_replaced = true;
+							break;
+						}
+					}
+				}
+			}
+
+			if (!tile_replaced)
+			{
+				ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(*tile_info, _tiles_size, _layer);
 			}
 		}
 

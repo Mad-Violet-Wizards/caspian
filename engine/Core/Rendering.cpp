@@ -1,34 +1,67 @@
 #include "engine/pch.hpp"
 
 #include "Rendering.hpp"
-#include "engine/Core/Components/C_Transform.hpp"
 
 unsigned int Rendering::System::s_LevelTileSize = 0;
 sf::Vector2f Rendering::System::s_RenderSize = { 1280.f, 720.f };
 bool Rendering::System::s_RenderEmptyTiles = false;
 
+
 void Rendering::System::Render(sf::RenderWindow& _window)
 {
-
 	if (ApplicationSingleton::Instance().GetWorld())
 	{
 		if (auto camera = ApplicationSingleton::Instance().GetWorld()->GetCamera())
 		{
 			_window.setView(camera->GetBaseView());
+
+			if (GameObjectCollection* game_object_collection = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage())
+			{
+				if (!game_object_collection->DrawablesEmpty())
+				{
+					const sf::Vector2f screen_size
+					{
+						static_cast<float>(sf::VideoMode::getDesktopMode().width),
+						static_cast<float>(sf::VideoMode::getDesktopMode().height)
+					};
+
+					sf::FloatRect camera_rect{ camera->GetPosition().x - System::s_RenderSize.x,
+																		 camera->GetPosition().y - System::s_RenderSize.y,
+																		 screen_size.x,
+																		 screen_size.y };
+
+					if (camera_rect.left < 0) camera_rect.left = 0;
+					if (camera_rect.top < 0) camera_rect.top = 0;
+
+					const TileIndex top_left = game_object_collection->CalculateTileIndex(camera_rect.left, camera_rect.top);
+					const TileIndex bottom_right = game_object_collection->CalculateTileIndex(camera_rect.left + camera_rect.width, camera_rect.top + camera_rect.height);
+
+					for (auto x = top_left.first; x < bottom_right.first; ++x)
+					{
+						for (auto y = top_left.second; y < bottom_right.second; ++y)
+						{
+							const TileIndex tile_index{ x, y };
+							for (auto it = game_object_collection->GetSpatialHashGrid().begin(tile_index); it != game_object_collection->GetSpatialHashGrid().end(tile_index); it++)
+							{
+								(*it)->GetComponent<C_Sprite>()->Draw(_window);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
-
-	m_LevelRendering.Render(_window);
+	//m_LevelRendering.Render(_window);
 }
 
 void Rendering::System::OnLevelActivated(Level::Level* _level)
 {
-	const Level::ChunksManager* chunk_manager = _level->GetChunksManager();
+	//const Level::ChunksManager* chunk_manager = _level->GetChunksManager();
 
-	s_LevelTileSize = _level->GetTilesSize();
+	//s_LevelTileSize = _level->GetTilesSize();
 
-	for (const auto& chunk : chunk_manager->GetChunks())
-		ProcessLevelChunk(chunk.get());
+	//for (const auto& chunk : chunk_manager->GetChunks())
+	//	ProcessLevelChunk(chunk.get());
 }
 
 void Rendering::System::OnLevelDeactivated(Level::Level* _level)
@@ -54,8 +87,8 @@ void Rendering::System::ProcessLevelChunk(Level::Chunk* _level_chunk)
 					continue;
 			}
 
-			const sf::Vector2u tile_world_pos { _tile_info.m_TilePositionX, _tile_info.m_TilePositionY };
-			const sf::Vector2u tile_position_in_tileset { _tile_info.m_TilesetColumn, _tile_info.m_TilesetRow };
+			const sf::Vector2u tile_world_pos{ _tile_info.m_TilePositionX, _tile_info.m_TilePositionY };
+			const sf::Vector2u tile_position_in_tileset{ _tile_info.m_TilesetColumn, _tile_info.m_TilesetRow };
 
 			Rendering::RenderTile* tile = new Rendering::RenderTile(tile_layer_info.m_LayerIndex, tile_world_pos, tile_position_in_tileset, _tile_info.m_TilesetUUID);
 
@@ -65,7 +98,7 @@ void Rendering::System::ProcessLevelChunk(Level::Chunk* _level_chunk)
 }
 
 void Rendering::System::RefreshHighlightTileSprite(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y, unsigned int _tile_size)
-{	
+{
 	m_LevelRendering.GetSpatialHashGrid().RefreshHighlightTileSprite(_tilesetId, _tile_x, _tile_y, _tile_size);
 }
 
@@ -184,7 +217,7 @@ void Rendering::LevelRendering::OnCollisionEditStateChanged(bool _state)
 			{
 				const sf::Vector2f world_position = go_transform_component_sPtr->GetPosition();
 
-				CollisionEditTile* collision_edit_tile = new CollisionEditTile(0, (sf::Vector2u) world_position);
+				CollisionEditTile* collision_edit_tile = new CollisionEditTile(0, (sf::Vector2u)world_position);
 				m_CollisionEditTiles.push_back(collision_edit_tile);
 			}
 		}
@@ -210,7 +243,7 @@ void Rendering::LevelRendering::PopCollisionTile(const sf::Vector2u& _pos)
 	{
 		if ((*it)->GetWorldPosition() == _pos)
 		{
-			delete *it;
+			delete* it;
 			m_CollisionEditTiles.erase(it);
 			break;
 		}
@@ -292,8 +325,9 @@ void Rendering::SpatialHashGrid::RefreshRenderTile(const sf::Vector2u& _position
 		{
 			if (_tilesetId != Random::EMPTY_UUID)
 			{
-				render_tile->RefreshSprite((sf::Vector2f)render_tile->GetWorldPosition(), { _tile_x, _tile_y }, _tilesetId);
-				return;
+				delete render_tile;
+				it = m_SpatialHash[tile_index].erase(it);
+				break;
 			}
 			else
 			{
@@ -367,7 +401,7 @@ void Rendering::RenderTile::SetWorldPosition(const sf::Vector2u& _world_position
 }
 
 Rendering::CollisionEditTile::CollisionEditTile(int _layer_index, const sf::Vector2u& _world_pos)
-	: RenderTile(_layer_index, _world_pos, { 0, 0}, Random::EMPTY_UUID)
+	: RenderTile(_layer_index, _world_pos, { 0, 0 }, Random::EMPTY_UUID)
 {
 	RefreshSprite((sf::Vector2f)_world_pos, { 0, 0 }, Random::EMPTY_UUID);
 }

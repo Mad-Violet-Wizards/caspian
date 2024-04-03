@@ -7,6 +7,7 @@ enum class ETag : UINT32
 	Camera_Attachable = 1 << 0,
 	Physics_Static = 1 << 1,
 	Physics_Dynamic = 1 << 2,
+	Drawable = 1 << 3,
 };
 
 inline ETag operator|(ETag _lhs, ETag _rhs);

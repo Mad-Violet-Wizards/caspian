@@ -1,6 +1,5 @@
 #include "engine/pch.hpp"
 #include "Collisions.hpp"
-#include "engine/Core/Components/C_Transform.hpp"
 
 void Collisions::Manager::SetCollisionSolver(ECollisionSolver _collision_solver)
 {
