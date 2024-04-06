@@ -103,7 +103,6 @@ void Application::InitializeAppEventListeners()
 	focusGainedListener->NotifyOn(sf::Event::GainedFocus);
 	focusGainedListener->SetCallback([this](const sf::Event& event)
 		{
-			std::cout << "DEBUG: Focus gained.\n";
 			SetWindowFocused(true);
 		});
 
@@ -111,15 +110,25 @@ void Application::InitializeAppEventListeners()
 	focusLostListener->NotifyOn(sf::Event::LostFocus);
 	focusLostListener->SetCallback([this](const sf::Event& event)
 		{
-			std::cout << "DEBUG: Focus lost.\n";
 			SetWindowFocused(false);
 		});
+
+	std::unique_ptr<Events::Listener> mouseButtonReleased = std::make_unique<Events::Listener>();
+	mouseButtonReleased->NotifyOn(sf::Event::MouseButtonReleased);
+	mouseButtonReleased->SetCallback([this](const sf::Event& event)
+	{
+			ApplicationSingleton::Instance().GetDebugControllers().GetLevelController()->OnEvent(event);
+	});
+
+
 	
 	GetEngineController().GetEventDispatcher()->AddObserver(focusGainedListener.get());
 	GetEngineController().GetEventDispatcher()->AddObserver(focusLostListener.get());
+	GetEngineController().GetEventDispatcher()->AddObserver(mouseButtonReleased.get());
 
 	m_AppEventListeners.push_back(std::move(focusGainedListener));
 	m_AppEventListeners.push_back(std::move(focusLostListener));
+	m_AppEventListeners.push_back(std::move(mouseButtonReleased));
 }
 
 sf::Vector2i Application::GetMousePosition()

@@ -8,6 +8,9 @@ enum class ETag : UINT32
 	Physics_Static = 1 << 1,
 	Physics_Dynamic = 1 << 2,
 	Drawable = 1 << 3,
+		Drawable_Background = 1 << 4,
+		Drawable_Entity = 1 << 5,
+		Drawable_Foreground = 1 << 6
 };
 
 inline ETag operator|(ETag _lhs, ETag _rhs);

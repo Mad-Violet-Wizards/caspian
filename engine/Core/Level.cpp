@@ -15,6 +15,9 @@ namespace Level
 	// LEVEL
 	Level::Level(const std::string& _level_name)
 		: m_LevelName(_level_name)
+		, m_TilesSize(0)
+		, m_BackgroundNoLayersSize(0)
+		, m_ForegroundNoLayers(0)
 	{
 		m_ChunksManager = std::make_unique<ChunksManager>();
 	}
@@ -43,14 +46,24 @@ namespace Level
 		return m_TilesSize;
 	}
 
-	void Level::SetNoLayers(unsigned int _no_layers)
+	void Level::SetNoBackroundLayers(unsigned int _val)
 	{
-		m_NoLayers = _no_layers;
+		m_BackgroundNoLayersSize = _val;
 	}
 
-	unsigned int Level::GetNoLayers() const
+	unsigned int Level::GetNoBackroundLayers() const
 	{
-		return m_NoLayers;
+		return m_BackgroundNoLayersSize;
+	}
+
+	void Level::SetNoForegroundLayers(unsigned int _val)
+	{
+		m_ForegroundNoLayers = _val;
+	}
+
+	unsigned int Level::GetNoForegroundLayers() const
+	{
+		return m_ForegroundNoLayers;
 	}
 
 	const std::string& Level::GetLevelName() const
@@ -68,32 +81,31 @@ namespace Level
 
 		GameObjectCollection* game_objects_collection = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage();
 		game_objects_collection->SortDrawablesOnDirtyFlag(false);
+		// Or in reverse, not sure.
 		for (const auto& chunk : m_ActiveLevelPtr->GetChunksManager()->GetChunks())
 		{
 			const auto& chunk_info = chunk->GetChunkInfo();
-			for (auto reverse_it = chunk_info->m_TileLayers.rbegin(); reverse_it != chunk_info->m_TileLayers.rend(); ++reverse_it)
+			for (const Serializable::Binary::TextureLayerInfo& background_tile_data : chunk_info->m_BackgroundTileLayers)
 			{
-				const Serializable::Binary::TextureLayerInfo& tile_layer_info = *reverse_it;
-
-				for (const auto& tile_info : tile_layer_info.m_Tiles)
+				for (const auto& tile_info : background_tile_data.m_Tiles)
 					if (tile_info.m_TilesetUUID != Random::EMPTY_UUID)
-						game_objects_collection->ConstructNew(tile_info, m_ActiveLevelPtr->GetTilesSize(), tile_layer_info.m_LayerIndex);
+						game_objects_collection->ConstructNew(tile_info, ETag::Drawable_Background, m_ActiveLevelPtr->GetTilesSize(), background_tile_data.m_LayerIndex);
+
+
+				for (const Serializable::Binary::TextureLayerInfo& foreground_tile_data : chunk_info->m_ForegroundTileLayers)
+				{
+					for (const auto& tile_info : foreground_tile_data.m_Tiles)
+						if (tile_info.m_TilesetUUID != Random::EMPTY_UUID)
+							game_objects_collection->ConstructNew(tile_info, ETag::Drawable_Foreground, m_ActiveLevelPtr->GetTilesSize(), foreground_tile_data.m_LayerIndex);
 				}
 			}
+		}
+
 		game_objects_collection->SortDrawablesOnDirtyFlag(true);
-
-
-		LevelEditController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
-		level_controller->OnLevelActivated(m_ActiveLevelPtr);
 	}
 
 	void World::DeactivateCurrentLevel()
 	{
-		Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
-		rendering_system->OnLevelDeactivated(m_ActiveLevelPtr);
-
-		LevelEditController* level_controller = ApplicationSingleton::Instance().GetDebugControllers().GetLevelController();
-		level_controller->OnLevelDeactivated();
 	}
 
 	bool World::IsLevelCached(const std::string& _level_name) const
@@ -166,7 +178,8 @@ namespace Level
 					parsed_chunk_info = std::dynamic_pointer_cast<Serializable::Binary::ChunkInfo>(binary_chunk_data);
 					parsed_chunk_info->m_ChunkUUID = chunk_info.m_ChunkUUID;
 
-					loaded_level->SetNoLayers(chunk->GetChunkInfo()->m_TileLayers.size());
+					loaded_level->SetNoBackroundLayers(chunk->GetChunkInfo()->m_BackgroundTileLayers.size());
+					loaded_level->SetNoForegroundLayers(chunk->GetChunkInfo()->m_ForegroundTileLayers.size());
 
 					loaded_level->GetChunksManager()->PushChunk(std::move(chunk));
 
@@ -229,17 +242,7 @@ namespace Level
 		return m_ActiveLevelPtr != nullptr;
 	}
 
-	unsigned int World::GetActiveLevelNoLayers() const
-	{
-		if (IsLevelActive())
-		{
-			return m_ActiveLevelPtr->GetNoLayers();
-		}
-
-		return -1;
-	}
-
-	void World::PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer)
+	void World::PaintTile(const sf::Vector2u& position, const sf::Vector2u& tileset_tile_pos, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type, Random::UUID _tilset_uuid)
 	{
 		if (Level* current_level = GetActiveLevel())
 		{
@@ -249,13 +252,13 @@ namespace Level
 			{
 				if (chunk->GetArea().contains(sf::Vector2i(position)))
 				{
-					chunk->PaintTile(position, _tilset_uuid, tileset_tile_pos, _layer, current_level->GetTilesSize());
+					chunk->PaintTile(position, tileset_tile_pos, _tiles_size, _layer, _drawable_type, _tilset_uuid);
 				}
 			}
 		}
 	}
 
-	void World::EraseTile(const sf::Vector2u& _position, unsigned int _layer)
+	void World::EraseTile(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type)
 	{
 		if (Level* current_level = GetActiveLevel())
 		{
@@ -265,7 +268,7 @@ namespace Level
 			{
 				if (chunk->GetArea().contains(sf::Vector2i(_position)))
 				{
-					chunk->EraseTile(_position, _layer, current_level->GetTilesSize());
+					chunk->EraseTile(_position, _tiles_size, _layer, _drawable_type);
 				}
 			}
 		}
@@ -337,7 +340,7 @@ namespace Level
 		bool chunk_processed = false;
 		if (chunks_manager->IsChunkRootInfoEmpty())
 		{
-			chunk_processed = chunks_manager->GenerateNewChunk(0, 0, 8192, 8192, _tile_size, _level_name);
+			chunk_processed = chunks_manager->GenerateNewChunk(0, 0, 4096, 4096, _tile_size, _level_name);
 		}
 
 		std::filesystem::path collisions_file_path = "levels";
@@ -374,9 +377,9 @@ namespace Level
 		m_ChunkInfo = std::make_shared<Serializable::Binary::ChunkInfo>();
 	}
 
-	void Chunk::PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer, unsigned int _tiles_size)
+	void Chunk::PaintTile(const sf::Vector2u& position, const sf::Vector2u& tileset_tile_pos, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type, Random::UUID _tilset_uuid)
 	{
-		if (Serializable::Binary::TextureTileInfo* tile_info = FindTileInfo(position, _tiles_size, _layer))
+		if (Serializable::Binary::TextureTileInfo* tile_info = FindTileInfo(position, _tiles_size, _layer, _drawable_type))
 		{
 			tile_info->m_TilesetUUID = _tilset_uuid;
 			tile_info->m_TilePositionX = position.x;
@@ -384,68 +387,178 @@ namespace Level
 			tile_info->m_TilesetColumn = tileset_tile_pos.x;
 			tile_info->m_TilesetRow = tileset_tile_pos.y;
 
-			SpatialHashGrid& spatial_hash_grid = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetSpatialHashGrid();
+			SpatialHashGrid* spatial_hash_grid = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetSpatialHashGrid();
 
-			const TileIndex tile_index = spatial_hash_grid.CalculateTileIndex(position.x, position.y);
-
+			const TileIndex tile_index = spatial_hash_grid->CalculateTileIndex(position.x, position.y);
+			SpatialHashGridBucket& game_objects_bucket = spatial_hash_grid->GetRefToBucket(tile_index);
 			bool tile_replaced = false;
 
-			for (GameObject* game_object : spatial_hash_grid.GetRefToBucket(tile_index))
+			switch (_drawable_type)
 			{
-				if (auto sprite_component_sPtr = game_object->GetComponent<C_Sprite>())
+				case ETag::Drawable_Background:
 				{
-					if (sprite_component_sPtr->GetLayer() == _layer)
+					for (auto it = game_objects_bucket.background_objects_begin(); it != game_objects_bucket.background_objects_end(); ++it)
 					{
-						if ((sf::Vector2u)game_object->GetComponent<C_Transform>()->GetPosition() == position)
+						if ((*it)->GetComponent<C_Sprite>()->GetLayerIndex() == _layer)
 						{
-							game_object->QueueForRemoval();
-							ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(*tile_info, _tiles_size, _layer);
-							tile_replaced = true;
-							break;
+							const sf::Vector2u tile_position = (sf::Vector2u)(*it)->GetComponent<C_Transform>()->GetPosition();
+
+							if (tile_position == position)
+							{
+								(*it)->QueueForRemoval();
+								break;
+							}
+						}
+
+						break;
+					}
+				}
+
+				case ETag::Drawable_Entity:
+				{
+					for (auto it = game_objects_bucket.entity_objects_begin(); it != game_objects_bucket.entity_objects_end(); ++it)
+					{
+						if ((*it)->GetComponent<C_Sprite>()->GetLayerIndex() == _layer)
+						{
+							const sf::Vector2u tile_position = (sf::Vector2u)(*it)->GetComponent<C_Transform>()->GetPosition();
+
+							if (tile_position == position)
+							{
+								(*it)->QueueForRemoval();
+								break;
+							}
 						}
 					}
+
+				break;
+			}
+
+				case ETag::Drawable_Foreground:
+				{
+					for (auto it = game_objects_bucket.foreground_objects_begin(); it != game_objects_bucket.foreground_objects_end(); ++it)
+					{
+						if ((*it)->GetComponent<C_Sprite>()->GetLayerIndex() == _layer)
+						{
+							const sf::Vector2u tile_position = (sf::Vector2u)(*it)->GetComponent<C_Transform>()->GetPosition();
+
+							if (tile_position == position)
+							{
+								(*it)->QueueForRemoval();
+								break;
+							}
+						}
+					}
+
+					break;
 				}
 			}
 
-			if (!tile_replaced)
-			{
-				ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(*tile_info, _tiles_size, _layer);
-			}
-		}
+			ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(*tile_info, _drawable_type, _tiles_size, _layer);
 
-		PerformSave();
+			PerformSave();
+		}
 	}
 
-	void Chunk::EraseTile(const sf::Vector2u& _position, unsigned int _layer, unsigned int _tiles_size)
+	void Chunk::EraseTile(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type)
 	{
-		if (Serializable::Binary::TextureTileInfo* tile_info = FindTileInfo(_position, _tiles_size, _layer))
+		if (Serializable::Binary::TextureTileInfo* tile_info = FindTileInfo(_position, _tiles_size, _layer, _drawable_type))
 		{
 			tile_info->m_TilesetUUID = Random::EMPTY_UUID;
 			tile_info->m_TilesetColumn = 0;
 			tile_info->m_TilesetRow = 0;
 
-			Rendering::System* rendering_system = ApplicationSingleton::Instance().GetRenderingSystem();
+			SpatialHashGrid* spatial_hash_grid = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetSpatialHashGrid();
 
-			if (rendering_system)
+			const TileIndex tile_index = spatial_hash_grid->CalculateTileIndex(_position.x, _position.y);
+			SpatialHashGridBucket& game_objects_bucket = spatial_hash_grid->GetRefToBucket(tile_index);
+
+			switch (_drawable_type)
 			{
-				rendering_system->RefreshRenderTile(_position, Random::EMPTY_UUID, 0, 0, _tiles_size, _layer);
+			case ETag::Drawable_Background:
+			{
+				for (auto it = game_objects_bucket.background_objects_begin(); it != game_objects_bucket.background_objects_end(); ++it)
+				{
+					if ((*it)->GetComponent<C_Sprite>()->GetLayerIndex() == _layer)
+					{
+						const sf::Vector2u tile_position = (sf::Vector2u)(*it)->GetComponent<C_Transform>()->GetPosition();
+
+						if (tile_position == _position)
+						{
+							(*it)->QueueForRemoval();
+							break;
+						}
+					}
+				}
+				break;
 			}
+
+			case ETag::Drawable_Entity:
+			{
+				for (auto it = game_objects_bucket.entity_objects_begin(); it != game_objects_bucket.entity_objects_end(); ++it)
+				{
+					if ((*it)->GetComponent<C_Sprite>()->GetLayerIndex() == _layer)
+					{
+						const sf::Vector2u tile_position = (sf::Vector2u)(*it)->GetComponent<C_Transform>()->GetPosition();
+
+						if (tile_position == _position)
+						{
+							(*it)->QueueForRemoval();
+							break;
+						}
+					}
+				}
+				break;
+			}
+
+			case ETag::Drawable_Foreground:
+			{
+				for (auto it = game_objects_bucket.foreground_objects_begin(); it != game_objects_bucket.foreground_objects_end(); ++it)
+				{
+					if ((*it)->GetComponent<C_Sprite>()->GetLayerIndex() == _layer)
+					{
+						const sf::Vector2u tile_position = (sf::Vector2u)(*it)->GetComponent<C_Transform>()->GetPosition();
+
+						if (tile_position == _position)
+						{
+							(*it)->QueueForRemoval();
+							break;
+						}
+					}
+				}
+				break;
+			}
+			}
+
 		}
 
 		PerformSave();
 	}
 
-	Serializable::Binary::TextureTileInfo* Chunk::FindTileInfo(const sf::Vector2u& position, unsigned int _tiles_size, unsigned int _layer)
+	Serializable::Binary::TextureTileInfo* Chunk::FindTileInfo(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type)
 	{
 		if (m_ChunkInfo)
 		{
-			for (TextureLayerInfo& layer_info : m_ChunkInfo->m_TileLayers)
+			if (_drawable_type == ETag::Drawable_Background)
 			{
-				if (layer_info.m_LayerIndex == _layer)
+				for (TextureLayerInfo& background_layer : m_ChunkInfo->m_BackgroundTileLayers)
 				{
-					for (Serializable::Binary::TextureTileInfo& tile_info : layer_info.m_Tiles)
+					for (Serializable::Binary::TextureTileInfo& tile_info : background_layer.m_Tiles)
 					{
-						if (tile_info.m_TilePositionX == position.x && tile_info.m_TilePositionY == position.y)
+						if (tile_info.m_TilePositionX == _position.x && tile_info.m_TilePositionY == _position.y)
+						{
+							return &tile_info;
+						}
+					}
+				}
+			}
+
+			if (_drawable_type == ETag::Drawable_Foreground)
+			{
+				for (TextureLayerInfo& foreground_layer : m_ChunkInfo->m_ForegroundTileLayers)
+				{
+					for (Serializable::Binary::TextureTileInfo& tile_info : foreground_layer.m_Tiles)
+					{
+						if (tile_info.m_TilePositionX == _position.x && tile_info.m_TilePositionY == _position.y)
 						{
 							return &tile_info;
 						}
@@ -526,8 +639,8 @@ namespace Level
 			auto& chunk_info = new_chunk->GetChunkInfo();
 			chunk_info->m_ChunkUUID = new_chunk_uuid;
 
-			Serializable::Binary::TextureLayerInfo default_layer;
-			default_layer.m_LayerIndex = 0;
+			Serializable::Binary::TextureLayerInfo background_layer_zero;
+			background_layer_zero.m_LayerIndex = 0;
 
 			const unsigned int final_x = _x + _width_pixels;
 			const unsigned int final_y = _y + _height_pixels;
@@ -541,12 +654,12 @@ namespace Level
 					tile.m_TilesetRow = 0;
 					tile.m_TilePositionX = i;
 					tile.m_TilePositionY = j;
-					default_layer.m_Tiles.push_back(tile);
+					background_layer_zero.m_Tiles.push_back(tile);
 				}
 			}
 
-			Serializable::Binary::TextureLayerInfo extra_layer;
-			extra_layer.m_LayerIndex = 1;
+			Serializable::Binary::TextureLayerInfo foreground_layer_zero;
+			foreground_layer_zero.m_LayerIndex = 0;
 
 			for (unsigned int i = _x; i < final_x; i += _tile_size)
 			{
@@ -557,13 +670,13 @@ namespace Level
 					tile.m_TilesetRow = 0;
 					tile.m_TilePositionX = i;
 					tile.m_TilePositionY = j;
-					extra_layer.m_Tiles.push_back(tile);
+					foreground_layer_zero.m_Tiles.push_back(tile);
 				}
 			}
 
 			
-			chunk_info->m_TileLayers.push_back(default_layer);
-			chunk_info->m_TileLayers.push_back(extra_layer);
+			chunk_info->m_BackgroundTileLayers.push_back(background_layer_zero);
+			chunk_info->m_ForegroundTileLayers.push_back(foreground_layer_zero);
 
 			chunk_file->SerializeBinary(chunk_info);
 

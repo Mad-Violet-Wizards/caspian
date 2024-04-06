@@ -181,7 +181,7 @@ void TilesetListWindow::Render()
 				{
 					auto it = tileset_vec.begin();
 					std::advance(it, current_idx.value());
-					combo_preview_value = GetComboBoxTilesetName(it->m_TilesetUUID);
+					combo_preview_value = it->m_TilesetName;
 					m_PrevTilesetUUID = it->m_TilesetUUID;
 				}
 				else
@@ -198,7 +198,7 @@ void TilesetListWindow::Render()
 					for (auto it = tileset_vec.begin(); it != tileset_vec.end(); it++, combo_current_idx++)
 					{
 						const bool is_selected = (current_idx == combo_current_idx);
-						if (ImGui::Selectable(GetComboBoxTilesetName(it->m_TilesetUUID).c_str(), is_selected))
+						if (ImGui::Selectable(it->m_TilesetName.c_str(), is_selected))
 							current_idx = combo_current_idx;
 
 						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)

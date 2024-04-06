@@ -125,19 +125,42 @@ void LevelToolbox::Render()
 		m_EditCollisionTileButton.Render();
 
 		auto& main_instance = ApplicationSingleton::Instance();
-		const unsigned int active_level_layers = main_instance.GetWorld()->GetActiveLevelNoLayers();
 
-		static std::optional<int> selected_layer = std::nullopt;
+		Level::World* world = main_instance.GetWorld();
 
-		if (ImGui::CollapsingHeader("Layers"))
+		if (world->IsLevelActive())
 		{
-			for (unsigned int i = 0; i < active_level_layers; i++)
+			const LevelEditController::WorkingLayer& current_layer = main_instance.GetDebugControllers().GetLevelController()->GetCurrentSelectedWorkingLayer();
+
+			ImGui::Text("Current working layer: ");
+			ImGui::SameLine();
+			const std::string layer_text = current_layer.m_Tag == ETag::None ? "None" : std::format("Layer {} ({})", current_layer.m_LayerIndex, current_layer.m_Tag == ETag::Drawable_Background ? "Background" : "Foreground");
+			ImGui::Text(layer_text.c_str());
+
+			const unsigned int background_layers = world->GetActiveLevel()->GetNoBackroundLayers();
+
+			if (background_layers != 0)
 			{
-				const std::string layer_text = std::format("Layer {}", i);
-				if (ImGui::Selectable(layer_text.c_str(), selected_layer == i))
+				for (auto i = 0; i < background_layers; i++)
 				{
-					selected_layer = i;
-					main_instance.GetDebugControllers().GetLevelController()->SetWorkingLayer(i);
+					const std::string layer_text = std::format("Background Layer {}", i);
+					if (ImGui::Selectable(layer_text.c_str()))
+					{
+						main_instance.GetDebugControllers().GetLevelController()->SetSelectedWorkingLayer(i, ETag::Drawable_Background);
+					}
+				}
+			}
+
+			const unsigned int foreground_layers = world->GetActiveLevel()->GetNoForegroundLayers();
+			if (foreground_layers != 0)
+			{
+				for (auto i = 0; i < foreground_layers; i++)
+				{
+					const std::string layer_text = std::format("Foreground Layer {}", i);
+					if (ImGui::Selectable(layer_text.c_str()))
+					{
+						main_instance.GetDebugControllers().GetLevelController()->SetSelectedWorkingLayer(i, ETag::Drawable_Foreground);
+					}
 				}
 			}
 		}

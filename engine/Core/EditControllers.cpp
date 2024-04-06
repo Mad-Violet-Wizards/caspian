@@ -85,12 +85,12 @@ void CameraEditController::OnDeactivated()
 LevelEditController::LevelEditController()
 	: m_Mode(ELevelEditControllerMode::None)
 	, m_PrevMode(ELevelEditControllerMode::None)
-	, m_TilesetUUID(Random::EMPTY_UUID)
-	, m_TileSize(0)
-	, m_TileX(0)
-	, m_TileY(0)
 {
-
+	m_SelectedTilesetTile.m_TilesetUUID = Random::EMPTY_UUID;
+	m_SelectedTilesetTile.m_TileX = 0;
+	m_SelectedTilesetTile.m_TileY = 0;
+	m_SelectedWorkingLayer.m_LayerIndex = 0;
+	m_SelectedWorkingLayer.m_Tag = ETag::None;
 }
 
 
@@ -101,50 +101,6 @@ LevelEditController::~LevelEditController()
 
 void LevelEditController::Update(float _dt)
 {
-	if (!m_Active)
-		return;
-
-	if (ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->IsImGuiActive())
-		return;
-
-	UpdateHighlightTile();
-
-	switch (m_Mode)
-	{
-		case ELevelEditControllerMode::PaintTile:
-		{
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-			{
-				OnPaint();
-			}
-			break;
-		}
-		case ELevelEditControllerMode::Erase:
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-			{	
-				OnErase();
-			}
-			break;
-		case ELevelEditControllerMode::EditCollisions:
-		{
-			if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-			{
-				OnPlaceNewCollision();
-				break;
-			}
-			else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-			{
-				OnRemoveCollision();
-				break;
-			}
-		}
-		case ELevelEditControllerMode::None:
-		{
-			break;
-		}
-		default:
-			break;
-	}
 }
 
 void LevelEditController::SetMode(ELevelEditControllerMode _mode)
@@ -155,9 +111,10 @@ void LevelEditController::SetMode(ELevelEditControllerMode _mode)
 	OnStateChanged();
 }
 
-void LevelEditController::SetWorkingLayer(unsigned int _layer)
+void LevelEditController::SetSelectedWorkingLayer(unsigned int _layer, ETag _drawable_type)
 {
-	m_WorkingLayer = _layer;
+	m_SelectedWorkingLayer.m_Tag = _drawable_type;
+	m_SelectedWorkingLayer.m_LayerIndex = _layer;
 }
 	
 void LevelEditController::OnTilesetTileSelected(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y)
@@ -167,21 +124,63 @@ void LevelEditController::OnTilesetTileSelected(Random::UUID _tilesetId, unsigne
 		return;
 	}
 
-	m_TilesetUUID = _tilesetId;
-	m_TileX = _tile_x;
-	m_TileY = _tile_y;
+	m_SelectedTilesetTile.m_TileX = _tile_x;
+	m_SelectedTilesetTile.m_TileY = _tile_y;
+	m_SelectedTilesetTile.m_TilesetUUID = _tilesetId;
 
-	ApplicationSingleton::Instance().GetRenderingSystem()->RefreshHighlightTileSprite(m_TilesetUUID, m_TileX, m_TileY, m_TileSize);
+	//m_TilesetUUID = _tilesetId;
+	//m_TileX = _tile_x;
+	//m_TileY = _tile_y;
+
+
+
+	//ApplicationSingleton::Instance().GetRenderingSystem()->RefreshHighlightTileSprite(m_TilesetUUID, m_TileX, m_TileY, m_TileSize);
 }
 
-void LevelEditController::OnLevelActivated(Level::Level* _level)
+void LevelEditController::OnEvent(const sf::Event& _event)
 {
-		m_TileSize = _level->GetTilesSize();
-}
+	if (!m_Active)
+		return;
 
-void LevelEditController::OnLevelDeactivated()
-{
-	m_TileSize = 0;
+	if (ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->IsImGuiActive())
+		return;
+
+	if (_event.MouseButtonReleased)
+	{
+		if (_event.mouseButton.button == sf::Mouse::Left)
+		{
+			switch (m_Mode)
+			{
+				case ELevelEditControllerMode::PaintTile:
+				{
+					OnPaint();
+					break;
+				}
+				case ELevelEditControllerMode::Erase:
+				{
+					OnErase();
+					break;
+				}
+				case ELevelEditControllerMode::EditCollisions:
+				{
+					OnPlaceNewCollision();
+					break;
+				}
+			}
+		}
+		if (_event.mouseButton.button == sf::Mouse::Right)
+		{
+			switch (m_Mode)
+			{
+			case ELevelEditControllerMode::EditCollisions:
+			{
+				OnRemoveCollision();
+				break;
+			}
+			}
+		}
+	}
+
 }
 
 void LevelEditController::OnStateChanged()
@@ -190,14 +189,14 @@ void LevelEditController::OnStateChanged()
 	{
 		case ELevelEditControllerMode::Erase:
 		{
-			ApplicationSingleton::Instance().GetRenderingSystem()->ClearHighlightTile();
+			//ApplicationSingleton::Instance().GetRenderingSystem()->ClearHighlightTile();
 			break;
 		}
 		case ELevelEditControllerMode::EditCollisions:
 		{
-			ApplicationSingleton::Instance().GetRenderingSystem()->ClearHighlightTile();
-			ApplicationSingleton::Instance().GetRenderingSystem()->RenderCollisionEdit(true);
+			//ApplicationSingleton::Instance().GetRenderingSystem()->ClearHighlightTile();
 			ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->ShowNotification(Tools_Impl::ENotificationType::Info, "Showed collision grid.");
+			ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->SetRenderCollidables(true);
 			break;
 		}
 	}
@@ -207,7 +206,8 @@ void LevelEditController::OnStateChanged()
 		case ELevelEditControllerMode::EditCollisions:
 		{
 			ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->ShowNotification(Tools_Impl::ENotificationType::Info, "Hidden collision grid.");
-			ApplicationSingleton::Instance().GetRenderingSystem()->RenderCollisionEdit(false);
+			ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->SetRenderCollidables(false);
+			//ApplicationSingleton::Instance().GetRenderingSystem()->RenderCollisionEdit(false);
 			break;
 		}
 	}
@@ -229,53 +229,47 @@ const sf::Vector2u LevelEditController::RoundMouseWorldPosition(const sf::Vector
 
 void LevelEditController::OnPaint()
 {
-	if (m_TileSize == 0 || m_WorkingLayer == -1 || m_TilesetUUID == Random::EMPTY_UUID) return;
+	if (ApplicationSingleton::Instance().GetWorld()->IsLevelActive() == false || m_SelectedTilesetTile.Valid() == false || m_SelectedWorkingLayer.Valid() == false)
+		return;
 
-	const sf::Vector2u tileset_tile_pos{ m_TileX, m_TileY };
-	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+	const sf::Vector2u tileset_tile_pos{ m_SelectedTilesetTile.m_TileX, m_SelectedTilesetTile.m_TileY };
+	const unsigned int tiles_size = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetTilesSize();
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), tiles_size);
 
-	ApplicationSingleton::Instance().GetWorld()->PaintTile(mouse_world_pos_rounded, m_TilesetUUID, tileset_tile_pos, m_WorkingLayer);
+	ApplicationSingleton::Instance().GetWorld()->PaintTile(mouse_world_pos_rounded, tileset_tile_pos, tiles_size, m_SelectedWorkingLayer.m_LayerIndex, m_SelectedWorkingLayer.m_Tag, m_SelectedTilesetTile.m_TilesetUUID);
 }
 
 void LevelEditController::OnErase()
 {
-	if (m_WorkingLayer == -1 || m_TileSize == 0)
+	if (ApplicationSingleton::Instance().GetWorld()->IsLevelActive() == false || m_SelectedWorkingLayer.Valid() == false)
 		return;
 
-	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+	const unsigned int tiles_size = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetTilesSize();
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), tiles_size);
 
-	ApplicationSingleton::Instance().GetWorld()->EraseTile(mouse_world_pos_rounded, m_WorkingLayer);
+	ApplicationSingleton::Instance().GetWorld()->EraseTile(mouse_world_pos_rounded, tiles_size, m_SelectedWorkingLayer.m_LayerIndex, m_SelectedWorkingLayer.m_Tag);
 }
 
 void LevelEditController::OnPlaceNewCollision()
 {
-	if (m_TileSize == 0)
+	if (ApplicationSingleton::Instance().GetWorld()->IsLevelActive() == false)
 		return;
 
-	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+	const unsigned int tiles_size = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetTilesSize();
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), tiles_size);
 
-	ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->OnLevelCollisionPlaced(mouse_world_pos_rounded, m_TileSize);
+	ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->OnLevelCollisionPlaced(mouse_world_pos_rounded, tiles_size);
 }
 
 void LevelEditController::OnRemoveCollision()
 {
-	if (m_TileSize == 0)
+	if (ApplicationSingleton::Instance().GetWorld()->IsLevelActive() == false)
 		return;
 
-	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
+	const unsigned int tiles_size = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetTilesSize();
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), tiles_size);
 
-	ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->OnLevelCollisionRemoved(mouse_world_pos_rounded, m_TileSize);
-}
-
-void LevelEditController::UpdateHighlightTile()
-{
-	if (m_TileSize == 0)
-		return;
-
-	const sf::Vector2u highlight_tile_pos = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), m_TileSize);
-
-	ApplicationSingleton::Instance().GetRenderingSystem()->RefreshHighlightTilePosition(highlight_tile_pos);
-
+	ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->OnLevelCollisionRemoved(mouse_world_pos_rounded, tiles_size);
 }
 
 /////////////////////////////////////////////////////////////

@@ -59,8 +59,6 @@ void Collisions::Manager::OnLevelCollisionPlaced(const sf::Vector2u& _pos, unsig
 
 
 	ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(new_collision_rect_info);
-
-	ApplicationSingleton::Instance().GetRenderingSystem()->PushCollisionTile(_pos);
 }
 
 void Collisions::Manager::OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsigned int m_TileSize)
@@ -97,8 +95,6 @@ void Collisions::Manager::OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsi
 			}
 		}
 	}
-
-	ApplicationSingleton::Instance().GetRenderingSystem()->PopCollisionTile(_pos);
 }
 
 void Collisions::CachedInfo::PerformSave()

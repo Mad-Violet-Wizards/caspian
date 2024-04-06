@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/Core/IComponent.hpp"
+#include "engine/Core/Components/C_Tags.hpp"
 
 class C_Sprite : public IComponent
 {
@@ -16,12 +17,16 @@ class C_Sprite : public IComponent
 		void SetTextureRect(const sf::IntRect& rect);
 		void SetScale(const sf::Vector2f& scale);
 
-		void SetLayer(unsigned int _layer);
-		unsigned int GetLayer() const;
+		void SetLayerIndex(unsigned int _layer);
+		unsigned int GetLayerIndex() const;
+
+		void SetDrawableType(ETag _type);
+		ETag GetDrawableType() const;
 
 	private:
 
 		sf::Sprite m_Sprite;
 
-		unsigned int m_Layer = -1;
+		ETag m_DrawableType = ETag::None;
+		unsigned int m_LayerIndex = -1;
 };

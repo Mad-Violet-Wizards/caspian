@@ -481,7 +481,8 @@ void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::stri
 	{
 		Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineController().GetAssetsStorage()->GetTilemapStorage();
 		
-		const Serializable::Binary::TilesetInfo tileset_info(_tileset_key, _tileset_name, _tile_width, _tile_height);
+		Serializable::Binary::TilesetInfo tileset_info(_tileset_key, _tileset_name, _tile_width, _tile_height);
+		tileset_info.m_TilesetUUID = Random::UUID();
 		tilemap_storage->PushTilesetInfo(tileset_info);
 		tilemap_file->Seek(0, fs::io::Origin::Begin);
 		tilemap_file->SerializeBinary(tilemap_storage->GetTilesetsInfo());

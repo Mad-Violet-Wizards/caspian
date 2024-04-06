@@ -1,43 +1,44 @@
 #pragma once
 
+#include "engine/Core/Components/C_Tags.hpp"
+
 class GameObject;
 
 class SpatialHashGridBucket
 {
 	public:
 
-		SpatialHashGridBucket();
+		SpatialHashGridBucket(unsigned int _init_buckets_capacity = 8);
 		~SpatialHashGridBucket();
 
 		void Add(GameObject* _game_object);
 		void Remove(GameObject* _game_object);
-		const std::vector<GameObject*>& GetConstRef() const { return m_GameObjects; }
-		std::vector<GameObject*>& GetRef() { return m_GameObjects; }
 
-		// find
-		std::vector<GameObject*>::iterator find(GameObject* _game_object);
-		std::vector<GameObject*>::iterator erase(std::vector<GameObject*>::iterator _it);
+		const SpatialHashGridBucket& GetConstRef() const { return *this; }
+		SpatialHashGridBucket& GetRef() { return *this; }
+		bool Contains(GameObject* _game_object, ETag _drawable_type) const;
+		
+		std::vector<GameObject*>::iterator background_objects_begin() { return m_BackgroundGameObjects.begin(); }
 
-		// it begin and end
-		std::vector<GameObject*>::iterator begin() { return m_GameObjects.begin(); }
-		std::vector<GameObject*>::iterator end() { return m_GameObjects.end(); }
+		std::vector<GameObject*>::iterator background_objects_end() { return m_BackgroundGameObjects.end(); }
 
-		// const begin and end
-		std::vector<GameObject*>::const_iterator begin() const { return m_GameObjects.begin(); }
-		std::vector<GameObject*>::const_iterator end() const { return m_GameObjects.end(); }
+		std::vector<GameObject*>::iterator entity_objects_begin() { return m_EntityGameObjects.begin(); }
 
-		// const iterator cbegin and cend
-		std::vector<GameObject*>::const_iterator cbegin() const { return m_GameObjects.cbegin(); }
-		std::vector<GameObject*>::const_iterator cend() const { return m_GameObjects.cend(); }
+		std::vector<GameObject*>::iterator entity_objects_end() { return m_EntityGameObjects.end(); }
 
+		std::vector<GameObject*>::iterator foreground_objects_begin() { return m_ForegroundGameObjects.begin(); }
+
+		std::vector<GameObject*>::iterator foreground_objects_end() { return m_ForegroundGameObjects.end(); }
 
 	private:
 
-		void Sort();
+		void Sort(ETag _drawable_type);
 
 	private:
 
-		std::vector<GameObject*> m_GameObjects;
+		std::vector<GameObject*> m_BackgroundGameObjects;
+		std::vector<GameObject*> m_EntityGameObjects;
+		std::vector<GameObject*> m_ForegroundGameObjects;
 };
 
 struct TileIndexHash
@@ -62,16 +63,8 @@ public:
 	void Add(GameObject* _game_object);
 	void Remove(GameObject* _game_object);
 
-	const std::vector<GameObject*>& GetConstRefToBucket(const TileIndex& _bucket_index) const;
-	std::vector<GameObject*>& GetRefToBucket(const TileIndex& _bucket_index);
-
-
-	std::vector<GameObject*>::iterator begin(const TileIndex& _bucket_index);
-	std::vector<GameObject*>::iterator end(const TileIndex& _bucket_index);
-
-	std::vector<GameObject*>::iterator find(GameObject* _game_object);
-	std::vector<GameObject*>::iterator end(GameObject* _game_object);
-	void Erase(std::vector<GameObject*>::iterator _it);
+	const SpatialHashGridBucket& GetConstRefToBucket(const TileIndex& _bucket_index) const;
+	SpatialHashGridBucket& GetRefToBucket(const TileIndex& _bucket_index);
 
 	bool Empty() const { return m_Grid.empty(); }
 
@@ -100,11 +93,9 @@ class GameObjectCollection
 		void ProcessQueuedForRemoval();
 
 		void ConstructDebugPlayer();
-		//void ConstructNew(Serializable::Binary::CollisionRectInfo* _collision_rect_info);
-		//void ConstructNew(Serializable::Binary::TextureTileInfo* _texture_tile_info, unsigned int _active_level_tiles_size);
 
 		void ConstructNew(const Serializable::Binary::CollisionRectInfo& _collision_rect_info);
-		void ConstructNew(const Serializable::Binary::TextureTileInfo& _texture_tile_info, unsigned int _active_level_tiles_size, unsigned int _tile_layer);
+		void ConstructNew(const Serializable::Binary::TextureTileInfo& _texture_tile_info, ETag _drawable_type, unsigned int _active_level_tiles_size, unsigned int _tile_layer);
 
 		const std::vector<GameObject*>& GetCollidableGameObjects() const { return m_CollidableGameObjects; }
 
@@ -112,8 +103,10 @@ class GameObjectCollection
 		bool GetSortDrawablesOnDirtyFlag() const { return m_SortDrawablesOnDirtyFlag; }
 		bool DrawablesEmpty() const { return m_DrawableGameObjects.Empty(); }
 		const TileIndex CalculateTileIndex(const float _x, const float _y) const;
+		SpatialHashGrid* GetSpatialHashGrid() { return &m_DrawableGameObjects; }
 
-		SpatialHashGrid& GetSpatialHashGrid() { return m_DrawableGameObjects; }
+		void SetRenderCollidables(bool _state);
+		bool GetRenderCollidables() const { return m_DebugRenderCollidables; }
 
 	private:
 
@@ -125,6 +118,7 @@ class GameObjectCollection
 		std::queue<GameObject*> m_GameObjectsToRemove;
 
 		bool m_SortDrawablesOnDirtyFlag = false;
+		bool m_DebugRenderCollidables = false;
 
 		GameObject* m_Player;
 };

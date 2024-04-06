@@ -152,13 +152,15 @@ namespace Serializable
 			void dummy() override {}
 
 			uint64_t m_ChunkUUID; // Same as in ChunkRoot_ChunkInfo
-			std::vector<TextureLayerInfo> m_TileLayers;
+			std::vector<TextureLayerInfo> m_BackgroundTileLayers;
+			std::vector<TextureLayerInfo> m_ForegroundTileLayers;
 
 			template<class Archive>
 			void serialize(Archive& archive)
 			{
 				archive(cereal::make_nvp("UUID", m_ChunkUUID),
-								cereal::make_nvp("TileLayers", m_TileLayers));
+								cereal::make_nvp("BackgroundTileLayers", m_BackgroundTileLayers),
+								cereal::make_nvp("ForegroundTileLayers", m_ForegroundTileLayers));
 			}
 		};
 

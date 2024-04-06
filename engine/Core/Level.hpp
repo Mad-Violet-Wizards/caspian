@@ -14,9 +14,8 @@ namespace Level
 			Chunk(const sf::IntRect& _area);
 			~Chunk() = default;
 
-			void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer, unsigned int _tiles_size);
-
-			void EraseTile(const sf::Vector2u& _position, unsigned int _layer, unsigned int _tiles_size);
+			void PaintTile(const sf::Vector2u& position, const sf::Vector2u& tileset_tile_pos, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type, Random::UUID _tilset_uuid);
+			void EraseTile(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type);
 
 			const sf::IntRect& GetArea() const { return m_Area; }
 
@@ -24,7 +23,7 @@ namespace Level
 
 	private:
 
-			Serializable::Binary::TextureTileInfo* FindTileInfo(const sf::Vector2u& position, unsigned int _tiles_size, unsigned int _layer);
+			Serializable::Binary::TextureTileInfo* FindTileInfo(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type);
 
 			void PerformSave();
 
@@ -76,8 +75,12 @@ namespace Level
 			void SetTilesSize(unsigned int _tile_size);
 			unsigned int GetTilesSize() const;
 
-			void SetNoLayers(unsigned int _no_layers);
-			unsigned int GetNoLayers() const;
+
+			void SetNoBackroundLayers(unsigned int _val);
+			unsigned int GetNoBackroundLayers() const;
+
+			void SetNoForegroundLayers(unsigned int _val);
+			unsigned int GetNoForegroundLayers() const;
 
 			const std::string& GetLevelName() const;
 
@@ -88,7 +91,8 @@ namespace Level
 			std::unique_ptr<ChunksManager> m_ChunksManager;
 
 			unsigned int m_TilesSize;
-			unsigned int m_NoLayers;
+			unsigned int m_BackgroundNoLayersSize;
+			unsigned int m_ForegroundNoLayers;
 
 	};
 
@@ -115,10 +119,8 @@ namespace Level
 		Level* GetActiveLevel() const;
 		bool IsLevelActive() const;
 
-		unsigned int GetActiveLevelNoLayers() const;
-
-		void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer);
-		void EraseTile(const sf::Vector2u& _position, unsigned int _layer);
+		void PaintTile(const sf::Vector2u& position, const sf::Vector2u& tileset_tile_pos, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type, Random::UUID _tilset_uuid);
+		void EraseTile(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type);
 
 	private:
 

@@ -60,6 +60,25 @@ enum class ELevelEditControllerMode
 
 class LevelEditController : public IEditorController
 {
+public:
+
+	struct TilesetTile
+	{
+		Random::UUID m_TilesetUUID;
+		unsigned int m_TileX;
+		unsigned int m_TileY;
+
+		bool Valid() const { return m_TilesetUUID != Random::EMPTY_UUID; }
+	};
+
+	struct WorkingLayer
+	{
+		unsigned int m_LayerIndex;
+		ETag m_Tag;
+
+		bool Valid() const { return m_Tag != ETag::None; }
+	};
+
 	public:
 
 		LevelEditController();
@@ -67,11 +86,11 @@ class LevelEditController : public IEditorController
 
 		void Update(float _dt) override;
 		void SetMode(ELevelEditControllerMode _mode);
-		void SetWorkingLayer(unsigned int _layer);
+		void SetSelectedWorkingLayer(unsigned int _layer, ETag _drawable_type);
 		void OnTilesetTileSelected(Random::UUID _tilesetId, unsigned int _tile_x, unsigned int _tile_y);
+		void OnEvent(const sf::Event& _event);
 
-		void OnLevelActivated(Level::Level* _level);
-		void OnLevelDeactivated();
+		const WorkingLayer& GetCurrentSelectedWorkingLayer() const { return m_SelectedWorkingLayer; }
 
 	private:
 
@@ -86,16 +105,11 @@ class LevelEditController : public IEditorController
 		void OnPlaceNewCollision();
 		void OnRemoveCollision();
 
-		void UpdateHighlightTile();
-
 		ELevelEditControllerMode m_Mode;
 		ELevelEditControllerMode m_PrevMode;
-		unsigned int m_WorkingLayer = -1;
 
-		Random::UUID m_TilesetUUID;
-		unsigned int m_TileSize;
-		unsigned int m_TileX;
-		unsigned int m_TileY;
+		TilesetTile m_SelectedTilesetTile;
+		WorkingLayer m_SelectedWorkingLayer;
 };
 
 
