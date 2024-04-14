@@ -1,7 +1,7 @@
 #pragma once
 
 //////////////////////////////////////////////////
-enum class ETag : UINT32
+enum class ETag
 {
 	None = 0,
 	Camera_Attachable = 1 << 0,
@@ -22,7 +22,6 @@ inline ETag operator~(ETag _tag);
 class C_Tags : public IComponent
 {
 	public:
-
 
 		explicit C_Tags(GameObject* _owner, ETag _initial_tags = ETag::None);
 		~C_Tags() = default;

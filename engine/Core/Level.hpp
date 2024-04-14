@@ -3,8 +3,9 @@
 #include "engine/Core/Serializable/LevelSerializable.hpp"
 
 class Camera;
+enum class ETag;
 
-namespace Level
+namespace Levels
 {
 	////////////////////////////////////////////////
 	class Chunk

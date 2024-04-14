@@ -1,7 +1,10 @@
 #pragma once
+#include "Level.hpp"
 
 namespace Collisions
 {
+	using namespace Levels;
+
 	struct CachedInfo
 	{
 		std::string m_LevelName;
@@ -29,8 +32,9 @@ namespace Collisions
 			CachedInfo* FindCachedInfo(const std::string& _level_name);
 			void AddCachedInfo(const std::string& _level_name, std::shared_ptr<Serializable::Binary::CollisionLayerInfo>& _collision_layer_info);
 
-			void OnLevelCollisionPlaced(const sf::Vector2u& _pos, unsigned int m_TileSize);
-			void OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsigned int m_TileSize);
+			void OnLevelCollisionPlaced(const sf::Vector2u& _pos, unsigned int _tile_size);
+			void OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsigned int _tile_size);
+			void OnLevelActivated(const Levels::Level* _activated_lvl);
 
 		private:
 

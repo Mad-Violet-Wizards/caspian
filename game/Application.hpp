@@ -33,8 +33,8 @@
 		EngineController& GetEngineController() { return m_engineController; }
 		EditControllersManager& GetDebugControllers() { return m_debugControllers; }
 
-		void SetWorld(std::unique_ptr<Level::World> _world) { m_World = std::move(_world); }
-		Level::World* const GetWorld() { return m_World.get(); }
+		void SetWorld(std::unique_ptr<Levels::World> _world) { m_World = std::move(_world); }
+		Levels::World* const GetWorld() { return m_World.get(); }
 
 		void SetProjectsManager(std::unique_ptr<Projects::Manager> _pm) { m_ProjectsManager = std::move(_pm); }
 		Projects::Manager* const GetProjectsManager() { return m_ProjectsManager.get(); }
@@ -59,7 +59,7 @@
 		EngineController m_engineController;
 		EditControllersManager m_debugControllers;
 
-		std::unique_ptr<Level::World> m_World = nullptr;
+		std::unique_ptr<Levels::World> m_World = nullptr;
 		std::unique_ptr<Projects::Manager> m_ProjectsManager;
 		std::unique_ptr<Rendering::System> m_RenderingSystem;
 

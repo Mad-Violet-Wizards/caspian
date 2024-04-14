@@ -28,29 +28,25 @@ void Collisions::Manager::AddCachedInfo(const std::string& _level_name, std::sha
 	if (!FindCachedInfo(_level_name))
 	{
 		m_CachedCollisionsInfo.push_back(new_collision_info);
-
-		for (const Serializable::Binary::CollisionRectInfo& collision_rect_info : _collision_layer_info->m_CollisionRects)
-			ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(collision_rect_info);
-
 	}
 	else
 		std::cout << "Collision info already exists for level: " << _level_name << "\n";
 }
 
-void Collisions::Manager::OnLevelCollisionPlaced(const sf::Vector2u& _pos, unsigned int m_TileSize)
+void Collisions::Manager::OnLevelCollisionPlaced(const sf::Vector2u& _pos, unsigned int _tile_size)
 {
 	CachedInfo* cached_info = FindCachedInfo(ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetLevelName());
 
 	Serializable::Binary::CollisionRectInfo new_collision_rect_info;
 	new_collision_rect_info.m_Rect.left = _pos.x;
 	new_collision_rect_info.m_Rect.top = _pos.y;
-	new_collision_rect_info.m_Rect.width = m_TileSize;
-	new_collision_rect_info.m_Rect.height = m_TileSize;
+	new_collision_rect_info.m_Rect.width = _tile_size;
+	new_collision_rect_info.m_Rect.height = _tile_size;
 
 	if (cached_info)
 	{
 		for (const Serializable::Binary::CollisionRectInfo& collision_rect_info : cached_info->m_CollisionLayerInfo->m_CollisionRects)
-			if (collision_rect_info.m_Rect.left == _pos.x && collision_rect_info.m_Rect.top == _pos.y && collision_rect_info.m_Rect.width == m_TileSize && collision_rect_info.m_Rect.height == m_TileSize)
+			if (collision_rect_info.m_Rect.left == _pos.x && collision_rect_info.m_Rect.top == _pos.y && collision_rect_info.m_Rect.width == _tile_size && collision_rect_info.m_Rect.height == _tile_size)
 				return;
 
 		cached_info->m_CollisionLayerInfo->m_CollisionRects.push_back(new_collision_rect_info);
@@ -61,7 +57,7 @@ void Collisions::Manager::OnLevelCollisionPlaced(const sf::Vector2u& _pos, unsig
 	ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(new_collision_rect_info);
 }
 
-void Collisions::Manager::OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsigned int m_TileSize)
+void Collisions::Manager::OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsigned int _tile_size)
 {
 	auto& game_objects_collidable_vec = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetCollidableGameObjects();
 
@@ -94,6 +90,22 @@ void Collisions::Manager::OnLevelCollisionRemoved(const sf::Vector2u& _pos, unsi
 				break;
 			}
 		}
+	}
+}
+
+void Collisions::Manager::OnLevelActivated(const Levels::Level* _activated_lvl)
+{
+	CachedInfo* cached_info = FindCachedInfo(_activated_lvl->GetLevelName());
+
+	if (!cached_info)
+	{
+		std::cout << "No cached collision info found for level: " << _activated_lvl->GetLevelName() << "\n";
+		return;
+	}
+	
+	for (const Serializable::Binary::CollisionRectInfo& collision_rect_info : cached_info->m_CollisionLayerInfo->m_CollisionRects)
+	{
+		ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructNew(collision_rect_info);
 	}
 }
 

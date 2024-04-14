@@ -31,7 +31,7 @@ int main()
 	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
 	engine_module.SetAssetsStorage(std::move(assets_storage));
 
-	std::unique_ptr<Level::World> world = std::make_unique<Level::World>();
+	std::unique_ptr<Levels::World> world = std::make_unique<Levels::World>();
 	main_instance.SetWorld(std::move(world));
 
 	std::unique_ptr<Collisions::Manager> collisions_manager = std::make_unique<Collisions::Manager>();

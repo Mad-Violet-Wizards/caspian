@@ -234,11 +234,11 @@ void LevelEditController::OnPaint()
 
 	const sf::Vector2u tileset_tile_pos{ m_SelectedTilesetTile.m_TileX, m_SelectedTilesetTile.m_TileY };
 	const unsigned int tiles_size = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetTilesSize();
-	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), tiles_size);
+	const sf::Vector2u mouse_world_pos_rounded = RoundMouseWorldPosition(ApplicationSingleton::Instance().GetMousePositionWorld(), tiles_size); 
 
 	ApplicationSingleton::Instance().GetWorld()->PaintTile(mouse_world_pos_rounded, tileset_tile_pos, tiles_size, m_SelectedWorkingLayer.m_LayerIndex, m_SelectedWorkingLayer.m_Tag, m_SelectedTilesetTile.m_TilesetUUID);
 }
-
+	
 void LevelEditController::OnErase()
 {
 	if (ApplicationSingleton::Instance().GetWorld()->IsLevelActive() == false || m_SelectedWorkingLayer.Valid() == false)

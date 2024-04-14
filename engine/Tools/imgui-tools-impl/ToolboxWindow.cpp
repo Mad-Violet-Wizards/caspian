@@ -126,7 +126,7 @@ void LevelToolbox::Render()
 
 		auto& main_instance = ApplicationSingleton::Instance();
 
-		Level::World* world = main_instance.GetWorld();
+		Levels::World* world = main_instance.GetWorld();
 
 		if (world->IsLevelActive())
 		{

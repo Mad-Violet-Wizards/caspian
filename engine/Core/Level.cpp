@@ -3,7 +3,7 @@
 #include <vendor/include/nlohmann/json.hpp>
 #include "Level.hpp"
 
-namespace Level
+namespace Levels
 {
 	World::World()
 	{
@@ -102,6 +102,8 @@ namespace Level
 		}
 
 		game_objects_collection->SortDrawablesOnDirtyFlag(true);
+
+		ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->OnLevelActivated(m_ActiveLevelPtr);
 	}
 
 	void World::DeactivateCurrentLevel()
@@ -409,9 +411,9 @@ namespace Level
 								break;
 							}
 						}
-
-						break;
 					}
+
+					break;
 				}
 
 				case ETag::Drawable_Entity:
