@@ -10,10 +10,11 @@ public:
 
 	IntersectionResult Intersects(const std::shared_ptr<C_InterfaceCollidable> _other) override;
 	void ResolveOverlap(const IntersectionResult& _manifold) override;
-	void SetCollidable(const sf::FloatRect& _rect);
 
 	void SetSize(const sf::Vector2f& _size);
 	void SetSize(float _width, float _height);
+
+	void SetRect(const sf::FloatRect& _rect);
 	const sf::FloatRect& GetRect();
 
 private:

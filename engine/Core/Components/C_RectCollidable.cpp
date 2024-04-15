@@ -1,5 +1,7 @@
 #pragma once
 #include "engine/pch.hpp"
+
+#include <math.h>
 #include "C_RectCollidable.hpp"
 
 C_RectCollidable::C_RectCollidable(GameObject* _owner)
@@ -37,10 +39,37 @@ void C_RectCollidable::ResolveOverlap(const IntersectionResult& _manifold)
 	if (transform->IsStatic())
 		return;
 
-	// CONTINUE HERE.
+	const sf::FloatRect& this_rect = GetRect();
+	const sf::FloatRect* other_rect = _manifold.m_Other;
+
+	float x_overlap = this_rect.left + this_rect.width - other_rect->left + other_rect->width;
+	float y_overlap = this_rect.top + this_rect.height - other_rect->top + other_rect->height;
+
+	if (fabs(x_overlap) > fabs(y_overlap))
+	{
+		if (x_overlap > 0)
+		{
+			transform->AddPosition((other_rect->left + other_rect->width) - this_rect.left, 0);
+		}
+		else
+		{
+			transform->AddPosition(-((this_rect.left + this_rect.width) - other_rect->left), 0);
+		}
+	}
+	else
+	{
+		if (y_overlap > 0)
+		{
+			transform->AddPosition(0, (other_rect->top + other_rect->height) - this_rect.top);
+		}
+		else
+		{
+			transform->AddPosition(0, -((this_rect.top + this_rect.height) - other_rect->top));
+		}
+	}
 }
 
-void C_RectCollidable::SetCollidable(const sf::FloatRect& _rect)
+void C_RectCollidable::SetRect(const sf::FloatRect& _rect)
 {
 		m_AABB = _rect;
 }

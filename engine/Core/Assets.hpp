@@ -157,15 +157,25 @@ namespace Assets
 
 		private:
 			
-			void LoadEmptyTexture();
-			void LoadDefaultFont();
+			// TODO: Think of init em on own thread
+			void InitEmptyTexture();
+			void InitDefaultFont();
+			void InitCursorTileTexture();
+			void InitPlayerTempTexture();
+			void InitCollisionTileTexture();
 
 		private:
 
 			std::unordered_map<std::string, Resource<sf::Texture>> m_textures;
 			std::unordered_map<std::string, Resource<sf::Font>> m_fonts;
 
+			// DEBUG Textures
 			Resource<sf::Texture> m_EmptyTexture;
+			Resource<sf::Texture> m_CursorTileTexture;
+			Resource<sf::Texture> m_PlayerTempTexture;
+			Resource<sf::Texture> m_CollisionTileTexture;
+
+			// DEBUG fonts
 			Resource<sf::Font> m_DefaultFont;
 
 			std::unique_ptr<TilemapStorage> m_TilemapStorage = nullptr;

@@ -35,6 +35,11 @@ void Application::MainLoop()
 
 void Application::Update()
 {
+	if (KeyboardInputController* keyboard_input = m_engineController.GetKeyboardInputController())
+	{
+		keyboard_input->Update(m_deltaTime);
+	}
+
 	m_window.Update();
 
 #if defined(DEBUG)
@@ -113,22 +118,44 @@ void Application::InitializeAppEventListeners()
 			SetWindowFocused(false);
 		});
 
+	GetEngineController().GetEventDispatcher()->AddObserver(focusGainedListener.get());
+	GetEngineController().GetEventDispatcher()->AddObserver(focusLostListener.get());
+
+
 	std::unique_ptr<Events::Listener> mouseButtonReleased = std::make_unique<Events::Listener>();
 	mouseButtonReleased->NotifyOn(sf::Event::MouseButtonReleased);
 	mouseButtonReleased->SetCallback([this](const sf::Event& event)
 	{
 			ApplicationSingleton::Instance().GetDebugControllers().GetLevelController()->OnEvent(event);
 	});
-
-
-	
-	GetEngineController().GetEventDispatcher()->AddObserver(focusGainedListener.get());
-	GetEngineController().GetEventDispatcher()->AddObserver(focusLostListener.get());
 	GetEngineController().GetEventDispatcher()->AddObserver(mouseButtonReleased.get());
+
+	std::unique_ptr<Events::Listener> keyReleasedListener = std::make_unique<Events::Listener>();
+	keyReleasedListener->NotifyOn(sf::Event::KeyReleased);
+	keyReleasedListener->SetCallback([this](const sf::Event& _event)
+	{
+		const static sf::Keyboard keyboard;
+		sf::Keyboard::Key key = keyboard.localize(_event.key.scancode);
+		ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController()->OnKeyReleased(key);
+	});
+
+	std::unique_ptr<Events::Listener> keyPressedListener = std::make_unique<Events::Listener>();
+	keyPressedListener->NotifyOn(sf::Event::KeyPressed);
+	keyPressedListener->SetCallback([this](const sf::Event& _event)
+	{
+		const static sf::Keyboard keyboard;
+		sf::Keyboard::Key key = keyboard.localize(_event.key.scancode);
+		ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController()->OnKeyPressed(key);
+	});
+
+	GetEngineController().GetEventDispatcher()->AddObserver(keyReleasedListener.get());
+	GetEngineController().GetEventDispatcher()->AddObserver(keyPressedListener.get());
 
 	m_AppEventListeners.push_back(std::move(focusGainedListener));
 	m_AppEventListeners.push_back(std::move(focusLostListener));
 	m_AppEventListeners.push_back(std::move(mouseButtonReleased));
+	m_AppEventListeners.push_back(std::move(keyReleasedListener));
+	m_AppEventListeners.push_back(std::move(keyPressedListener));
 }
 
 sf::Vector2i Application::GetMousePosition()

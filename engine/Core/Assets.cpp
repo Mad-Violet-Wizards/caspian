@@ -9,8 +9,8 @@ Assets::Storage::Storage()
 {
 	m_TilemapStorage = std::make_unique<TilemapStorage>();
 
-	LoadEmptyTexture();
-	LoadDefaultFont();
+	InitEmptyTexture();
+	InitDefaultFont();
 }
 
 void Assets::Storage::LoadTextureFsFilesBatch(const std::vector<fs::IFile*>& _files)
@@ -271,7 +271,7 @@ std::vector<std::string> Assets::Storage::GetFontKeys() const
 	return keys;
 }
 
-void Assets::Storage::LoadEmptyTexture()
+void Assets::Storage::InitEmptyTexture()
 {
 	const auto size = 32;
 
@@ -294,10 +294,33 @@ void Assets::Storage::LoadEmptyTexture()
 	m_EmptyTexture.LoadFromImage(image_buffer);
 }
 
-void Assets::Storage::LoadDefaultFont()
+void Assets::Storage::InitDefaultFont()
 {
 	std::vector<uint8_t> data(default_font, default_font + default_font_size);
 	m_DefaultFont.LoadFromData(data);
+}
+
+void Assets::Storage::InitCursorTileTexture()
+{
+
+}
+
+void Assets::Storage::InitPlayerTempTexture()
+{
+
+}
+
+void Assets::Storage::InitCollisionTileTexture()
+{
+	const auto size = 32;
+
+	sf::Image image_buffer;
+	image_buffer.create(size, size);
+
+	for (auto y = 0; y < size; ++y)
+		image_buffer.setPixel(0, y, sf::Color::Red);
+
+	// CONTINUE HERE.
 }
 
 Assets::TilemapStorage::TilemapStorage()

@@ -8,6 +8,7 @@
 #include "engine/Core/Serializable/LevelSerializable.hpp"
 #include "engine/Core/Collisions.hpp"
 #include "engine/Core/GameObjectCollection.hpp"
+#include "engine/Core/KeyboardInputController.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 struct Project
@@ -32,6 +33,9 @@ class EngineController
 		~EngineController() = default;
 
 		void Update(float _dt);
+
+		void SetKeyboardInputController(std::unique_ptr<KeyboardInputController> _keyboard_input_controller) { m_KeyboardInputController = std::move(_keyboard_input_controller); }
+		KeyboardInputController* const GetKeyboardInputController() { return m_KeyboardInputController.get(); }
 
 		void SetEventDispatcher(std::unique_ptr<Events::Dispatcher> _event_dispatcher) { m_eventDispatcher = std::move(_event_dispatcher); }
 		Events::Dispatcher* const GetEventDispatcher() { return m_eventDispatcher.get(); }
@@ -78,6 +82,7 @@ class EngineController
 		std::unique_ptr<Scenes::StateMachine> m_ScenesStateMachine = nullptr;
 		std::unique_ptr<Collisions::Manager> m_CollisionsManager = nullptr;
 		std::unique_ptr<GameObjectCollection> m_GameObjectCollection = nullptr;
+		std::unique_ptr<KeyboardInputController> m_KeyboardInputController = nullptr;
 
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;

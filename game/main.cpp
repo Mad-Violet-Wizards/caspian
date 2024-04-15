@@ -7,6 +7,7 @@
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Core/Level.hpp"
 #include "engine/Core/Rendering.hpp"
+#include "engine/Core/KeyboardInputController.hpp"
 
 int main()
 {
@@ -21,6 +22,10 @@ int main()
 
 	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
 	engine_module.SetEventDispatcher(std::move(event_dispatcher_system));
+
+	// Initialize Input System, for now Keyboard controller is enough.
+	std::unique_ptr<KeyboardInputController> keyboard_controller = std::make_unique<KeyboardInputController>();
+	engine_module.SetKeyboardInputController(std::move(keyboard_controller));
 
 	// App Event Listeners;
 	main_instance.InitializeAppEventListeners();
@@ -49,7 +54,6 @@ int main()
 	main_instance.SetProjectsManager(std::move(projects_manager));
 
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
-	tools_manager->InitializeEventListeners();
 	engine_module.SetToolsManager(std::move(tools_manager));
 	#endif
 
