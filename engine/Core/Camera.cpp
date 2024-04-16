@@ -19,7 +19,7 @@ void Camera::Update(float _dt)
 #if defined (_DEBUG)
 	sf::Vector2i mouse_delta = sf::Vector2i(0, 0);
 
-	if (CameraEditController* camera_debug_controller = main_instance.GetDebugControllers().GetCameraController())
+	if (CameraEditController* camera_debug_controller = main_instance.GetEditControllers().GetCameraController())
 	{
 		if (camera_debug_controller->IsActive())
 			if (camera_debug_controller->ValidateMouseDelta())

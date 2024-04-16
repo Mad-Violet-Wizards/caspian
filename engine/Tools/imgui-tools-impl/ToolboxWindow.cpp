@@ -96,7 +96,7 @@ CameraToolbox::CameraToolbox(Manager* _mgr)
 void CameraToolbox::OnMoveCameraToggled()
 {
 	auto& main_instance = ApplicationSingleton::Instance();
-	main_instance.GetDebugControllers().GetCameraController()->SetActive(m_MoveCameraButton.IsActive());
+	main_instance.GetEditControllers().GetCameraController()->SetActive(m_MoveCameraButton.IsActive());
 
 }
 
@@ -130,7 +130,7 @@ void LevelToolbox::Render()
 
 		if (world->IsLevelActive())
 		{
-			const LevelEditController::WorkingLayer& current_layer = main_instance.GetDebugControllers().GetLevelController()->GetCurrentSelectedWorkingLayer();
+			const LevelEditController::WorkingLayer& current_layer = main_instance.GetEditControllers().GetLevelController()->GetCurrentSelectedWorkingLayer();
 
 			ImGui::Text("Current working layer: ");
 			ImGui::SameLine();
@@ -146,7 +146,7 @@ void LevelToolbox::Render()
 					const std::string layer_text = std::format("Background Layer {}", i);
 					if (ImGui::Selectable(layer_text.c_str()))
 					{
-						main_instance.GetDebugControllers().GetLevelController()->SetSelectedWorkingLayer(i, ETag::Drawable_Background);
+						main_instance.GetEditControllers().GetLevelController()->SetSelectedWorkingLayer(i, ETag::Drawable_Background);
 					}
 				}
 			}
@@ -159,7 +159,7 @@ void LevelToolbox::Render()
 					const std::string layer_text = std::format("Foreground Layer {}", i);
 					if (ImGui::Selectable(layer_text.c_str()))
 					{
-						main_instance.GetDebugControllers().GetLevelController()->SetSelectedWorkingLayer(i, ETag::Drawable_Foreground);
+						main_instance.GetEditControllers().GetLevelController()->SetSelectedWorkingLayer(i, ETag::Drawable_Foreground);
 					}
 				}
 			}
@@ -172,17 +172,17 @@ void LevelToolbox::OnPlaceTileToggled()
 	auto& main_instance = ApplicationSingleton::Instance();
 
 	const bool is_active = m_PlaceTileButton.IsActive();
-	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
+	main_instance.GetEditControllers().GetLevelController()->SetActive(is_active);
 
 	if (is_active)
 	{
 		m_EraseTileButton.m_Active = false;
 		m_EditCollisionTileButton.m_Active = false;
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::PaintTile);
+		main_instance.GetEditControllers().GetLevelController()->SetMode(ELevelEditControllerMode::PaintTile);
 	}
 	else
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
+		main_instance.GetEditControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
 	}
 }
 
@@ -191,17 +191,17 @@ void LevelToolbox::OnEraseTileToggled()
 	auto& main_instance = ApplicationSingleton::Instance();
 
 	const bool is_active = m_EraseTileButton.IsActive();
-	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
+	main_instance.GetEditControllers().GetLevelController()->SetActive(is_active);
 
 	if (is_active)
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::Erase);
+		main_instance.GetEditControllers().GetLevelController()->SetMode(ELevelEditControllerMode::Erase);
 		m_PlaceTileButton.m_Active = false;
 		m_EditCollisionTileButton.m_Active = false;
 	}
 	else
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
+		main_instance.GetEditControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
 	}
 }
 
@@ -217,17 +217,17 @@ void LevelToolbox::OnPlaceCollisionTileToggled()
 	}
 	
 	const bool is_active = m_EditCollisionTileButton.IsActive();
-	main_instance.GetDebugControllers().GetLevelController()->SetActive(is_active);
+	main_instance.GetEditControllers().GetLevelController()->SetActive(is_active);
 
 	if (is_active)
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::EditCollisions);
+		main_instance.GetEditControllers().GetLevelController()->SetMode(ELevelEditControllerMode::EditCollisions);
 		m_EraseTileButton.m_Active = false;
 		m_PlaceTileButton.m_Active = false;
 	}
 	else
 	{
-		main_instance.GetDebugControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
+		main_instance.GetEditControllers().GetLevelController()->SetMode(ELevelEditControllerMode::None);
 	}
 }
 

@@ -48,16 +48,12 @@ void Rendering::System::Render(sf::RenderWindow& _window)
 							{
 								(*it)->GetComponent<C_Sprite>()->Draw(_window);
 							}
-
-							// Static entities.
+							
+							// Entities
 							for (auto it = spatial_hash_grid->GetRefToBucket(tile_index).entity_objects_begin(); it != spatial_hash_grid->GetRefToBucket(tile_index).entity_objects_end(); it++)
 							{
 								(*it)->GetComponent<C_Sprite>()->Draw(_window);
 							}
-
-							// Dynamic entities.
-							// Player / AIs
-							// Projectiles
 
 							// Foreground tiles
 							for (auto it = spatial_hash_grid->GetRefToBucket(tile_index).foreground_objects_begin(); it != spatial_hash_grid->GetRefToBucket(tile_index).foreground_objects_end(); it++)
@@ -66,7 +62,7 @@ void Rendering::System::Render(sf::RenderWindow& _window)
 							}
 						}
 
-						// Debug Edit Collision Rendering - static level.
+						// Edit Collision Rendering.
 						if (ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetRenderCollidables())
 						{
 							const auto& collidable_go = ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->GetCollidableGameObjects();
@@ -81,7 +77,7 @@ void Rendering::System::Render(sf::RenderWindow& _window)
 						}
 
 
-						// Debug Collision Rendering - dynamic level.
+						// Debug Collision Rendering - dynamic (how Quadtree splits).
 					}
 				}
 			}

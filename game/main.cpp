@@ -8,6 +8,7 @@
 #include "engine/Core/Level.hpp"
 #include "engine/Core/Rendering.hpp"
 #include "engine/Core/KeyboardInputController.hpp"
+#include "GameController.hpp"
 
 int main()
 {
@@ -56,6 +57,9 @@ int main()
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
 	engine_module.SetToolsManager(std::move(tools_manager));
 	#endif
+
+	IGameController* game_controller = new GameController();
+	main_instance.SetGameController(game_controller);
 
 	#if defined (_WIN32)
 	std::cout << "DEBUG: [Main] Running on Windows\n";

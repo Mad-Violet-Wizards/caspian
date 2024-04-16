@@ -23,11 +23,11 @@ public:
 
 	T GetMask() const;
 
-	bool GetBit(size_t pos) const;
-	void SetBit(size_t pos, bool on);
+	bool GetBit(unsigned int pos) const;
+	void SetBit(unsigned int pos, bool on);
 
-	void SetBit(size_t pos);
-	void ClearBit(size_t pos);
+	void SetBit(unsigned int pos);
+	void ClearBit(unsigned int pos);
 	void Clear();
 
 private:
@@ -62,25 +62,25 @@ T Bitmask<T>::GetMask() const
 }
 
 template<BitmaskAcceptableType T>
-bool Bitmask<T>::GetBit(size_t pos) const
+bool Bitmask<T>::GetBit(unsigned int pos) const
 {
 	return (m_Mask & (1 << pos)) != 0;
 }
 
 template<BitmaskAcceptableType T>
-void Bitmask<T>::SetBit(size_t pos, bool on)
+void Bitmask<T>::SetBit(unsigned int pos, bool on)
 {
 	on ? SetBit(pos) : ClearBit(pos);
 }
 
 template<BitmaskAcceptableType T>
-void Bitmask<T>::SetBit(size_t pos)
+void Bitmask<T>::SetBit(unsigned int pos)
 {
-	m_Mask = m_Mask | (1 << pos);
+	m_Mask = m_Mask | 1 << pos;
 }
 
 template<BitmaskAcceptableType T>
-void Bitmask<T>::ClearBit(size_t pos)
+void Bitmask<T>::ClearBit(unsigned int pos)
 {
 	m_Mask = m_Mask & ~(1 << pos);
 }

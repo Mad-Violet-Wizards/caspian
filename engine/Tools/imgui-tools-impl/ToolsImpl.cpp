@@ -123,7 +123,46 @@ void Toolbar::Render()
 
 				ImGui::EndPopup();
 			}
-			
+		}
+
+		const bool bLevelActive = ApplicationSingleton::Instance().GetWorld()->IsLevelActive();
+
+		{
+			constexpr auto game_popup_name = "GamePopup";
+
+			ImGui::SameLine();
+			if (ImGui::Button("Game", styles.toolbar_button_size))
+				ImGui::OpenPopup(game_popup_name);
+
+			if (ImGui::BeginPopup(game_popup_name))
+			{
+				if (ImGui::Selectable("Start game"))
+				{
+					if (bLevelActive && ApplicationSingleton::Instance().GetGameController()->IsGameRunning() == false) // Maybe better check if level is active?
+					{
+						ApplicationSingleton::Instance().GetGameController()->StartGame();
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot start game \nwithout loading level first!");
+					}
+
+				}
+				else if (ImGui::Selectable("Exit game"))
+				{
+					if (ApplicationSingleton::Instance().GetGameController()->IsGameRunning())
+					{
+						ApplicationSingleton::Instance().GetGameController()->ExitGame();
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot exit game \nwithout starting it!");
+					}
+				}
+
+
+				ImGui::EndPopup();
+			}
 		}
 		
 		styles.toolbar_pop_combobox_style();

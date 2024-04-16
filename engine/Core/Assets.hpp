@@ -153,6 +153,9 @@ namespace Assets
 			bool IsInitialized() const { return m_bInitialized; }
 
 			const sf::Texture& GetEmptyTexture() const { return m_EmptyTexture.GetConstResource(); }
+			const sf::Texture& GetCursorTileTexture() const { return m_CursorTileTexture.GetConstResource(); }
+			const sf::Texture& GetPlayerTempTexture() const { return m_PlayerTempTexture.GetConstResource(); }
+			const sf::Texture& GetCollisionTileTexture() const { return m_CollisionTileTexture.GetConstResource(); }
 
 
 		private:

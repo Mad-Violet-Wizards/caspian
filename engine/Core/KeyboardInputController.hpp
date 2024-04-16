@@ -2,6 +2,15 @@
 
 #include "engine/Core/Bitmask.hpp"
 
+enum class ESupportedKey : uint64_t
+{
+	Grave = 0,
+	W = 1,
+	A,
+	S,
+	D = 4
+};
+
 class KeyboardInputController
 {
 public:
@@ -11,12 +20,15 @@ public:
 
 	void Update([[maybe_unused]] float _dt);
 
-	void OnKeyPressed(sf::Keyboard::Key _key);
-	void OnKeyReleased(sf::Keyboard::Key _key);
+	void OnKeyPressed(ESupportedKey _key);
+	void OnKeyReleased(ESupportedKey _key);
 
-	bool IsKeyPressed(sf::Keyboard::Key _key);
-	bool IsKeyDown(sf::Keyboard::Key _key);
-	bool IsKeyUp(sf::Keyboard::Key _key);
+	bool IsKeyPressed(ESupportedKey _key);
+	bool IsKeyDown(ESupportedKey _key);
+	bool IsKeyUp(ESupportedKey _key);
+
+	ESupportedKey GetSupportedKey(sf::Keyboard::Key _key) const;
+	bool IsKeySupported(sf::Keyboard::Key _key) const;
 
 private:
 

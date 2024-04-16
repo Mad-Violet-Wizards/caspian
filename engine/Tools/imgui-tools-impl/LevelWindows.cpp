@@ -269,7 +269,7 @@ void TilesetListWindow::Render()
 
 								m_SelectedTileInfo = &tile_info;
 								m_SelectedTileInfo->m_Selected = true;
-								ApplicationSingleton::Instance().GetDebugControllers().GetLevelController()->OnTilesetTileSelected(m_SelectedTileInfo->m_TilesetUUID, m_SelectedTileInfo->m_Rect.left, m_SelectedTileInfo->m_Rect.top);
+								ApplicationSingleton::Instance().GetEditControllers().GetLevelController()->OnTilesetTileSelected(m_SelectedTileInfo->m_TilesetUUID, m_SelectedTileInfo->m_Rect.left, m_SelectedTileInfo->m_Rect.top);
 							}
 
 							ImGui::PopStyleVar();

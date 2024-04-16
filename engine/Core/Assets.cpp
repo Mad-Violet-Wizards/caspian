@@ -10,6 +10,9 @@ Assets::Storage::Storage()
 	m_TilemapStorage = std::make_unique<TilemapStorage>();
 
 	InitEmptyTexture();
+	InitPlayerTempTexture();
+	InitCollisionTileTexture();
+	InitCursorTileTexture();
 	InitDefaultFont();
 }
 
@@ -302,12 +305,50 @@ void Assets::Storage::InitDefaultFont()
 
 void Assets::Storage::InitCursorTileTexture()
 {
+	const auto size = 32;
 
+	sf::Image image_buffer;
+	image_buffer.create(size, size);
+
+	for (auto y = 0; y < size; ++y)
+	{
+		image_buffer.setPixel(0, y, sf::Color::Blue);
+		image_buffer.setPixel(size - 1, y, sf::Color::Blue);
+	}
+
+	for (auto x = 0; x < size; ++x)
+	{
+		image_buffer.setPixel(x, 0, sf::Color::Blue);
+		image_buffer.setPixel(x, size - 1, sf::Color::Blue);
+	}
+
+	m_CursorTileTexture.LoadFromImage(image_buffer);
 }
 
 void Assets::Storage::InitPlayerTempTexture()
 {
+	const auto size = 32;
 
+	sf::Image image_buffer;
+	image_buffer.create(size, size, sf::Color::Transparent);
+
+	for (auto y = 0; y < size; ++y)
+	{
+		image_buffer.setPixel(0, y, sf::Color::Green);
+		image_buffer.setPixel(1, y, sf::Color::Green);
+		image_buffer.setPixel(size - 1, y, sf::Color::Green);
+		image_buffer.setPixel(size - 2, y, sf::Color::Green);
+	}
+
+	for (auto x = 0; x < size; ++x)
+	{
+		image_buffer.setPixel(x, 0, sf::Color::Green);
+		image_buffer.setPixel(x, 1, sf::Color::Green);
+		image_buffer.setPixel(x, size - 1, sf::Color::Green);
+		image_buffer.setPixel(x, size - 2, sf::Color::Green);
+	}
+
+	m_PlayerTempTexture.LoadFromImage(image_buffer);
 }
 
 void Assets::Storage::InitCollisionTileTexture()
@@ -318,9 +359,18 @@ void Assets::Storage::InitCollisionTileTexture()
 	image_buffer.create(size, size);
 
 	for (auto y = 0; y < size; ++y)
+	{
 		image_buffer.setPixel(0, y, sf::Color::Red);
+		image_buffer.setPixel(size - 1, y, sf::Color::Red);
+	}
 
-	// CONTINUE HERE.
+	for (auto x = 0; x < size; ++x)
+	{
+		image_buffer.setPixel(x, 0, sf::Color::Red);
+		image_buffer.setPixel(x, size - 1, sf::Color::Red);
+	}
+	
+	m_CollisionTileTexture.LoadFromImage(image_buffer);
 }
 
 Assets::TilemapStorage::TilemapStorage()

@@ -7,6 +7,7 @@
 #include "engine/Core/Projects.hpp"
 #include "engine/Core/Rendering.hpp"
 #include "engine/Core/EditControllers.hpp"
+#include "engine/Core/IGameController.hpp"
 
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +32,9 @@
 		float GetDeltaTime() const { return m_deltaTime; }
 
 		EngineController& GetEngineController() { return m_engineController; }
-		EditControllersManager& GetDebugControllers() { return m_debugControllers; }
+		EditControllersManager& GetEditControllers() { return m_editControllers; }
+		void SetGameController(IGameController* _gameController) { m_gameController = _gameController; }
+		IGameController* GetGameController() const { return m_gameController; }
 
 		void SetWorld(std::unique_ptr<Levels::World> _world) { m_World = std::move(_world); }
 		Levels::World* const GetWorld() { return m_World.get(); }
@@ -41,6 +44,7 @@
 
 		void SetRenderingSystem(std::unique_ptr<Rendering::System> _renderingSystem) { m_RenderingSystem = std::move(_renderingSystem); }
 		Rendering::System* const GetRenderingSystem() { return m_RenderingSystem.get(); }
+
 
 		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
 
@@ -57,7 +61,8 @@
 		Window m_window;
 
 		EngineController m_engineController;
-		EditControllersManager m_debugControllers;
+		EditControllersManager m_editControllers;
+		IGameController* m_gameController;
 
 		std::unique_ptr<Levels::World> m_World = nullptr;
 		std::unique_ptr<Projects::Manager> m_ProjectsManager;

@@ -8,7 +8,7 @@ using namespace Tools;
 /* Manager */
 void Manager::Update(float _dt, EToolsSystem _tools_system)
 {
-	if (ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController()->IsKeyDown(sf::Keyboard::Grave))
+	if (ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController()->IsKeyDown(ESupportedKey::Grave))
 		m_ImplManager.ToggleActiveState();
 
 	if (_tools_system == EToolsSystem::None) [[unlikely]]

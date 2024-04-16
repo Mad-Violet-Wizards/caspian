@@ -4,15 +4,21 @@
 
 class GameObject;
 
+using TileIndex = std::pair<int, int>;
+
 class SpatialHashGridBucket
 {
-	public:
+public:
 
-		SpatialHashGridBucket(unsigned int _init_buckets_capacity = 8);
-		~SpatialHashGridBucket();
+	SpatialHashGridBucket(const TileIndex& _tile_index, unsigned int _init_buckets_capacity = 8);
+	~SpatialHashGridBucket();
 
-		void Add(GameObject* _game_object);
-		void Remove(GameObject* _game_object);
+	const TileIndex& GetTileIndex() const { return m_TileIndex; }
+
+	void Add(GameObject* _game_object);
+	void Remove(GameObject* _game_object);
+
+	bool EntitiesEmpty() const { return m_EntityGameObjects.empty(); }
 
 		const SpatialHashGridBucket& GetConstRef() const { return *this; }
 		SpatialHashGridBucket& GetRef() { return *this; }
@@ -39,6 +45,8 @@ class SpatialHashGridBucket
 		std::vector<GameObject*> m_BackgroundGameObjects;
 		std::vector<GameObject*> m_EntityGameObjects;
 		std::vector<GameObject*> m_ForegroundGameObjects;
+
+		TileIndex m_TileIndex;
 };
 
 struct TileIndexHash
@@ -50,8 +58,6 @@ struct TileIndexHash
 	}
 };
 
-using TileIndex = std::pair<int, int>;
-
 // TODO: Better to create iter begin and end as we almost always have to iterate over the collection.
 class SpatialHashGrid
 {
@@ -62,6 +68,7 @@ public:
 
 	void Add(GameObject* _game_object);
 	void Remove(GameObject* _game_object);
+	void UpdateEntitiesPositions();
 
 	const SpatialHashGridBucket& GetConstRefToBucket(const TileIndex& _bucket_index) const;
 	SpatialHashGridBucket& GetRefToBucket(const TileIndex& _bucket_index);
@@ -93,6 +100,8 @@ class GameObjectCollection
 		void ProcessQueuedForRemoval();
 
 		void ConstructDebugPlayer();
+		void ReleaseDebugPlayer();
+		GameObject* GetPlayer() const { return m_Player; }
 
 		void ConstructNew(const Serializable::Binary::CollisionRectInfo& _collision_rect_info);
 		void ConstructNew(const Serializable::Binary::TextureTileInfo& _texture_tile_info, ETag _drawable_type, unsigned int _active_level_tiles_size, unsigned int _tile_layer);

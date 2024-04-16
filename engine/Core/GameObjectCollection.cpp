@@ -5,6 +5,7 @@
 #include "Components/C_Tags.hpp"
 #include "Components/C_Transform.hpp"
 #include "Components/C_Sprite.hpp"
+#include "Components/C_KeyboardMovement.hpp"
 
 GameObjectCollection::~GameObjectCollection()
 {
@@ -30,6 +31,8 @@ void GameObjectCollection::Update(float _dt)
 
 		game_object->Update(_dt);
 	}
+
+	m_DrawableGameObjects.UpdateEntitiesPositions();
 }
 
 void GameObjectCollection::LateUpdate(float _dt)
@@ -81,8 +84,27 @@ void GameObjectCollection::ProcessQueuedForRemoval()
 
 void GameObjectCollection::ConstructDebugPlayer()
 {
+	m_Player = new GameObject();
+
+	auto tag_component_sPtr = m_Player->AddComponent<C_Tags>(ETag::Drawable | ETag::Drawable_Entity | ETag::Physics_Dynamic);
+	auto transform_component_sPtr = m_Player->AddComponent<C_Transform>();
+	auto keyboard_movement_component_sPtr = m_Player->AddComponent<C_KeyboardMovement>();
+	auto sprite_component_sPtr = m_Player->AddComponent<C_Sprite>();
+	sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetPlayerTempTexture());
+
+	m_GameObjects.push_back(m_Player);
+	m_CollidableGameObjects.push_back(m_Player);
+	m_DrawableGameObjects.Add(m_Player);
 }
 
+
+void GameObjectCollection::ReleaseDebugPlayer()
+{
+	if (m_Player)
+	{
+		m_Player->QueueForRemoval();
+	}
+}
 
 void GameObjectCollection::ConstructNew(const Serializable::Binary::CollisionRectInfo& _collision_rect_info)
 {
@@ -95,7 +117,7 @@ void GameObjectCollection::ConstructNew(const Serializable::Binary::CollisionRec
 	if (m_DebugRenderCollidables)
 	{
 		auto sprite_component_sPtr = new_game_object->AddComponent<C_Sprite>();
-		sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetEmptyTexture());
+		sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetCollisionTileTexture());
 		sprite_component_sPtr->SetTextureRect(sf::IntRect(0, 0, _collision_rect_info.m_Rect.width, _collision_rect_info.m_Rect.height));
 	}
 
@@ -157,8 +179,12 @@ void GameObjectCollection::SetRenderCollidables(bool _state)
 ///////////////////////////////////////////////////////////
 // DRAWABLES
 ///////////////////////////////////////////////////////////
-SpatialHashGridBucket::SpatialHashGridBucket(unsigned int _init_buckets_capacity /* = 8*/)
+SpatialHashGridBucket::SpatialHashGridBucket(const TileIndex& _tile_index, unsigned int _init_buckets_capacity /* = 8*/)
 {
+	m_TileIndex = _tile_index;
+	m_BackgroundGameObjects.reserve(_init_buckets_capacity);
+	m_EntityGameObjects.reserve(_init_buckets_capacity);
+	m_ForegroundGameObjects.reserve(_init_buckets_capacity);
 }
 
 ///////////////////////////////////////////////////////////
@@ -312,14 +338,50 @@ void SpatialHashGridBucket::Sort(ETag _drawable_type)
 void SpatialHashGrid::Add(GameObject* _game_object)
 {
 	const TileIndex tile_index = CalculateTileIndex(_game_object);
-	m_Grid[tile_index].Add(_game_object);
 
+	if (m_Grid.find(tile_index) == m_Grid.end())
+	{
+		SpatialHashGridBucket new_bucket(tile_index);
+		new_bucket.Add(_game_object);
+		m_Grid.insert(std::make_pair(tile_index, new_bucket));
+	}
+	else
+	{
+		m_Grid.at(tile_index).Add(_game_object);
+	}
 }
 
 void SpatialHashGrid::Remove(GameObject* _game_object)
 {
 	const TileIndex tile_index = CalculateTileIndex(_game_object);
-	m_Grid[tile_index].Remove(_game_object);
+
+	if (m_Grid.find(tile_index) != m_Grid.end())
+	{
+		m_Grid.at(tile_index).Remove(_game_object);
+	}
+}
+
+void SpatialHashGrid::UpdateEntitiesPositions()
+{
+	for (SpatialHashGridBucket& bucket : m_Grid | std::views::values)
+	{
+		for (auto it = bucket.entity_objects_begin(); it != bucket.entity_objects_end(); it++)
+		{
+			if (auto transform_component_sPtr = (*it)->GetComponent<C_Transform>())
+			{
+				const TileIndex new_tile_index = CalculateTileIndex(*it);
+
+				if (new_tile_index != bucket.GetTileIndex())
+				{
+					m_Grid.at(new_tile_index).Add(*it);
+					bucket.Remove(*it);
+
+					if (bucket.EntitiesEmpty()) // In case there is only one entity left in the bucket.
+						break;
+				}
+			}
+		}
+	}
 }
 
 const SpatialHashGridBucket& SpatialHashGrid::GetConstRefToBucket(const TileIndex& _bucket_index) const
@@ -331,7 +393,7 @@ SpatialHashGridBucket& SpatialHashGrid::GetRefToBucket(const TileIndex& _bucket_
 {
 	if (m_Grid.find(_bucket_index) == m_Grid.end())
 	{
-		SpatialHashGridBucket new_bucket = SpatialHashGridBucket();
+		SpatialHashGridBucket new_bucket = SpatialHashGridBucket(_bucket_index);
 		m_Grid.insert({ _bucket_index, new_bucket });
 	}
 
