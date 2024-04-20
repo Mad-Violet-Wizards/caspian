@@ -53,6 +53,10 @@ class GameObject
 			return false;
 		}
 
+		void OnCollisionEnter();
+		void OnCollisionStay();
+		void OnCollisionExit();
+
 	private:
 
 		bool m_queuedForRemoval : 1;

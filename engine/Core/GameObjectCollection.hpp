@@ -103,19 +103,28 @@ class GameObjectCollection
 		void ReleaseDebugPlayer();
 		GameObject* GetPlayer() const { return m_Player; }
 
+		// Think about factory?
 		void ConstructNew(const Serializable::Binary::CollisionRectInfo& _collision_rect_info);
 		void ConstructNew(const Serializable::Binary::TextureTileInfo& _texture_tile_info, ETag _drawable_type, unsigned int _active_level_tiles_size, unsigned int _tile_layer);
 
-		const std::vector<GameObject*>& GetCollidableGameObjects() const { return m_CollidableGameObjects; }
-
+		// Should I move it to other class?
 		void SortDrawablesOnDirtyFlag(bool _state) { m_SortDrawablesOnDirtyFlag = _state; }
 		bool GetSortDrawablesOnDirtyFlag() const { return m_SortDrawablesOnDirtyFlag; }
 		bool DrawablesEmpty() const { return m_DrawableGameObjects.Empty(); }
 		const TileIndex CalculateTileIndex(const float _x, const float _y) const;
 		SpatialHashGrid* GetSpatialHashGrid() { return &m_DrawableGameObjects; }
 
+		// Same here?
 		void SetRenderCollidables(bool _state);
 		bool GetRenderCollidables() const { return m_DebugRenderCollidables; }
+
+		std::vector<GameObject*>::iterator collidable_objects_begin() { return m_CollidableGameObjects.begin(); }
+		std::vector<GameObject*>::iterator collidable_objects_end() { return m_CollidableGameObjects.end(); }
+		std::vector<GameObject*>::const_iterator collidable_objects_cbegin() const { return m_CollidableGameObjects.cbegin(); }
+		std::vector<GameObject*>::const_iterator collidable_objects_cend() const { return m_CollidableGameObjects.cend(); }
+
+
+		const std::vector<GameObject*>& GetCollidableGameObjects() const { return m_CollidableGameObjects; }
 
 	private:
 

@@ -9,7 +9,7 @@ public:
 	~C_RectCollidable();
 
 	IntersectionResult Intersects(const std::shared_ptr<C_InterfaceCollidable> _other) override;
-	void ResolveOverlap(const IntersectionResult& _manifold) override;
+	void FixDistance(const IntersectionResult& _manifold) override;
 
 	void SetSize(const sf::Vector2f& _size);
 	void SetSize(float _width, float _height);

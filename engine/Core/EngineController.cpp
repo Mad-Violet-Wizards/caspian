@@ -9,15 +9,15 @@
 
 void EngineController::Update(float _dt)
 {
-	if (m_ScenesStateMachine)
-	{
-		m_ScenesStateMachine->Update(_dt);
-	}
-
 	if (m_GameObjectCollection)
 	{
 		m_GameObjectCollection->Update(_dt);
 		m_GameObjectCollection->LateUpdate(_dt);
+	}
+
+	if (m_CollisionsManager)
+	{
+		m_CollisionsManager->Update(_dt);
 	}
 
 	if (m_ResourcesFsInitFinished && m_DataFsInitFinished)

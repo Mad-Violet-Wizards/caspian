@@ -6,6 +6,7 @@
 #include "Components/C_Transform.hpp"
 #include "Components/C_Sprite.hpp"
 #include "Components/C_KeyboardMovement.hpp"
+#include "Components/C_RectCollidable.hpp"
 
 GameObjectCollection::~GameObjectCollection()
 {
@@ -90,6 +91,10 @@ void GameObjectCollection::ConstructDebugPlayer()
 	auto transform_component_sPtr = m_Player->AddComponent<C_Transform>();
 	auto keyboard_movement_component_sPtr = m_Player->AddComponent<C_KeyboardMovement>();
 	auto sprite_component_sPtr = m_Player->AddComponent<C_Sprite>();
+	auto collision_component_sPtr = m_Player->AddComponent<C_RectCollidable>();
+	sf::FloatRect player_colliding_rect { 0.0f, 0.0f, 32.0f, 32.0f };
+	collision_component_sPtr->SetRect(player_colliding_rect);
+
 	sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetPlayerTempTexture());
 
 	m_GameObjects.push_back(m_Player);
@@ -111,8 +116,12 @@ void GameObjectCollection::ConstructNew(const Serializable::Binary::CollisionRec
 	GameObject* new_game_object = new GameObject();
 	auto tag_component_sPtr = new_game_object->AddComponent<C_Tags>(ETag::Physics_Static);
 	auto transform_component_sPtr = new_game_object->AddComponent<C_Transform>();
+	transform_component_sPtr->SetStatic(true);
 	transform_component_sPtr->SetX(_collision_rect_info.m_Rect.left);
 	transform_component_sPtr->SetY(_collision_rect_info.m_Rect.top);
+	auto collision_component_sPtr = new_game_object->AddComponent<C_RectCollidable>();
+	sf::FloatRect rect(0.f, 0.f, _collision_rect_info.m_Rect.width, _collision_rect_info.m_Rect.height);
+	collision_component_sPtr->SetRect(rect);
 
 	if (m_DebugRenderCollidables)
 	{
@@ -159,7 +168,14 @@ void GameObjectCollection::SetRenderCollidables(bool _state)
 {
 	if (m_DebugRenderCollidables && _state == false)
 	{
-		// We leave the sprites unchanged, as they are already set to the correct texture anyway.
+		// We leave the sprites unchanged except player, as they are already set to the correct texture anyway.
+		if (m_Player)
+		{
+			auto player_sprite_component_sPtr = m_Player->GetComponent<C_Sprite>();
+
+			player_sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetPlayerTempTexture());
+		}
+
 		m_DebugRenderCollidables = false;
 	}
 	if (!m_DebugRenderCollidables && _state == true)
@@ -167,7 +183,7 @@ void GameObjectCollection::SetRenderCollidables(bool _state)
 		for (GameObject* game_object : m_CollidableGameObjects)
 		{
 			auto sprite_component_sPtr = game_object->AddComponent<C_Sprite>();
-			sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetEmptyTexture());
+			sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetCollisionTileTexture());
 			const unsigned int tile_size = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetTilesSize();
 			const sf::IntRect texture_rect(0, 0, tile_size, tile_size);
 			sprite_component_sPtr->SetTextureRect(texture_rect);

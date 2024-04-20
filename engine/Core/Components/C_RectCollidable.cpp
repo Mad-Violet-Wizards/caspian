@@ -32,7 +32,7 @@ IntersectionResult C_RectCollidable::Intersects(const std::shared_ptr<C_Interfac
 	return result;
 }
 
-void C_RectCollidable::ResolveOverlap(const IntersectionResult& _manifold)
+void C_RectCollidable::FixDistance(const IntersectionResult& _manifold)
 {
 	auto transform = m_Owner->GetComponent<C_Transform>();
 
@@ -42,8 +42,8 @@ void C_RectCollidable::ResolveOverlap(const IntersectionResult& _manifold)
 	const sf::FloatRect& this_rect = GetRect();
 	const sf::FloatRect* other_rect = _manifold.m_Other;
 
-	float x_overlap = this_rect.left + this_rect.width - other_rect->left + other_rect->width;
-	float y_overlap = this_rect.top + this_rect.height - other_rect->top + other_rect->height;
+	float x_overlap = (this_rect.left + this_rect.width) - (other_rect->left + other_rect->width);
+	float y_overlap = (this_rect.top + this_rect.height) - (other_rect->top + other_rect->height);
 
 	if (fabs(x_overlap) > fabs(y_overlap))
 	{

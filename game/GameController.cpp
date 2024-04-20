@@ -8,6 +8,8 @@ void GameController::StartGame()
 	ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ConstructDebugPlayer();
 
 	ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->ShowNotification(Tools_Impl::ENotificationType::Info, "Game started.");
+
+	ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->StartProcessingCollisions();
 #endif
 }
 
@@ -17,6 +19,8 @@ void GameController::ExitGame()
 
 #ifdef _DEBUG
 	ApplicationSingleton::Instance().GetEngineController().GetGameObjectStorage()->ReleaseDebugPlayer();
+
+	ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->StopProcessingCollisions();
 
 	ApplicationSingleton::Instance().GetEngineController().GetToolsManager()->ShowNotification(Tools_Impl::ENotificationType::Info, "Game stopped.");
 #endif
