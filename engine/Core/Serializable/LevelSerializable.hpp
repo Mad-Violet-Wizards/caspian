@@ -17,9 +17,11 @@ namespace Serializable
 				LevelInfo() = default;
 				LevelInfo(const std::string& _level_name,
 					const std::string& _chunk_root_file,
+					const std::string& _collisions_info_file,
 					unsigned int _tile_size)
 					: m_LevelName{ _level_name }
 					, m_ChunkRootFile{ _chunk_root_file }
+					, m_CollisionsInfoFile{ _collisions_info_file }
 					, m_TileSize{ _tile_size }
 					, m_FsMark{ fs::EFilesystemMarkToHash(fs::EFilesystemMark::Level) }
 				{
@@ -29,6 +31,7 @@ namespace Serializable
 
 			std::string m_LevelName;
 			std::string m_ChunkRootFile;
+			std::string m_CollisionsInfoFile;
 			unsigned int m_TileSize;
 			unsigned int m_FsMark;
 
@@ -39,6 +42,7 @@ namespace Serializable
 			{
 				ar(cereal::make_nvp("Name", m_LevelName),
 					cereal::make_nvp("ChunkRootFile", m_ChunkRootFile),
+					cereal::make_nvp("CollisionsInfoFile", m_CollisionsInfoFile),
 					cereal::make_nvp("TileSize", m_TileSize),
 					cereal::make_nvp("Fs Mark", m_FsMark));
 			}
@@ -56,6 +60,9 @@ namespace Serializable
 			CollisionRectInfo(const CollisionRectInfo& _other);
 			CollisionRectInfo(CollisionRectInfo&& _other) noexcept;
 
+			CollisionRectInfo& operator= (const CollisionRectInfo& _other);
+			CollisionRectInfo& operator= (CollisionRectInfo&& _other) noexcept;
+
 			void dummy() override {}
 
 			sf::IntRect m_Rect;
@@ -68,6 +75,23 @@ namespace Serializable
 								cereal::make_nvp("width", m_Rect.width),
 								cereal::make_nvp("height", m_Rect.height));
 			}
+		};
+
+		class CollisionLayerInfo : public ISerializable::Binary
+		{
+			public:
+
+				CollisionLayerInfo() = default;
+
+				void dummy() override {}
+
+				std::vector<CollisionRectInfo> m_CollisionRects;
+
+				template<class Archive>
+				void serialize(Archive& archive)
+				{
+					archive(cereal::make_nvp("CollisionRects", m_CollisionRects));
+				}
 		};
 
 
@@ -100,24 +124,22 @@ namespace Serializable
 			}
 		};
 
-		class LayerInfo : public ISerializable::Binary
+		class TextureLayerInfo : public ISerializable::Binary
 		{
 		public:
 
-			LayerInfo() = default;
+			TextureLayerInfo() = default;
 
 			void dummy() override {}
 
 			int m_LayerIndex = 0;
 			std::vector<TextureTileInfo> m_Tiles;
-			std::vector<CollisionRectInfo> m_CollisionRects;
 
 			template<class Archive>
 			void serialize(Archive& archive)
 			{
 								archive(cereal::make_nvp("LayerIndex", m_LayerIndex),
-												cereal::make_nvp("Tiles", m_Tiles),
-												cereal::make_nvp("Collision Rects", m_CollisionRects));
+												cereal::make_nvp("Tiles", m_Tiles));
 			}
 		};
 
@@ -130,13 +152,15 @@ namespace Serializable
 			void dummy() override {}
 
 			uint64_t m_ChunkUUID; // Same as in ChunkRoot_ChunkInfo
-			std::vector<LayerInfo> m_TileLayers;
+			std::vector<TextureLayerInfo> m_BackgroundTileLayers;
+			std::vector<TextureLayerInfo> m_ForegroundTileLayers;
 
 			template<class Archive>
 			void serialize(Archive& archive)
 			{
 				archive(cereal::make_nvp("UUID", m_ChunkUUID),
-								cereal::make_nvp("TileLayers", m_TileLayers));
+								cereal::make_nvp("BackgroundTileLayers", m_BackgroundTileLayers),
+								cereal::make_nvp("ForegroundTileLayers", m_ForegroundTileLayers));
 			}
 		};
 
@@ -194,8 +218,8 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(JSON, LevelInfo);
 CEREAL_REGISTER_TYPE(TextureTileInfo);
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, TextureTileInfo);
 
-CEREAL_REGISTER_TYPE(LayerInfo);
-CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, LayerInfo);
+CEREAL_REGISTER_TYPE(TextureLayerInfo);
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, TextureLayerInfo);
 
 CEREAL_REGISTER_TYPE(ChunkInfo);
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, ChunkInfo);
@@ -208,3 +232,6 @@ CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, ChunkRootInfo);
 
 CEREAL_REGISTER_TYPE(CollisionRectInfo);
 CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, CollisionRectInfo);
+
+CEREAL_REGISTER_TYPE(CollisionLayerInfo);
+CEREAL_REGISTER_POLYMORPHIC_RELATION(Binary, CollisionLayerInfo);

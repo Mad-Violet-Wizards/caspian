@@ -33,3 +33,18 @@ void GameObject::QueueForRemoval()
 {
 	m_queuedForRemoval = true;
 }
+
+void GameObject::OnCollisionEnter()
+{
+
+}
+
+void GameObject::OnCollisionStay()
+{
+
+}
+
+void GameObject::OnCollisionExit()
+{
+
+}

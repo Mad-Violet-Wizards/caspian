@@ -7,6 +7,8 @@
 #include "engine/Filesystem/NativeFileSystem.hpp"
 #include "engine/Core/Level.hpp"
 #include "engine/Core/Rendering.hpp"
+#include "engine/Core/KeyboardInputController.hpp"
+#include "GameController.hpp"
 
 int main()
 {
@@ -22,30 +24,42 @@ int main()
 	std::unique_ptr<Events::Dispatcher> event_dispatcher_system = std::make_unique<Events::Dispatcher>();
 	engine_module.SetEventDispatcher(std::move(event_dispatcher_system));
 
+	// Initialize Input System, for now Keyboard controller is enough.
+	std::unique_ptr<KeyboardInputController> keyboard_controller = std::make_unique<KeyboardInputController>();
+	engine_module.SetKeyboardInputController(std::move(keyboard_controller));
+
+	// App Event Listeners;
+	main_instance.InitializeAppEventListeners();
+
 	std::unique_ptr<fs::Manager> filesystem_manager = std::make_unique<fs::Manager>();
 	engine_module.SetFilesystemManager(std::move(filesystem_manager));
 
 	std::unique_ptr<Assets::Storage> assets_storage = std::make_unique<Assets::Storage>();
 	engine_module.SetAssetsStorage(std::move(assets_storage));
 
-	std::unique_ptr<Level::World> world = std::make_unique<Level::World>();
+	std::unique_ptr<Levels::World> world = std::make_unique<Levels::World>();
 	main_instance.SetWorld(std::move(world));
 
-	// RENDERING
+	std::unique_ptr<Collisions::Manager> collisions_manager = std::make_unique<Collisions::Manager>();
+	collisions_manager->SetCollisionSolver(Collisions::ECollisionSolver::Quadtree);
+	engine_module.SetCollisionsManager(std::move(collisions_manager));
+
 	std::unique_ptr<Rendering::System> rendering_system = std::make_unique<Rendering::System>();
 	main_instance.SetRenderingSystem(std::move(rendering_system));
+
+	std::unique_ptr<GameObjectCollection> game_objects = std::make_unique<GameObjectCollection>();
+	engine_module.SetGameObjectStorage(std::move(game_objects));
 
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();
 	main_instance.SetProjectsManager(std::move(projects_manager));
 
-	std::unique_ptr<DebugHelper> game_debug_helper = std::make_unique<DebugHelper>();
-	game_debug_helper->InitializeDebugEventListeners();
-
 	std::unique_ptr<Tools::Manager> tools_manager = std::make_unique<Tools::Manager>();
-	tools_manager->InitializeEventListeners();
 	engine_module.SetToolsManager(std::move(tools_manager));
 	#endif
+
+	IGameController* game_controller = new GameController();
+	main_instance.SetGameController(game_controller);
 
 	#if defined (_WIN32)
 	std::cout << "DEBUG: [Main] Running on Windows\n";

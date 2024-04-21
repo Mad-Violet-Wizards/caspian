@@ -28,6 +28,7 @@ class GameObject
 
 			std::shared_ptr<T> newComponent = std::make_shared<T>(this, std::forward<Args>(args)...);
 			m_components.push_back(newComponent);
+			return newComponent;
 		}
 
 		template<typename T>
@@ -51,6 +52,10 @@ class GameObject
 
 			return false;
 		}
+
+		void OnCollisionEnter();
+		void OnCollisionStay();
+		void OnCollisionExit();
 
 	private:
 

@@ -30,6 +30,7 @@ namespace Tools_Impl
 		Warning,
 		Error,
 		Success,
+		Info,
 		COUNT
 	};
 
@@ -55,6 +56,7 @@ namespace Tools_Impl
 			std::unique_ptr<notifications::WarningNotificationWindow> m_WarningWindow;
 			std::unique_ptr<notifications::ErrorNotificationWindow>		m_ErrorWindow;
 			std::unique_ptr<notifications::SuccessNotificationWindow> m_SuccessWindow;
+			std::unique_ptr<notifications::InfoNotificationWindow>		m_InfoWindow;
 
 			Manager* m_Manager = nullptr;
 	};

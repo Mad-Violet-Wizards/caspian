@@ -3,8 +3,9 @@
 #include "engine/Core/Serializable/LevelSerializable.hpp"
 
 class Camera;
+enum class ETag;
 
-namespace Level
+namespace Levels
 {
 	////////////////////////////////////////////////
 	class Chunk
@@ -14,9 +15,8 @@ namespace Level
 			Chunk(const sf::IntRect& _area);
 			~Chunk() = default;
 
-			void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer, unsigned int _tiles_size);
-
-			void EraseTile(const sf::Vector2u& _position, unsigned int _layer, unsigned int _tiles_size);
+			void PaintTile(const sf::Vector2u& position, const sf::Vector2u& tileset_tile_pos, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type, Random::UUID _tilset_uuid);
+			void EraseTile(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type);
 
 			const sf::IntRect& GetArea() const { return m_Area; }
 
@@ -24,7 +24,7 @@ namespace Level
 
 	private:
 
-			Serializable::Binary::TextureTileInfo* FindTileInfo(const sf::Vector2u& position, unsigned int _tiles_size, unsigned int _layer);
+			Serializable::Binary::TextureTileInfo* FindTileInfo(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type);
 
 			void PerformSave();
 
@@ -60,8 +60,11 @@ namespace Level
 	{
 		public:
 
-			Level();
+			Level(const std::string& _level_name);
 			~Level() = default;
+
+			void OnLevelActivated();
+			void OnLevelDeactivated();
 
 			void Update(float _dt);
 
@@ -73,8 +76,14 @@ namespace Level
 			void SetTilesSize(unsigned int _tile_size);
 			unsigned int GetTilesSize() const;
 
-			void SetNoLayers(unsigned int _no_layers);
-			unsigned int GetNoLayers() const;
+
+			void SetNoBackroundLayers(unsigned int _val);
+			unsigned int GetNoBackroundLayers() const;
+
+			void SetNoForegroundLayers(unsigned int _val);
+			unsigned int GetNoForegroundLayers() const;
+
+			const std::string& GetLevelName() const;
 
 		private:
 
@@ -83,7 +92,8 @@ namespace Level
 			std::unique_ptr<ChunksManager> m_ChunksManager;
 
 			unsigned int m_TilesSize;
-			unsigned int m_NoLayers;
+			unsigned int m_BackgroundNoLayersSize;
+			unsigned int m_ForegroundNoLayers;
 
 	};
 
@@ -108,24 +118,26 @@ namespace Level
 		std::shared_ptr<Camera> GetCamera() { return m_Camera; }
 
 		Level* GetActiveLevel() const;
-		unsigned int GetActiveLevelNoLayers() const;
+		bool IsLevelActive() const;
 
-		void PaintTile(const sf::Vector2u& position, Random::UUID _tilset_uuid, const sf::Vector2u& tileset_tile_pos, unsigned int _layer);
-		void EraseTile(const sf::Vector2u& _position, unsigned int _layer);
+		void PaintTile(const sf::Vector2u& position, const sf::Vector2u& tileset_tile_pos, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type, Random::UUID _tilset_uuid);
+		void EraseTile(const sf::Vector2u& _position, unsigned int _tiles_size, unsigned int _layer, ETag _drawable_type);
 
 	private:
 
 		void ActivateLevel(const std::string& _level_name);
-		void DeactivateLevel(const std::string& _level_name);
+		void DeactivateCurrentLevel();
 
 		bool IsLevelCached(const std::string& _level_name) const;
-		void LoadLevel(const std::string& _level_name, const std::string& _chunk_root_name, unsigned int _tile_size);
+		void LoadLevel(const Serializable::JSON::LevelInfo& _entry_level_info);
 
 	private:
 
 		std::shared_ptr<Camera> m_Camera;
+
+		Level* m_ActiveLevelPtr;
+
 		std::unordered_map<std::string, std::unique_ptr<Level>> m_CachedLevels;
-		std::string m_ActiveLevel;
 
 		std::vector<Serializable::JSON::LevelInfo> m_InitialLevelsData;
 	};

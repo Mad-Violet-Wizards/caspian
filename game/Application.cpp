@@ -10,6 +10,8 @@
 /* APPLICATION */
 Application::Application()
 	: m_window("Caspian Engine | Empty Project")
+	, m_WindowFocused(false)
+	, m_gameController(nullptr)
 {
 	m_deltaTime = m_clock.restart().asSeconds();
 
@@ -23,6 +25,8 @@ Application::~Application()
 #if defined(DEBUG)
 		ImGui::SFML::Shutdown();
 #endif
+	
+	delete m_gameController;
 }
 
 void Application::MainLoop()
@@ -35,18 +39,20 @@ void Application::MainLoop()
 
 void Application::Update()
 {
+	if (KeyboardInputController* keyboard_input = m_engineController.GetKeyboardInputController())
+	{
+		keyboard_input->Update(m_deltaTime);
+	}
+
 	m_window.Update();
 
 #if defined(DEBUG)
 
 	ImGui::SFML::Update(m_window.GetRenderWindow(), sf::seconds(m_deltaTime));
 
-	m_engineController.Update(m_deltaTime);
-	m_debugControllers.Update(m_deltaTime);
-
-	if (m_World)
+	if (GetWindowFocused())
 	{
-		m_World->Update(m_deltaTime);
+		m_editControllers.Update(m_deltaTime);
 	}
 
 	if (auto tools_mgr = m_engineController.GetToolsManager())
@@ -54,6 +60,16 @@ void Application::Update()
 		tools_mgr->Update(m_deltaTime, Tools::EToolsSystem::ImGui);
 	}
 #endif
+
+	m_engineController.Update(m_deltaTime);
+
+	if (m_World)
+	{
+		m_World->Update(m_deltaTime);
+	}
+
+	if (m_gameController->IsGameRunning())
+		m_gameController->Update(m_deltaTime);
 }
 
 void Application::LateUpdate()
@@ -93,6 +109,76 @@ bool Application::IsRunning() const
 }
 
 
+void Application::InitializeAppEventListeners()
+{
+	std::unique_ptr<Events::Listener> focusGainedListener = std::make_unique<Events::Listener>();
+	focusGainedListener->NotifyOn(sf::Event::GainedFocus);
+	focusGainedListener->SetCallback([this](const sf::Event& event)
+		{
+			SetWindowFocused(true);
+		});
+
+	std::unique_ptr<Events::Listener> focusLostListener = std::make_unique<Events::Listener>();
+	focusLostListener->NotifyOn(sf::Event::LostFocus);
+	focusLostListener->SetCallback([this](const sf::Event& event)
+		{
+			SetWindowFocused(false);
+		});
+
+	GetEngineController().GetEventDispatcher()->AddObserver(focusGainedListener.get());
+	GetEngineController().GetEventDispatcher()->AddObserver(focusLostListener.get());
+
+
+	std::unique_ptr<Events::Listener> mouseButtonReleased = std::make_unique<Events::Listener>();
+	mouseButtonReleased->NotifyOn(sf::Event::MouseButtonReleased);
+	mouseButtonReleased->SetCallback([this](const sf::Event& event)
+	{
+			ApplicationSingleton::Instance().GetEditControllers().GetLevelController()->OnEvent(event);
+	});
+	GetEngineController().GetEventDispatcher()->AddObserver(mouseButtonReleased.get());
+
+	std::unique_ptr<Events::Listener> keyReleasedListener = std::make_unique<Events::Listener>();
+	keyReleasedListener->NotifyOn(sf::Event::KeyReleased);
+	keyReleasedListener->SetCallback([this](const sf::Event& _event)
+	{
+		const static sf::Keyboard keyboard;
+		sf::Keyboard::Key key = keyboard.localize(_event.key.scancode);
+
+		KeyboardInputController* keyboard_input = ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController();
+
+		if (keyboard_input->IsKeySupported(key))
+		{
+			const ESupportedKey supported_key = keyboard_input->GetSupportedKey(key);
+			keyboard_input->OnKeyReleased(supported_key);
+		}
+	});
+
+	std::unique_ptr<Events::Listener> keyPressedListener = std::make_unique<Events::Listener>();
+	keyPressedListener->NotifyOn(sf::Event::KeyPressed);
+	keyPressedListener->SetCallback([this](const sf::Event& _event)
+	{
+		const static sf::Keyboard keyboard;
+		sf::Keyboard::Key key = keyboard.localize(_event.key.scancode);
+
+		KeyboardInputController* keyboard_input = ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController();
+
+		if (keyboard_input->IsKeySupported(key))
+		{
+			const ESupportedKey supported_key = keyboard_input->GetSupportedKey(key);
+			keyboard_input->OnKeyPressed(supported_key);
+		}
+	});
+
+	GetEngineController().GetEventDispatcher()->AddObserver(keyReleasedListener.get());
+	GetEngineController().GetEventDispatcher()->AddObserver(keyPressedListener.get());
+
+	m_AppEventListeners.push_back(std::move(focusGainedListener));
+	m_AppEventListeners.push_back(std::move(focusLostListener));
+	m_AppEventListeners.push_back(std::move(mouseButtonReleased));
+	m_AppEventListeners.push_back(std::move(keyReleasedListener));
+	m_AppEventListeners.push_back(std::move(keyPressedListener));
+}
+
 sf::Vector2i Application::GetMousePosition()
 {
 	return sf::Mouse::getPosition(m_window.GetRenderWindow());
@@ -103,22 +189,3 @@ sf::Vector2f Application::GetMousePositionWorld()
 	sf::Vector2i mousePos = GetMousePosition();
 	return m_window.GetRenderWindow().mapPixelToCoords(mousePos);
 }
-
-////////////////////////////////////////////////////////////////////////////////
-/* DEBUG */
-#if defined(DEBUG)
-	void DebugHelper::InitializeDebugEventListeners()
-	{
-		m_keyReleasedListener = std::make_unique<Events::Listener>();
-		m_keyReleasedListener->NotifyOn(sf::Event::KeyReleased);
-
-		m_keyReleasedListener->SetCallback([](const sf::Event& event)
-			{
-				std::cout << "DEBUG: [EventListener] Key released: " << event.key.code << "\n";
-			});
-
-		auto& main_instance = ApplicationSingleton::Instance();
-
-		main_instance.GetEngineController().GetEventDispatcher()->AddObserver(m_keyReleasedListener.get());
-	}
-#endif

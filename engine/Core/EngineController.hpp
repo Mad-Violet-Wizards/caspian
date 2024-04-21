@@ -6,6 +6,9 @@
 #include "EventHandler.hpp"
 #include "Assets.hpp"
 #include "engine/Core/Serializable/LevelSerializable.hpp"
+#include "engine/Core/Collisions.hpp"
+#include "engine/Core/GameObjectCollection.hpp"
+#include "engine/Core/KeyboardInputController.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 struct Project
@@ -31,6 +34,9 @@ class EngineController
 
 		void Update(float _dt);
 
+		void SetKeyboardInputController(std::unique_ptr<KeyboardInputController> _keyboard_input_controller) { m_KeyboardInputController = std::move(_keyboard_input_controller); }
+		KeyboardInputController* const GetKeyboardInputController() { return m_KeyboardInputController.get(); }
+
 		void SetEventDispatcher(std::unique_ptr<Events::Dispatcher> _event_dispatcher) { m_eventDispatcher = std::move(_event_dispatcher); }
 		Events::Dispatcher* const GetEventDispatcher() { return m_eventDispatcher.get(); }
 
@@ -45,6 +51,12 @@ class EngineController
 
 		void SetScenesStateMachine(std::unique_ptr<Scenes::StateMachine> _scenes_state_machine) { m_ScenesStateMachine = std::move(_scenes_state_machine); }
 		Scenes::StateMachine* const GetScenesStateMachine() { return m_ScenesStateMachine.get(); }
+
+		void SetCollisionsManager(std::unique_ptr<Collisions::Manager> _collisions_manager) { m_CollisionsManager = std::move(_collisions_manager); }
+		Collisions::Manager* const GetCollisionsManager() { return m_CollisionsManager.get(); }
+
+		void SetGameObjectStorage(std::unique_ptr<GameObjectCollection> _game_object_collection) { m_GameObjectCollection = std::move(_game_object_collection); }
+		GameObjectCollection* const GetGameObjectStorage() { return m_GameObjectCollection.get(); }
 
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
 		static std::string GetEngineVersionString();
@@ -68,6 +80,9 @@ class EngineController
 		std::unique_ptr<fs::Manager> m_filesystemManager = nullptr;
 		std::unique_ptr<Assets::Storage> m_assetsStorage = nullptr;
 		std::unique_ptr<Scenes::StateMachine> m_ScenesStateMachine = nullptr;
+		std::unique_ptr<Collisions::Manager> m_CollisionsManager = nullptr;
+		std::unique_ptr<GameObjectCollection> m_GameObjectCollection = nullptr;
+		std::unique_ptr<KeyboardInputController> m_KeyboardInputController = nullptr;
 
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;

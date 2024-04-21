@@ -6,24 +6,9 @@
 #include "engine/Core/Level.hpp"
 #include "engine/Core/Projects.hpp"
 #include "engine/Core/Rendering.hpp"
-#include "engine/Core/DebugEditorControllers.hpp"
+#include "engine/Core/EditControllers.hpp"
+#include "engine/Core/IGameController.hpp"
 
-////////////////////////////////////////////////////////////////////////////////
-#if defined(DEBUG)
-class DebugHelper
-{
-	public:
-
-		DebugHelper() = default;
-		~DebugHelper() = default;
-
-		void InitializeDebugEventListeners();
-
-	private:
-
-		std::unique_ptr<Events::Listener> m_keyReleasedListener = nullptr;
-	};
-	#endif
 
 	////////////////////////////////////////////////////////////////////////////////
 	class Application
@@ -41,14 +26,18 @@ class DebugHelper
 		void CalculateDeltaTime();
 		bool IsRunning() const;
 
+		void InitializeAppEventListeners();
+
 		// Use for debug purposes only!
 		float GetDeltaTime() const { return m_deltaTime; }
 
 		EngineController& GetEngineController() { return m_engineController; }
-		DebugEditorControllers& GetDebugControllers() { return m_debugControllers; }
+		EditControllersManager& GetEditControllers() { return m_editControllers; }
+		void SetGameController(IGameController* _gameController) { m_gameController = _gameController; }
+		IGameController* GetGameController() const { return m_gameController; }
 
-		void SetWorld(std::unique_ptr<Level::World> _world) { m_World = std::move(_world); }
-		Level::World* const GetWorld() { return m_World.get(); }
+		void SetWorld(std::unique_ptr<Levels::World> _world) { m_World = std::move(_world); }
+		Levels::World* const GetWorld() { return m_World.get(); }
 
 		void SetProjectsManager(std::unique_ptr<Projects::Manager> _pm) { m_ProjectsManager = std::move(_pm); }
 		Projects::Manager* const GetProjectsManager() { return m_ProjectsManager.get(); }
@@ -56,26 +45,34 @@ class DebugHelper
 		void SetRenderingSystem(std::unique_ptr<Rendering::System> _renderingSystem) { m_RenderingSystem = std::move(_renderingSystem); }
 		Rendering::System* const GetRenderingSystem() { return m_RenderingSystem.get(); }
 
+
 		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
 
 		sf::Vector2i GetMousePosition();
 		sf::Vector2f GetMousePositionWorld();
 
 		const sf::View& GetView() const { return m_window.GetView(); }
+
+		void SetWindowFocused(bool _focus) { m_window.SetHasFocus(_focus); }
+		bool GetWindowFocused() const { return m_window.GetHasFocus(); }
 			 
 	private:
 
 		Window m_window;
 
 		EngineController m_engineController;
-		DebugEditorControllers m_debugControllers;
+		EditControllersManager m_editControllers;
+		IGameController* m_gameController;
 
-		std::unique_ptr<Level::World> m_World = nullptr;
+		std::unique_ptr<Levels::World> m_World = nullptr;
 		std::unique_ptr<Projects::Manager> m_ProjectsManager;
 		std::unique_ptr<Rendering::System> m_RenderingSystem;
 
+		std::vector<std::unique_ptr<Events::Listener>> m_AppEventListeners;
+
 		sf::Clock m_clock;
 		float m_deltaTime;
+		bool m_WindowFocused;
 	};
 
 namespace Windows

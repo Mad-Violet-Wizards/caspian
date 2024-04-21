@@ -165,6 +165,7 @@ namespace fs
 			case IFile::EType::Data_LevelRootChunk:
 			case IFile::EType::Data_LevelChunk:
 			case IFile::EType::Data_Tilemaps:
+			case IFile::EType::Data_Collisions:
 			{
 				std::ofstream file(file_path);
 				os_file_operation_result = file.good();

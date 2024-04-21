@@ -20,8 +20,13 @@ class Window
 		[[nodiscard]] sf::RenderWindow& GetRenderWindow() { return m_renderWindow; }
 		const sf::View& GetView() const { return m_renderWindow.getView(); }
 
+		void SetHasFocus(bool _focus);
+		bool GetHasFocus() const;
+
 	private:
 
 		Events::Dispatcher* m_eventDispatcher = nullptr;
 		sf::RenderWindow m_renderWindow;
+
+		bool m_HasFocus = true;
 };

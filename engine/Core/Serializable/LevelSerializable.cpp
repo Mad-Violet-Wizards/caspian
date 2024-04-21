@@ -27,6 +27,19 @@ Serializable::Binary::CollisionRectInfo::CollisionRectInfo(const sf::IntRect& _i
 {
 }
 
+
+CollisionRectInfo& Serializable::Binary::CollisionRectInfo::operator=(const CollisionRectInfo& _other)
+{
+	m_Rect = _other.m_Rect;
+	return *this;
+}
+
+CollisionRectInfo& Serializable::Binary::CollisionRectInfo::operator=(CollisionRectInfo&& _other) noexcept
+{
+	m_Rect = std::move(_other.m_Rect);
+	return *this;
+}
+
 Serializable::Binary::CollisionRectInfo::CollisionRectInfo(CollisionRectInfo&& _other) noexcept
 {
 	m_Rect = std::move(_other.m_Rect);

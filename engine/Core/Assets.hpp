@@ -153,19 +153,32 @@ namespace Assets
 			bool IsInitialized() const { return m_bInitialized; }
 
 			const sf::Texture& GetEmptyTexture() const { return m_EmptyTexture.GetConstResource(); }
+			const sf::Texture& GetCursorTileTexture() const { return m_CursorTileTexture.GetConstResource(); }
+			const sf::Texture& GetPlayerTempTexture() const { return m_PlayerTempTexture.GetConstResource(); }
+			const sf::Texture& GetCollisionTileTexture() const { return m_CollisionTileTexture.GetConstResource(); }
 
 
 		private:
 			
-			void LoadEmptyTexture();
-			void LoadDefaultFont();
+			// TODO: Think of init em on own thread
+			void InitEmptyTexture();
+			void InitDefaultFont();
+			void InitCursorTileTexture();
+			void InitPlayerTempTexture();
+			void InitCollisionTileTexture();
 
 		private:
 
 			std::unordered_map<std::string, Resource<sf::Texture>> m_textures;
 			std::unordered_map<std::string, Resource<sf::Font>> m_fonts;
 
+			// DEBUG Textures
 			Resource<sf::Texture> m_EmptyTexture;
+			Resource<sf::Texture> m_CursorTileTexture;
+			Resource<sf::Texture> m_PlayerTempTexture;
+			Resource<sf::Texture> m_CollisionTileTexture;
+
+			// DEBUG fonts
 			Resource<sf::Font> m_DefaultFont;
 
 			std::unique_ptr<TilemapStorage> m_TilemapStorage = nullptr;

@@ -123,7 +123,46 @@ void Toolbar::Render()
 
 				ImGui::EndPopup();
 			}
-			
+		}
+
+		const bool bLevelActive = ApplicationSingleton::Instance().GetWorld()->IsLevelActive();
+
+		{
+			constexpr auto game_popup_name = "GamePopup";
+
+			ImGui::SameLine();
+			if (ImGui::Button("Game", styles.toolbar_button_size))
+				ImGui::OpenPopup(game_popup_name);
+
+			if (ImGui::BeginPopup(game_popup_name))
+			{
+				if (ImGui::Selectable("Start game"))
+				{
+					if (bLevelActive && ApplicationSingleton::Instance().GetGameController()->IsGameRunning() == false) // Maybe better check if level is active?
+					{
+						ApplicationSingleton::Instance().GetGameController()->StartGame();
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot start game \nwithout loading level first!");
+					}
+
+				}
+				else if (ImGui::Selectable("Exit game"))
+				{
+					if (ApplicationSingleton::Instance().GetGameController()->IsGameRunning())
+					{
+						ApplicationSingleton::Instance().GetGameController()->ExitGame();
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot exit game \nwithout starting it!");
+					}
+				}
+
+
+				ImGui::EndPopup();
+			}
 		}
 		
 		styles.toolbar_pop_combobox_style();
@@ -140,6 +179,7 @@ NotificationsManager::NotificationsManager(Manager* _mgr)
 	, m_ErrorWindow(std::make_unique<notifications::ErrorNotificationWindow>(_mgr))
 	, m_WarningWindow(std::make_unique<notifications::WarningNotificationWindow>(_mgr))
 	, m_SuccessWindow(std::make_unique<notifications::SuccessNotificationWindow>(_mgr))
+	, m_InfoWindow(std::make_unique<notifications::InfoNotificationWindow>(_mgr))
 {
 }
 
@@ -148,6 +188,7 @@ void NotificationsManager::Update(float _dt)
 	m_ErrorWindow->Update(_dt);
 	m_WarningWindow->Update(_dt);
 	m_SuccessWindow->Update(_dt);
+	m_InfoWindow->Update(_dt);
 }
 
 void NotificationsManager::Render()
@@ -155,6 +196,7 @@ void NotificationsManager::Render()
 	m_ErrorWindow->Render();
 	m_WarningWindow->Render();
 	m_SuccessWindow->Render();
+	m_InfoWindow->Render();
 }
 
 void NotificationsManager::ShowNotification(ENotificationType _type, std::string_view _msg)
@@ -164,6 +206,7 @@ void NotificationsManager::ShowNotification(ENotificationType _type, std::string
 	active_notifications += m_ErrorWindow->m_Active ? 1 : 0;
 	active_notifications += m_WarningWindow->m_Active ? 1 : 0;
 	active_notifications += m_SuccessWindow->m_Active ? 1 : 0;
+	active_notifications += m_InfoWindow->m_Active ? 1 : 0;
 
 	switch (_type)
 	{
@@ -190,6 +233,12 @@ void NotificationsManager::ShowNotification(ENotificationType _type, std::string
 			m_SuccessWindow->Show(active_notifications);
 			break;
 		}
+		case ENotificationType::Info:
+		{
+			m_InfoWindow->SetMessage(_msg);
+			m_InfoWindow->Show(active_notifications);
+			break;
+		}
 	}
 }
 
@@ -198,6 +247,7 @@ void NotificationsManager::ClearNotifications()
 	m_ErrorWindow->Hide();
 	m_WarningWindow->Hide();
 	m_SuccessWindow->Hide();
+	m_InfoWindow->Hide();
 }
 
 void NotificationsManager::OnNotificationHidden()
@@ -212,6 +262,9 @@ void NotificationsManager::OnNotificationHidden()
 
 	if (m_SuccessWindow->m_Active)
 		active_notification_vec.push_back(m_SuccessWindow.get());
+
+	if (m_InfoWindow->m_Active)
+		active_notification_vec.push_back(m_InfoWindow.get());
 
 	// Sort vector by descending m_DisplayTime value.
 	std::sort(active_notification_vec.begin(), active_notification_vec.end(), [](const auto& _lhs, const auto& _rhs)
@@ -415,7 +468,7 @@ void Manager::LoadProjectRequest(const std::string& _project_name, const std::st
 
 		if (project_set)
 		{
-			auto msg = std::format("Project {} parsed successfully. Loading systems.", _project_name);
+			const auto msg = std::format("Project {} parsed successfully. Loading systems.", _project_name);
 			ShowNotification(ENotificationType::Success, msg);
 			ApplicationSingleton::Instance().UpdateWindowTitle(std::format("CASPIAN ENGINE | {}", _project_name));
 		}
@@ -467,7 +520,8 @@ void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::stri
 	{
 		Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineController().GetAssetsStorage()->GetTilemapStorage();
 		
-		const Serializable::Binary::TilesetInfo tileset_info(_tileset_key, _tileset_name, _tile_width, _tile_height);
+		Serializable::Binary::TilesetInfo tileset_info(_tileset_key, _tileset_name, _tile_width, _tile_height);
+		tileset_info.m_TilesetUUID = Random::UUID();
 		tilemap_storage->PushTilesetInfo(tileset_info);
 		tilemap_file->Seek(0, fs::io::Origin::Begin);
 		tilemap_file->SerializeBinary(tilemap_storage->GetTilesetsInfo());

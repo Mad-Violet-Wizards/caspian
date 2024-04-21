@@ -2,9 +2,6 @@
 
 #include "Camera.hpp"
 
-#include "engine/Core/Components/C_Tags.hpp"
-#include "engine/Core/Components/C_Transform.hpp"
-
 Camera::Camera()
 	: m_OwningGameObject(nullptr)
 	, m_Position(0, 0)
@@ -22,7 +19,7 @@ void Camera::Update(float _dt)
 #if defined (_DEBUG)
 	sf::Vector2i mouse_delta = sf::Vector2i(0, 0);
 
-	if (CameraDebugController* camera_debug_controller = main_instance.GetDebugControllers().GetCameraController())
+	if (CameraEditController* camera_debug_controller = main_instance.GetEditControllers().GetCameraController())
 	{
 		if (camera_debug_controller->IsActive())
 			if (camera_debug_controller->ValidateMouseDelta())
@@ -84,7 +81,7 @@ void Camera::AttachToGameObject(GameObject* game_object)
 	{
 		if (auto c_tags = game_object->GetComponent<C_Tags>())
 		{
-			if (c_tags->HasTag(ETag::CameraAttachable))
+			if (c_tags->HasTag(ETag::Camera_Attachable))
 			{
 				m_OwningGameObject = game_object;
 			}
