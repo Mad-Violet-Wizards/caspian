@@ -357,7 +357,7 @@ namespace Levels
 
 		if (success)
 		{
-			new_level->SetLevelBounds({ 0.f, 0.f, 8192.f, 8192.f });
+			new_level->SetLevelBounds({ 0.f, 0.f, 4096.f, 4096.f });
 			new_level->SetTilesSize(_tile_size);
 			m_CachedLevels.insert({ _level_name, std::move(new_level) });
 			ActivateLevel(_level_name);

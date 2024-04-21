@@ -47,16 +47,49 @@ namespace Collisions
 		std::vector<std::shared_ptr<C_RectCollidable>> m_Collidables;
 	};
 
+	enum class EQuadtreeNode : unsigned int
+	{
+		TopLeft = 0,
+		TopRight,
+		BottomLeft,
+		BottomRight,
+		COUNT = 4,
+		INVALID = 5
+	};
+
 	class QuadtreeSolver : public ICollisionSolver
 	{
 	public:
 
-		QuadtreeSolver() = default;
+		QuadtreeSolver();
+		QuadtreeSolver(unsigned int _height, const sf::FloatRect& bounds);
 		~QuadtreeSolver() = default;
 
 		void Search(const sf::FloatRect& _rect, std::vector<std::shared_ptr<C_RectCollidable>>& _overlapping_objects) override;
 		void Insert(std::shared_ptr<C_RectCollidable> _collidable) override;
 		void Clear() override;
+
+#ifdef DEBUG
+		void DrawBounds(sf::RenderWindow& _window) const;
+#endif
+	
+	private:
+		
+		EQuadtreeNode CalculateNode(const sf::FloatRect& _rect);
+
+	private:
+
+		static const unsigned int MAX_HEIGHT = 8;
+		static const unsigned int MAX_OBJECTS = 8;
+
+	private:
+
+		std::array<std::shared_ptr<QuadtreeSolver>, 4> m_Children;
+
+		std::vector<std::shared_ptr<C_RectCollidable>> m_Collidables;
+
+		sf::FloatRect m_Bounds;
+		unsigned int m_CurrentHeight;
 	};
 
 	struct CachedInfo
@@ -79,7 +112,7 @@ namespace Collisions
 		public:
 
 			Manager() = default;
-			~Manager() = default;
+			~Manager();
 
 			void Update(float _dt);
 			void SetCollisionSolver(ECollisionSolver _collision_solver);
@@ -94,6 +127,10 @@ namespace Collisions
 			void StartProcessingCollisions();
 			void StopProcessingCollisions();
 
+#ifdef DEBUG
+			const QuadtreeSolver* GetQuadtreeSolver() const;
+#endif
+
 		private:
 
 			void ResolveCollisions();
@@ -104,7 +141,7 @@ namespace Collisions
 			bool m_ProccessingCollisions = false;
 
 			std::vector<CachedInfo> m_CachedCollisionsInfo;
-			std::vector<ObjectsCollidingPair> m_CollidingObjects;
+			std::set<ObjectsCollidingPair> m_CollidingObjects;
 
 
 			ECollisionSolver m_CollisionSolverType = ECollisionSolver::NoCollision;

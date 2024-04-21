@@ -1,6 +1,15 @@
 #include "engine/pch.hpp"
 #include "Collisions.hpp"
 
+Collisions::Manager::~Manager()
+{
+	if (m_CollisionSolverImpl)
+	{
+		delete m_CollisionSolverImpl;
+		m_CollisionSolverImpl = nullptr;
+	}
+}
+
 void Collisions::Manager::Update(float _dt)
 {
 	if (!m_ProccessingCollisions)
@@ -161,9 +170,42 @@ void Collisions::Manager::StopProcessingCollisions()
 	m_ProccessingCollisions = false;
 }
 
+const Collisions::QuadtreeSolver* Collisions::Manager::GetQuadtreeSolver() const
+{
+	if (dynamic_cast<QuadtreeSolver*>(m_CollisionSolverImpl))
+		return static_cast<QuadtreeSolver*>(m_CollisionSolverImpl);
+	else
+	{
+		std::cout << "Collision solver is not of type QuadtreeSolver\n";
+		return nullptr;
+	}
+}
+
 void Collisions::Manager::ResolveCollisions()
 {
-	// CONTINUE HERE.
+	auto it = m_CollidingObjects.begin();
+
+	while (it != m_CollidingObjects.end())
+	{
+		std::shared_ptr<C_RectCollidable> first = it->first;
+		std::shared_ptr<C_RectCollidable> second = it->second;
+
+		IntersectionResult result = first->Intersects(second);
+
+		if (result.m_Collided == false || (first->m_Owner->QueuedForRemoval() || second->m_Owner->QueuedForRemoval()))
+		{
+			first->m_Owner->OnCollisionExit();
+			second->m_Owner->OnCollisionExit();
+
+			it = m_CollidingObjects.erase(it);
+		}
+		else
+		{
+			first->m_Owner->OnCollisionStay();
+			second->m_Owner->OnCollisionStay();
+			++it;
+		}
+	}
 }
 
 void Collisions::Manager::FindCollisions()
@@ -191,7 +233,7 @@ void Collisions::Manager::FindCollisions()
 			if (result.m_Collided)
 			{
 				ObjectsCollidingPair colliding_pair(collision_rect_component_sPtr, colliding_object);
-				m_CollidingObjects.emplace_back(colliding_pair);
+				m_CollidingObjects.emplace(colliding_pair);
 
 				collision_rect_component_sPtr->m_Owner->OnCollisionEnter();
 				colliding_object->m_Owner->OnCollisionEnter();
@@ -259,18 +301,142 @@ void Collisions::BruteForceSolver::Clear()
 	m_Collidables.clear();
 }
 
+Collisions::QuadtreeSolver::QuadtreeSolver()
+{
+	m_CurrentHeight = 0;
+	m_Bounds = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel()->GetLevelBounds();
+
+	for (unsigned int i = 0; i < (unsigned int)EQuadtreeNode::COUNT; ++i)
+		m_Children[i] = nullptr;
+}
+
+Collisions::QuadtreeSolver::QuadtreeSolver(unsigned int _height, const sf::FloatRect& bounds)
+	: m_CurrentHeight(_height)
+	, m_Bounds(bounds)
+{
+	for (unsigned int i = 0; i < (unsigned int)EQuadtreeNode::COUNT; ++i)
+		m_Children[i] = nullptr;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Collisions::QuadtreeSolver::Search(const sf::FloatRect& _rect, std::vector<std::shared_ptr<C_RectCollidable>>& _overlapping_objects)
 {
+	if (m_Children[0] != nullptr)
+	{
+		EQuadtreeNode _node = CalculateNode(_rect);
+
+		if (_node != EQuadtreeNode::INVALID)
+		{
+			m_Children[(unsigned int)_node]->Search(_rect, _overlapping_objects);
+			return;
+		}
+	}
+
+	for (std::shared_ptr<C_RectCollidable> collidable : m_Collidables)
+	{
+		if (_rect.intersects(collidable->GetRect()))
+			_overlapping_objects.push_back(collidable);
+	}
 }
 
 void Collisions::QuadtreeSolver::Insert(std::shared_ptr<C_RectCollidable> _collidable)
 {
+	if (m_Children[0] != nullptr)
+	{
+		EQuadtreeNode _node = CalculateNode(_collidable->GetRect());
 
+		if (_node != EQuadtreeNode::INVALID)
+		{
+			m_Children[(unsigned int)_node]->Insert(_collidable);
+			return;
+		}
+	}
+
+	m_Collidables.emplace_back(_collidable);
+
+	if (m_Collidables.size() > QuadtreeSolver::MAX_OBJECTS && m_CurrentHeight <= QuadtreeSolver::MAX_HEIGHT)
+	{	
+		if (m_Children[0] == nullptr)
+		{
+			const unsigned int half_width = m_Bounds.width / 2;
+			const unsigned int half_height = m_Bounds.height / 2;
+
+			for (unsigned int i = 0; i < (unsigned int)EQuadtreeNode::COUNT; ++i)
+			{
+				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left, m_Bounds.top, half_width, half_height));
+				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left + half_width, m_Bounds.top, half_width, half_height));
+				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left, m_Bounds.top + half_height, half_width, half_height));
+				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left + half_width, m_Bounds.top + half_height, half_width, half_height));
+			}
+
+			for (std::shared_ptr<C_RectCollidable> collidable : m_Collidables)
+			{
+				EQuadtreeNode _node = CalculateNode(collidable->GetRect());
+
+				if (_node != EQuadtreeNode::INVALID)
+				{
+					m_Children[(unsigned int)_node]->Insert(collidable);
+				}
+			}
+
+			m_Collidables.clear();
+		}
+	}
 }
 
 void Collisions::QuadtreeSolver::Clear()
 {
+		m_Collidables.clear();
+
+		for (unsigned int i = 0; i < (unsigned int)EQuadtreeNode::COUNT; ++i)
+		{
+			if (m_Children[i] != nullptr)
+			{
+				m_Children[i]->Clear();
+				m_Children[i] = nullptr;
+			}
+		}
+}
+
+void Collisions::QuadtreeSolver::DrawBounds(sf::RenderWindow& _window) const
+{
+	if (m_Children[0] != nullptr)
+	{
+		for (unsigned int i = 0; i < (unsigned int)EQuadtreeNode::COUNT; ++i)
+			m_Children[i]->DrawBounds(_window);
+	}
+
+	sf::RectangleShape rect(sf::Vector2f(m_Bounds.width, m_Bounds.height));
+	rect.setPosition(m_Bounds.left, m_Bounds.top);
+	rect.setFillColor(sf::Color::Transparent);
+	rect.setOutlineColor(sf::Color::Cyan);
+	_window.draw(rect);
+}
+
+Collisions::EQuadtreeNode Collisions::QuadtreeSolver::CalculateNode(const sf::FloatRect& _rect)
+{
+	EQuadtreeNode index = EQuadtreeNode::INVALID;
+
+	const float vertical_midpoint = m_Bounds.left + (m_Bounds.width * 0.5f);
+	const float horizontal_midpoint = m_Bounds.top + (m_Bounds.height * 0.5f);
+
+	const bool top_quadrant = _rect.top < horizontal_midpoint && _rect.top + _rect.height < horizontal_midpoint;
+	const bool bottom_quadrant = _rect.top > horizontal_midpoint;
+	const bool left_quadrant = _rect.left < vertical_midpoint && _rect.left + _rect.width < vertical_midpoint;
+	const bool right_quadrant = _rect.left > vertical_midpoint;
+
+	if (top_quadrant)
+	{
+		if (left_quadrant)			 index = EQuadtreeNode::TopLeft;
+		else if (right_quadrant) index = EQuadtreeNode::TopRight;
+	}
+	else if (bottom_quadrant)
+	{
+		if (left_quadrant)			 index = EQuadtreeNode::BottomLeft;
+		else if (right_quadrant) index = EQuadtreeNode::BottomRight;
+	}
+
+	return index;
 
 }

@@ -41,7 +41,7 @@ int main()
 	main_instance.SetWorld(std::move(world));
 
 	std::unique_ptr<Collisions::Manager> collisions_manager = std::make_unique<Collisions::Manager>();
-	collisions_manager->SetCollisionSolver(Collisions::ECollisionSolver::BruteForce);
+	collisions_manager->SetCollisionSolver(Collisions::ECollisionSolver::Quadtree);
 	engine_module.SetCollisionsManager(std::move(collisions_manager));
 
 	std::unique_ptr<Rendering::System> rendering_system = std::make_unique<Rendering::System>();

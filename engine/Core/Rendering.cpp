@@ -74,10 +74,11 @@ void Rendering::System::Render(sf::RenderWindow& _window)
 									c_sprite_sptr->Draw(_window);
 								}
 							}
+
+							// Debug Collision Rendering - dynamic (how Quadtree splits).
+							const Collisions::QuadtreeSolver* quadtree_solver = ApplicationSingleton::Instance().GetEngineController().GetCollisionsManager()->GetQuadtreeSolver();
+							quadtree_solver->DrawBounds(_window);
 						}
-
-
-						// Debug Collision Rendering - dynamic (how Quadtree splits).
 					}
 				}
 			}
