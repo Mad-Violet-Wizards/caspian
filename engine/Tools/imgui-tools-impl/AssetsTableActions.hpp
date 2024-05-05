@@ -8,7 +8,7 @@ namespace Tools_Impl
 	{
 		public:
 		
-			std::string_view m_RelativePath; // To get the data from the asset manager.
+			std::string* m_RelativePath; // To get the data from the asset manager.
 	};
 
 	class IAssetsTableActionsListener

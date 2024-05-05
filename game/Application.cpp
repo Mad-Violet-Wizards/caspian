@@ -183,7 +183,7 @@ void Application::InitializeAppEventListeners()
 
 void Application::UpdateWindowTitle(const std::string& _title)
 {
-	const int process_id = getpid();
+	const int process_id = _getpid();
 
 	const std::string final_title = std::format("{}, pid: {}", _title, process_id);
 

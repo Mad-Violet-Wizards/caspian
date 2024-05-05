@@ -311,7 +311,7 @@ void AssetsListWindow::Render()
 					if (ImGui::Button("Select"))
 					{
 						SelectedAssetData data;
-						data.m_RelativePath = asset.m_RelativePath;
+						data.m_RelativePath = &asset.m_RelativePath;
 						NotifyAssetSelected(data);
 					}
 					ImGui::PopID();

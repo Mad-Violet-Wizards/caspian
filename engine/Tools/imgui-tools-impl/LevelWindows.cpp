@@ -303,7 +303,7 @@ void TilesetListWindow::Render()
 
 			if (m_TilesetPreview != nullptr)
 			{
-				std::string fmt = std::format("Currently watching preview of: {}", m_QueuedToAddAsTileset->m_RelativePath);
+				const std::string fmt = std::format("Currently watching preview of: {}", *m_QueuedToAddAsTileset->m_RelativePath);
 
 				ImGui::InputText("Name", &m_TilesetName);
 				ImGui::InputText("Tile Width", &m_nTileWidth);
@@ -331,9 +331,8 @@ void TilesetListWindow::Render()
 					{
 						const unsigned int tile_width = std::stoul(m_nTileWidth);
 						const unsigned int tile_height = std::stoul(m_nTileHeight);
-						const std::string key{ m_QueuedToAddAsTileset->m_RelativePath };
 
-						m_Manager->AddTilesetRequest(key, m_TilesetName, tile_width, tile_height);
+						m_Manager->AddTilesetRequest(*m_QueuedToAddAsTileset->m_RelativePath, m_TilesetName, tile_width, tile_height);
 					}
 				}
 				styles.pop_accept_button_style();
@@ -351,11 +350,11 @@ void TilesetListWindow::Render()
 
 void TilesetListWindow::OnAssetSelected(const SelectedAssetData& data)
 {
+	m_QueuedToAddAsTileset.reset();
 	m_QueuedToAddAsTileset = data;
 
 	auto& engine_module = ApplicationSingleton::Instance().GetEngineController();
-	const std::string key{ data.m_RelativePath };
-	m_TilesetPreview = &engine_module.GetAssetsStorage()->GetConstTexture(key);
+	m_TilesetPreview = &engine_module.GetAssetsStorage()->GetConstTexture(*data.m_RelativePath);
 }
 
 std::string TilesetListWindow::GetComboBoxTilesetName(Random::UUID _tileset_uuid) const
