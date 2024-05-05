@@ -46,7 +46,7 @@
 		Rendering::System* const GetRenderingSystem() { return m_RenderingSystem.get(); }
 
 
-		void UpdateWindowTitle(const std::string& _title) { m_window.UpdateTitle(_title); }
+		void UpdateWindowTitle(const std::string& _title);
 
 		sf::Vector2i GetMousePosition();
 		sf::Vector2f GetMousePositionWorld();

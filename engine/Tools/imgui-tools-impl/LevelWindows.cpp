@@ -237,50 +237,66 @@ void TilesetListWindow::Render()
 							m_CachedTilesetSprites.emplace_back(tile_info);
 							m_PrevTilesetUUID = selected_tileset_uuid;
 							m_CurrentTilesetHeight = assets_storage->GetTexture(selected_tileset_path).getSize().y;
+							m_CurrentTilesetWidth = assets_storage->GetTexture(selected_tileset_path).getSize().x;
 						}
 					}
 					
 					if (m_CachedTilesetSprites.size() > 0)
 					{
-						ImGui::BeginChild("TileSelector", ImVec2(0, 400), true, ImGuiWindowFlags_HorizontalScrollbar);
-
-						const float availableWidth = ImGui::GetContentRegionAvail().x;
-						const int columns = std::max(1, (int)(availableWidth / selected_tileset_tile_width));
-
-						int counter = 0;
-						bool b_img_button_is_selected = false;
-						for (auto& tile_info : m_CachedTilesetSprites)
+						if (ImGui::CollapsingHeader("TileSelector"))
 						{
-							ImGui::PushID(&tile_info.m_Sprite);
-							ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(selected_tileset_tile_width, selected_tileset_tile_width));
+							const float availableWidth = ImGui::GetContentRegionAvail().x;
+							const int rows = std::max(1, (int)(availableWidth / (selected_tileset_tile_width + 10)));
 
-							tile_info.m_Selected ? ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.1f, 0.6f, 1.f)) : ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
-
-							ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.f, 0.7f, 0.1f, 1.f));
-							ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 0.5f, 0.f, 1.f));
-
-							if (ImGui::ImageButton(tile_info.m_Sprite, ImVec2(selected_tileset_tile_width, selected_tileset_tile_height)))
+							int counter = 0;
+							bool b_img_button_is_selected = false;
+							for (auto& tile_info : m_CachedTilesetSprites)
 							{
-								if (m_SelectedTileInfo)
+								ImGui::PushID(&tile_info.m_Sprite);
+								ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(1, 1));
+
+								tile_info.m_Selected ? ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.4f, 0.1f, 0.6f, 1.f)) : ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.f, 0.f, 0.f, 0.f));
+
+								ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1.f, 0.7f, 0.1f, 1.f));
+								ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.f, 0.5f, 0.f, 1.f));
+
+								if (ImGui::ImageButton(tile_info.m_Sprite, ImVec2(selected_tileset_tile_width, selected_tileset_tile_height)))
 								{
-									m_SelectedTileInfo->m_Selected = false;
-									m_SelectedTileInfo = nullptr;
+									if (m_SelectedTileInfo)
+									{
+										m_SelectedTileInfo->m_Selected = false;
+										m_SelectedTileInfo = nullptr;
+									}
+
+									m_SelectedTileInfo = &tile_info;
+									m_SelectedTileInfo->m_Selected = true;
+									ApplicationSingleton::Instance().GetEditControllers().GetLevelController()->OnTilesetTileSelected(m_SelectedTileInfo->m_TilesetUUID, m_SelectedTileInfo->m_Rect.left, m_SelectedTileInfo->m_Rect.top);
 								}
 
-								m_SelectedTileInfo = &tile_info;
-								m_SelectedTileInfo->m_Selected = true;
-								ApplicationSingleton::Instance().GetEditControllers().GetLevelController()->OnTilesetTileSelected(m_SelectedTileInfo->m_TilesetUUID, m_SelectedTileInfo->m_Rect.left, m_SelectedTileInfo->m_Rect.top);
+								++counter;
+								if (counter != rows)
+								{
+									ImGui::SameLine();
+								}
+								else
+								{
+									counter = 0;
+								}
+
+								//if (++counter % rows != 0)
+								//{
+								//	ImGui::SameLine();
+								//}
+								//else
+								//{
+								//	std::cout << "b\n";
+								//}
+
+								ImGui::PopStyleVar();
+								ImGui::PopStyleColor(3);
+								ImGui::PopID();
 							}
-
-							ImGui::PopStyleVar();
-							ImGui::PopStyleColor(3);
-							ImGui::PopID();
-
-							if (++counter % columns != 0)
-								ImGui::SameLine();
 						}
-
-						ImGui::EndChild();
 					}
 				}
 			}

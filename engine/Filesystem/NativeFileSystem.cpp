@@ -40,6 +40,7 @@ namespace fs
 			fn_create_engine_dir(path, "levels");
 			fn_create_engine_dir(path, "tilemaps");
 			fn_create_engine_dir(path, "fonts");
+			fn_create_engine_dir(path, "animations");
 		}
 
 		// Build files list.

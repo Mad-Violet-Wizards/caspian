@@ -40,6 +40,7 @@ namespace Tools_Impl
 				: IWindow(_mgr)
 				, m_PreviewWindow(_anim_preview_window)
 				, m_AnimationType(EAnimationType::Unknown)
+				, m_AnimationDirection(EAnimationDirection::None)
 			{}
 
 			void Render() override;
@@ -49,10 +50,10 @@ namespace Tools_Impl
 
 			std::string m_AnimationName;
 			std::string m_AnimationTexturePath;
-			sf::Vector2u m_AnimationTextureOffset;
 			std::string m_AnimationFrameCount;
 			std::vector<AnimationInternalData> m_AnimationData;
 			EAnimationType m_AnimationType;
+			EAnimationDirection m_AnimationDirection;
 
 			AnimationPreviewWindow* m_PreviewWindow;
 
