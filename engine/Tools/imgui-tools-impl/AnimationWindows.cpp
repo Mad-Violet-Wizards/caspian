@@ -13,21 +13,84 @@ void AnimationPreviewWindow::Render()
 {
 	if (ImGui::CollapsingHeader("Animation Preview"))
 	{
-		if (m_AnimationTexturePreview == nullptr)
+		if (m_AnimationTexturePreview == nullptr || m_AnimationFrameData.empty() && !m_Playing)
 		{
-			ImGui::Text("No animation tileset found. Please select one in the 'New Animation' or 'Edit Animation' window.");
+			ImGui::Text("No animation tileset found or animation data missing.\n"
+								   "Please select one in the 'New Animation' or 'Edit Animation' window.");
 		}
 		else
 		{
-			for (AnimationFramePreviewInternalData& frame_data : m_AnimationFrameData)
-			{
-				ImGui::Text(frame_data.m_Label.c_str());
+			ImGui::Text("Animation preview:");
+			sf::Sprite sprite;
+			sprite.setScale(m_AnimationScalesArray[m_CurrentScalesArrayIndex].second, m_AnimationScalesArray[m_CurrentScalesArrayIndex].second);
+			sprite.setTexture(*m_AnimationTexturePreview);
+			sprite.setTextureRect(m_AnimationFrameData[m_CurrentAnimationFrameIndex].m_Rect);
+			ImGui::Image(sprite);
 
-				sf::Sprite sprite;
-				sprite.setTexture(*m_AnimationTexturePreview);
-				sprite.setTextureRect(frame_data.m_Rect);
-				
-				ImGui::Image(sprite);
+			m_PlayButton.Render();
+			ImGui::SameLine();
+			m_StopButton.Render();
+			ImGui::SameLine();
+			m_PauseButton.Render();
+			ImGui::SameLine();
+			const std::string frame_time = std::format("{:.2f}{}", m_CurrentFrameTime, "ms");
+			ImGui::Text(frame_time.c_str());
+
+			const std::string current_frame = std::format("Frame: {}", m_CurrentAnimationFrameIndex);
+			if (ImGui::BeginCombo("Select frame", current_frame.c_str()))
+			{
+				for (auto i = 0; i < m_AnimationFrameData.size(); i++)
+				{
+					bool is_selected = (m_CurrentAnimationFrameIndex == i);
+					if (ImGui::Selectable(m_AnimationFrameData[i].m_Label.c_str(), is_selected))
+					{
+						m_CurrentAnimationFrameIndex = i;
+						m_CurrentFrameTime = 0.0f;
+					}
+					if (is_selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::BeginCombo("Scale", m_AnimationScalesArray[m_CurrentScalesArrayIndex].first.c_str()))
+			{
+				for (auto i = 0; i < m_AnimationScalesArray.size(); i++)
+				{
+					bool is_selected = (m_CurrentScalesArrayIndex == i);
+					if (ImGui::Selectable(m_AnimationScalesArray[i].first.c_str(), is_selected))
+					{
+						m_CurrentScalesArrayIndex = i;
+					}
+					if (is_selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
+			}
+
+
+			if (ImGui::BeginCombo("Slowdown", m_AnimationSpeedValuesArray[m_CurrentSpeedValuesArrayIndex].first.c_str()))
+			{
+				for (auto i = 0; i < m_AnimationSpeedValuesArray.size(); i++)
+				{
+					bool is_selected = (m_CurrentSpeedValuesArrayIndex == i);
+
+					if (ImGui::Selectable(m_AnimationSpeedValuesArray[i].first.c_str(), is_selected))
+					{
+						m_CurrentSpeedValuesArrayIndex = i;
+					}
+					if (is_selected)
+					{
+						ImGui::SetItemDefaultFocus();
+					}
+				}
+
+				ImGui::EndCombo();
 			}
 		}
 	}
@@ -35,7 +98,22 @@ void AnimationPreviewWindow::Render()
 
 void AnimationPreviewWindow::Update(float _dt)
 {
+	if (m_AnimationTexturePreview && !m_AnimationFrameData.empty() && m_Playing)
+	{
+		m_CurrentFrameTime += _dt * 1000.f * m_AnimationSpeedValuesArray[m_CurrentSpeedValuesArrayIndex].second;
 
+		if (m_CurrentFrameTime >= m_AnimationFrameData[m_CurrentAnimationFrameIndex].m_FrameTime)
+		{
+			m_CurrentFrameTime = 0.0f;
+			m_CurrentAnimationFrameIndex++;
+			if (m_CurrentAnimationFrameIndex >= m_AnimationFrameData.size())
+			{
+				m_CurrentAnimationFrameIndex = 0;
+				m_CurrentFrameTime = 0.f;
+				OnAnimationFinished();
+			}
+		}
+	}
 }
 
 void AnimationPreviewWindow::SetTexture(const std::string& _texture_path)
@@ -44,11 +122,11 @@ void AnimationPreviewWindow::SetTexture(const std::string& _texture_path)
 	m_AnimationTexturePreview = &assets_storage->GetConstTexture(_texture_path);
 }
 
-void AnimationPreviewWindow::SyncNewAnimationData(const std::vector<AnimationFrameInternalData>& _frame_internal_data)
+void AnimationPreviewWindow::CreatePreviewDataFromFrameInternals(const std::vector<AnimationFrameInternalData>& _frame_internal_data)
 {
 	m_AnimationFrameData.clear();
 
-	int idx = 1;
+	int idx = 0;
 	for (const AnimationFrameInternalData& frame_data : _frame_internal_data)
 	{
 		if (utils::FilterDigitOnly(frame_data.m_FrameTime)
@@ -73,6 +151,51 @@ void AnimationPreviewWindow::SyncNewAnimationData(const std::vector<AnimationFra
 	}
 }
 
+void AnimationPreviewWindow::OnPlayButtonToggled()
+{
+	m_PlayButton.m_Active = true;
+	m_PauseButton.m_Active = false;
+	m_Playing = true;
+}
+
+void AnimationPreviewWindow::OnStopButtonToggled()
+{
+	m_PlayButton.m_Active = false;
+	m_PauseButton.m_Active = false;
+	m_StopButton.m_Active = false;
+	m_Playing = false;
+	m_CurrentAnimationFrameIndex = 0;
+	m_CurrentFrameTime = 0.0f;
+}
+
+void AnimationPreviewWindow::OnPauseButtonToggled()
+{
+	m_PlayButton.m_Active = false;
+	m_Playing = false;
+}
+
+void AnimationPreviewWindow::OnAnimationFinished()
+{
+	switch (m_CurrentAnimationType)
+	{
+		case EAnimationType::Loop:
+		{
+			// Do nothing.
+		}
+		break;
+		case EAnimationType::OneShot:
+		{
+			OnStopButtonToggled();
+		}
+		break;
+		case EAnimationType::PingPong:
+		{
+			std::reverse(m_AnimationFrameData.begin(), m_AnimationFrameData.end());
+		}
+		break;
+	}
+}
+
 void AnimationListWindow::Render()
 {
 	if (ImGui::CollapsingHeader("Animations List"))
@@ -86,13 +209,31 @@ void AnimationListWindow::Update(float _dt)
 
 }
 
-void NewAnimationWindow::Render()
+void AnimationPropertiesWindow::Render()
 {
-	if (ImGui::CollapsingHeader("New Animation"))
+	if (ImGui::TreeNode("Animation Properties"))
 	{
 		ImGui::InputText("Animation name: ", &m_AnimationName);
 		ImGui::InputText("Animation frames count: ", &m_AnimationFrameCount);
-		
+
+		const std::string current_anim_type = std::format("Animation type: {}", ToString(m_AnimationType));
+		if (ImGui::BeginCombo("Select animation type", current_anim_type.c_str()))
+		{
+			for (auto i = 0; i < m_AnimationTypes.size(); i++)
+			{
+				bool is_selected = (m_AnimationType == m_AnimationTypes[i]);
+				if (ImGui::Selectable(ToString(m_AnimationTypes[i]), is_selected))
+				{
+					m_AnimationType = m_AnimationTypes[i];
+				}
+				if (is_selected)
+				{
+					ImGui::SetItemDefaultFocus();
+				}
+			}
+			ImGui::EndCombo();
+		}
+
 		if (ImGui::Button("Select animation tileset"))
 		{
 			m_Manager->OpenAssetTableForAction(this);
@@ -123,20 +264,16 @@ void NewAnimationWindow::Render()
 				ImGui::PopID();
 			}
 		}
+
+		ImGui::TreePop();
 	}
 }
 
-void NewAnimationWindow::Update(float _dt)
+void AnimationPropertiesWindow::Update(float _dt)
 {
-	const bool bFrameCountOk = utils::FilterDigitOnly(m_AnimationFrameCount);
-
-	if (bFrameCountOk)
-	{
-		m_PreviewWindow->SyncNewAnimationData(m_AnimationData);
-	}
 }
 
-void NewAnimationWindow::OnAssetSelected(const SelectedAssetData& data)
+void AnimationPropertiesWindow::OnAssetSelected(const SelectedAssetData& data)
 {
 	m_PreviewWindow->SetTexture(*data.m_RelativePath);
 	m_AnimationTexturePath = *data.m_RelativePath;
@@ -155,7 +292,7 @@ void EditAnimationWindow::Update(float _dt)
 
 }
 
-void AnimationEditortWindow::Render()
+void AnimationEditorWindow::Render()
 {
 	if (!m_Active)
 		return;
@@ -163,10 +300,13 @@ void AnimationEditortWindow::Render()
 	if (ImGui::Begin("Animations Editor", &m_Active))
 	{
 		m_AnimationPreviewWindow.Render();
+		ImGui::Separator();
 		ImGui::Dummy({ 0.f, 10.f });
 		m_AnimationListWindow.Render();
+		ImGui::Separator();
 		ImGui::Dummy({ 0.f, 10.f });
 		m_EditAnimationWindow.Render();
+		ImGui::Separator();
 		ImGui::Dummy({ 0.f, 10.f });
 		m_NewAnimationWindow.Render();
 
@@ -174,7 +314,7 @@ void AnimationEditortWindow::Render()
 	}
 }
 
-void AnimationEditortWindow::Update(float _dt)
+void AnimationEditorWindow::Update(float _dt)
 {
 		if (!m_Active)
 		return;
@@ -185,3 +325,24 @@ void AnimationEditortWindow::Update(float _dt)
 	m_NewAnimationWindow.Update(_dt);
 }
 
+void NewAnimationWindow::Render()
+{
+	if (ImGui::CollapsingHeader("New animation"))
+	{
+		m_AnimationPropertiesWindow.Render();
+		m_PlayInPreview.Render();
+	}
+}
+
+void NewAnimationWindow::Update(float _dt)
+{
+
+}
+
+void NewAnimationWindow::OnPlayInPreviewButtonToggled()
+{
+	m_PlayInPreview.m_Active = false;
+	m_PreviewWindow->SetAnimationPreviewOwner(EAnimationPreviewOwner::NewAnimWindow);
+	m_PreviewWindow->CreatePreviewDataFromFrameInternals(m_AnimationPropertiesWindow.GetAnimationData());
+	m_PreviewWindow->SetAnimationType(m_AnimationPropertiesWindow.GetAnimationType());
+}

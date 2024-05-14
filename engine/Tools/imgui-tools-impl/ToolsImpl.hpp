@@ -97,7 +97,7 @@ namespace Tools_Impl
 			LoadProjectWindow m_LoadProjectWindow;
 
 			LevelEditorWindow m_LevelEditorWindow;
-			AnimationEditortWindow m_AnimationEditorWindow;
+			AnimationEditorWindow m_AnimationEditorWindow;
 
 			NotificationsManager m_NotificationManager;
 			ToolboxWindow m_ToolboxWindow;

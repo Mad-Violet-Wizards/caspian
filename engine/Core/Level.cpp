@@ -284,7 +284,6 @@ namespace Levels
 			m_ActiveLevelPtr->Update(_dt);
 	}
 
-	// TODO: Waste of memory & dandlding std::shared_ptr...
 	void World::PushInitialLevelData(std::shared_ptr<Serializable::JSON::LevelInfo>& _level_info)
 	{
 		m_InitialLevelsData.push_back({ _level_info->m_LevelName, _level_info->m_ChunkRootFile, _level_info->m_CollisionsInfoFile, _level_info->m_TileSize });

@@ -18,7 +18,7 @@ namespace Scenes
 		_End
 	};
 
-	static std::string_view ToString(ESceneID _id)
+	static const char* ToString(ESceneID _id)
 	{
 		#define ENUM_TO_STR(x) case ESceneID::x: return #x;
 		switch (_id)
