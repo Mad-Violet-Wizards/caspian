@@ -279,6 +279,20 @@ void AnimationPropertiesWindow::OnAssetSelected(const SelectedAssetData& data)
 	m_AnimationTexturePath = *data.m_RelativePath;
 }
 
+void AnimationPropertiesWindow::Clear()
+{
+	m_AnimationName.clear();
+	m_AnimationFrameCount.clear();
+	m_AnimationData.clear();
+	m_AnimationTexturePath.clear();
+	m_PrevAnimationFrameCountInt = 0;
+}
+
+bool AnimationPropertiesWindow::Validate() const
+{
+	return !m_AnimationName.empty() && !m_AnimationFrameCount.empty() && !m_AnimationData.empty() && !m_AnimationTexturePath.empty() && m_AnimationType != EAnimationType::Unknown;
+}
+
 void EditAnimationWindow::Render()
 {
 	if (ImGui::CollapsingHeader("Edit Animation"))
@@ -331,6 +345,32 @@ void NewAnimationWindow::Render()
 	{
 		m_AnimationPropertiesWindow.Render();
 		m_PlayInPreview.Render();
+		ImGui::SameLine();
+		if (ImGui::Button("Create animation"))
+		{
+			if (m_AnimationPropertiesWindow.Validate() == false)
+			{
+				m_Manager->ShowNotification(ENotificationType::Error, "Validation of animation properties failed.");
+				return;
+			}
+
+			const std::vector<AnimationFrameInternalData>& internal_frames_data = m_AnimationPropertiesWindow.GetAnimationData();
+			std::vector<AnimationFrame> frame_data;
+			frame_data.reserve(internal_frames_data.size());
+
+			for (const AnimationFrameInternalData& internal_frame_data : internal_frames_data)
+			{
+				frame_data.push_back(internal_frame_data.ConvertToAnimationFrame());
+			}
+			
+			m_Manager->AddAnimationRequest(m_AnimationPropertiesWindow.GetAnimationName(), m_AnimationPropertiesWindow.GetTexturePath(), m_AnimationPropertiesWindow.GetAnimationType(), frame_data);
+
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			m_AnimationPropertiesWindow.Clear();
+		}
 	}
 }
 

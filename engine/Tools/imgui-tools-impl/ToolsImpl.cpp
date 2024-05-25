@@ -556,3 +556,19 @@ bool Manager::IsActive() const
 {
 	return m_Active;
 }
+
+void Manager::AddAnimationRequest(const std::string& _anim_name, const std::string& _anim_texture_key, EAnimationType _anim_type, const std::vector<AnimationFrame>& _anim_frames)
+{
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	bool ok = main_instance.GetEngineController().GetAnimationsController()->CreateNewAnimation(_anim_name, _anim_texture_key, _anim_type, _anim_frames);
+
+	if (ok)
+	{
+		ShowNotification(ENotificationType::Success, "Animation created succesfully! :)");
+	}
+	else
+	{
+		ShowNotification(ENotificationType::Error, "Failed to create animation! :(");
+	}
+}

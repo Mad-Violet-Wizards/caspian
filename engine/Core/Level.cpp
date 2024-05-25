@@ -362,10 +362,6 @@ namespace Levels
 			ActivateLevel(_level_name);
 			return true;
 		}
-		else
-		{
-			return false;
-		}
 	
 		return json_created_succesfully && file_closed_successfully && json_serialized && chunk_processed;
 	}
@@ -573,8 +569,6 @@ namespace Levels
 
 	void Chunk::PerformSave()
 	{
-		bool chunk_file_closed = false; // ;_;
-
 		if (Level* level = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel())
 		{
 			auto& chunk_root_chunk_info = level->GetChunksManager()->GetChunkRootInfo();

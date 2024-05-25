@@ -5,10 +5,10 @@
 #include "engine/Scenes/StateMachine.hpp"
 #include "EventHandler.hpp"
 #include "Assets.hpp"
-#include "engine/Core/Serializable/LevelSerializable.hpp"
 #include "engine/Core/Collisions.hpp"
 #include "engine/Core/GameObjectCollection.hpp"
 #include "engine/Core/KeyboardInputController.hpp"
+#include "engine/Core/Animations.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 struct Project
@@ -58,6 +58,9 @@ class EngineController
 		void SetGameObjectStorage(std::unique_ptr<GameObjectCollection> _game_object_collection) { m_GameObjectCollection = std::move(_game_object_collection); }
 		GameObjectCollection* const GetGameObjectStorage() { return m_GameObjectCollection.get(); }
 
+		void SetAnimationsController(std::unique_ptr<AnimationsController> _animations_controller) { m_AnimationsController = std::move(_animations_controller); }
+		AnimationsController* const GetAnimationsController() { return m_AnimationsController.get(); }
+
 		static std::array<unsigned char, 4> GetEngineVersion() { return { 0x31, 0x30, 0x30, 0x30}; }
 		static std::string GetEngineVersionString();
 
@@ -83,6 +86,7 @@ class EngineController
 		std::unique_ptr<Collisions::Manager> m_CollisionsManager = nullptr;
 		std::unique_ptr<GameObjectCollection> m_GameObjectCollection = nullptr;
 		std::unique_ptr<KeyboardInputController> m_KeyboardInputController = nullptr;
+		std::unique_ptr<AnimationsController> m_AnimationsController = nullptr;
 
 		std::atomic<bool> m_ResourcesFsInitStarted = false;
 		std::atomic<bool> m_DataFsInitStarted = false;

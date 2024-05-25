@@ -88,6 +88,8 @@ namespace Tools_Impl
 			void AddTilesetRequest(const std::string& _tileset_key, const std::string& _tileset_name, unsigned int _tile_width, unsigned int _tile_height);
 
 
+			void AddAnimationRequest(const std::string& _anim_name, const std::string& _anim_texture_key, EAnimationType _anim_type, const std::vector<AnimationFrame>& _anim_frames);
+
 		public:
 
 			ImportAssetWindow m_ImportAssetWindow;

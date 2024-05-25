@@ -12,6 +12,15 @@ namespace Tools_Impl
 		std::string m_FrameRectY;
 		std::string m_FrameRectWidth;
 		std::string m_FrameRectHeight;
+
+		AnimationFrame ConvertToAnimationFrame() const
+		{
+			float frame_time = std::stof(m_FrameTime);
+			sf::IntRect rect(std::stoi(m_FrameRectX), std::stoi(m_FrameRectY), std::stoi(m_FrameRectWidth), std::stoi(m_FrameRectHeight));
+
+			AnimationFrame frame(frame_time, rect);
+			return frame;
+		}
 	};
 
 	struct AnimationFramePreviewInternalData
@@ -107,7 +116,7 @@ namespace Tools_Impl
 				AnimationPreviewComboSlowdownPair("x0.75", 0.75f),
 				AnimationPreviewComboSlowdownPair("x0.5", .5f),
 				AnimationPreviewComboSlowdownPair("x0.25", .25f),
-				AnimationPreviewComboSlowdownPair("x0.1", .1),
+				AnimationPreviewComboSlowdownPair("x0.1", .1f),
 			};
 
 			EAnimationType m_CurrentAnimationType;
@@ -120,7 +129,6 @@ namespace Tools_Impl
 			std::vector<AnimationFramePreviewInternalData> m_AnimationFrameData;
 	};
 
-	// TODO: Continue here, merge NewAnimationWindow & EditAnimationWindow into one AnimationPropertiesWindow.
 	class AnimationPropertiesWindow : public IWindow, public IAssetsTableActionsListener
 	{
 	public:
@@ -137,7 +145,11 @@ namespace Tools_Impl
 
 		void OnAssetSelected(const SelectedAssetData& data) override;
 		const std::vector<AnimationFrameInternalData>& GetAnimationData() const { return m_AnimationData; }
+		const std::string& GetAnimationName() const { return m_AnimationName; }
+		const std::string& GetTexturePath() const { return m_AnimationTexturePath; }
 		EAnimationType GetAnimationType() const { return m_AnimationType; }
+		bool Validate() const;
+		void Clear();
 
 	private:
 
@@ -178,6 +190,7 @@ namespace Tools_Impl
 		private:
 
 			utils::widgets::ToggleButton m_PlayInPreview;
+
 			AnimationPreviewWindow* m_PreviewWindow;
 			AnimationPropertiesWindow m_AnimationPropertiesWindow;
 	};

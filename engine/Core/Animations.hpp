@@ -1,6 +1,8 @@
 #pragma once
 
-/////////////////////////////////////////////////////////
+#include "engine/Core/Serializable/AnimationsSerializable.hpp"
+
+///////////////////////////////////////////////////////
 enum class EAnimationType
 {
 	Unknown,
@@ -36,7 +38,8 @@ class Animation
 {
 public:
 
-	Animation(const std::string& _name, EAnimationType _type);
+	Animation();
+	Animation(const std::string& _name, const std::string& _texture_key, EAnimationType _type);
 	~Animation() = default;
 
 	void AddFrame(const AnimationFrame& _frame);
@@ -46,23 +49,27 @@ public:
 	EAnimationType GetType() const { return m_Type; }
 	const std::vector<AnimationFrame>& GetFrames() const { return m_Frames; }
 
+	void PerformSave();
+
 private:
 
 	std::string m_Name;
+	std::string m_TextureKey;
 	EAnimationType m_Type;
 	std::vector<AnimationFrame> m_Frames;
 };
 
 
 /////////////////////////////////////////////////////////
-class AnimationsStorage
+class AnimationsController
 {
 	public:
 
-		AnimationsStorage() = default;
-		~AnimationsStorage() = default;
+		AnimationsController() = default;
+		~AnimationsController() = default;
 
-		bool CreateNewAnimation(const std::string& _name, EAnimationType _type, const std::vector<AnimationFrame>& _frames);
+		bool CreateNewAnimation(const std::string& _name, const std::string& _texture_key, EAnimationType _type, const std::vector<AnimationFrame>& _frames);
+		void PushAnimationDataFromLoading(std::shared_ptr<Serializable::JSON::AnimationInfo>& _anim_info);
 
 	private:
 
