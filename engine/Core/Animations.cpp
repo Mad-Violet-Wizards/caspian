@@ -33,7 +33,8 @@ void Animation::AddFrame(const AnimationFrame& _frame)
 
 void Animation::AddFrame(float _duration, const sf::IntRect& _rect)
 {
-	m_Frames.push_back({ _duration, _rect });
+	AnimationFrame frame(_duration, _rect);
+	AddFrame(frame);
 }
 
 void Animation::PerformSave()
@@ -78,6 +79,52 @@ void Animation::PerformSave()
 	}
 }
 
+AnimationsController::AnimationsController()
+	: m_CurrentAnimationName(nullptr)
+	, m_CurrentFrameTime(0.f)
+	, m_CurrentFrameIndex(0)
+	, m_OneShotBackwards(false)
+{
+
+}
+
+void AnimationsController::Update(float _dt)
+{
+	if (m_CurrentAnimationName)
+	{
+		const Animation& current_animation = m_Animations[*m_CurrentAnimationName];
+		const AnimationFrame& current_frame = current_animation.GetFrame(m_CurrentFrameIndex);
+
+		m_CurrentFrameTime += _dt;
+
+		if (m_CurrentFrameTime >= (current_frame.m_Duration * 0.001f))
+		{
+			m_CurrentFrameTime = 0.f;
+
+			if (m_OneShotBackwards)
+			{
+				m_CurrentFrameIndex--;
+
+				if (m_CurrentFrameIndex < 0)
+				{
+					m_CurrentFrameIndex = current_animation.GetFramesSize() - 1;
+					OnAnimationEnd();
+				}
+			}
+			else
+			{
+				m_CurrentFrameIndex++;
+
+				if (m_CurrentFrameIndex >= current_animation.GetFramesSize())
+				{
+					m_CurrentFrameIndex = 0;
+					OnAnimationEnd();
+				}
+			}
+		}
+	}
+}
+
 bool AnimationsController::CreateNewAnimation(const std::string& _name, const std::string& _texture_key, EAnimationType _type, const std::vector<AnimationFrame>& _frames)
 {
 	if (m_Animations.find(_name) != m_Animations.end())
@@ -112,4 +159,59 @@ void AnimationsController::PushAnimationDataFromLoading(std::shared_ptr<Serializ
 	}
 
 	m_Animations[_anim_info->m_Name] = animation;
+}
+
+void AnimationsController::OnAnimationEnd()
+{
+	switch(m_Animations[*m_CurrentAnimationName].GetType())
+	{ 
+		case EAnimationType::Loop:
+			break;
+		case EAnimationType::OneShot:
+		{
+			m_CurrentAnimationName = nullptr;
+			break;
+		}
+		case EAnimationType::PingPong:
+		{
+			m_OneShotBackwards ^= true;
+		}
+	}
+}
+
+void AnimationsController::PlayAnimation(const std::string& _name)
+{
+	if (m_Animations.find(_name) == m_Animations.end())
+	{
+		return;
+	}
+
+	m_CurrentAnimationName = &m_Animations[_name].GetName();
+}
+
+void AnimationsController::StopAnimation()
+{
+	m_CurrentAnimationName = nullptr;
+	m_CurrentFrameIndex = 0;
+	m_CurrentFrameTime = 0.f;
+}
+
+const Animation* AnimationsController::GetCurrentAnimation() const
+{
+	if (m_CurrentAnimationName)
+	{
+		return &m_Animations.at(*m_CurrentAnimationName);
+	}
+
+	return nullptr;
+}
+
+const AnimationFrame* AnimationsController::GetCurrentAnimationFrame() const
+{
+	if (m_CurrentAnimationName)
+	{
+			return &m_Animations.at(*m_CurrentAnimationName).GetFrame(m_CurrentFrameIndex);
+	}
+
+	return nullptr;
 }

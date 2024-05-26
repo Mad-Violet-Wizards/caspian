@@ -46,8 +46,12 @@ public:
 	void AddFrame(float _duration, const sf::IntRect& _rect);
 
 	const std::string& GetName() const { return m_Name; }
+	const std::string& GetTextureKey() const { return m_TextureKey; }
 	EAnimationType GetType() const { return m_Type; }
+
+	int GetFramesSize() const { return m_Frames.size(); }
 	const std::vector<AnimationFrame>& GetFrames() const { return m_Frames; }
+	const AnimationFrame& GetFrame(int _index) const { return m_Frames[_index]; }
 
 	void PerformSave();
 
@@ -65,13 +69,31 @@ class AnimationsController
 {
 	public:
 
-		AnimationsController() = default;
+		AnimationsController();
 		~AnimationsController() = default;
+
+		void Update(float _dt);
 
 		bool CreateNewAnimation(const std::string& _name, const std::string& _texture_key, EAnimationType _type, const std::vector<AnimationFrame>& _frames);
 		void PushAnimationDataFromLoading(std::shared_ptr<Serializable::JSON::AnimationInfo>& _anim_info);
 
+		void PlayAnimation(const std::string& _name);
+		void StopAnimation();
+
+		const Animation* GetCurrentAnimation() const;
+		const AnimationFrame* GetCurrentAnimationFrame() const;
+
+	private:
+
+		void OnAnimationEnd();
+
 	private:
 
 		std::unordered_map<std::string, Animation> m_Animations;
+
+		bool m_OneShotBackwards;
+
+		const std::string* m_CurrentAnimationName;
+		float m_CurrentFrameTime;
+		int m_CurrentFrameIndex;
 };

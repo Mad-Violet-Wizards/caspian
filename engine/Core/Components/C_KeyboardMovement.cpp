@@ -7,31 +7,35 @@ C_KeyboardMovement::C_KeyboardMovement(GameObject* _owner)
 	, m_MovementSpeed(250.f)
 {
 	m_p_KeyboardInput = ApplicationSingleton::Instance().GetEngineController().GetKeyboardInputController();
+	m_sPtrVelocity = m_Owner->GetComponent<C_Velocity>();
 }
 
 void C_KeyboardMovement::Update(float _dt)
 {
-	const std::shared_ptr<C_Transform> transform = m_Owner->GetComponent<C_Transform>();
-
+	float ySpeed = 0.f;
 	if (m_p_KeyboardInput->IsKeyPressed(ESupportedKey::W))
 	{
-		transform->AddY(-m_MovementSpeed * _dt);
+		ySpeed = -m_MovementSpeed;
 	}
 
 	if (m_p_KeyboardInput->IsKeyPressed(ESupportedKey::S))
 	{
-		transform->AddY(m_MovementSpeed * _dt);
+		ySpeed = m_MovementSpeed;
 	}
 
+
+	float xSpeed = 0.f;
 	if (m_p_KeyboardInput->IsKeyPressed(ESupportedKey::A))
 	{
-		transform->AddX(-m_MovementSpeed * _dt);
+		xSpeed = -m_MovementSpeed;
 	}
 
 	if (m_p_KeyboardInput->IsKeyPressed(ESupportedKey::D))
 	{
-		transform->AddX(m_MovementSpeed * _dt);
+		xSpeed = m_MovementSpeed;
 	}
+
+	m_sPtrVelocity->Set(xSpeed, ySpeed);
 }
 
 void C_KeyboardMovement::SetMovementSpeed(float _movementSpeed)
