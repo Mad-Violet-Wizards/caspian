@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/Core/IComponent.hpp"
+#include "engine/Core/Components/C_Velocity.hpp"
 
 /////////////////////////////////////
 class C_KeyboardMovement : public IComponent
@@ -17,6 +18,7 @@ public:
 private:
 
 
+	std::shared_ptr<C_Velocity> m_sPtrVelocity;
 	KeyboardInputController* m_p_KeyboardInput;
 	float m_MovementSpeed;
 

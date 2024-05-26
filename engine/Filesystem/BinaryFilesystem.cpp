@@ -39,6 +39,7 @@ namespace fs
 		{
 			fn_create_engine_dir(path, "levels");
 			fn_create_engine_dir(path, "tilemaps");
+			fn_create_engine_dir(path, "animations");
 		}
 
 		// ...
@@ -58,7 +59,9 @@ namespace fs
 			else
 			{
 				std::string_view extension = relative_path.substr(pos);
-				if (!IFile::IsBinary(IFile::StringExtToType(extension)))
+				const IFile::EType file_type = IFile::StringExtToType(extension);
+
+				if (!IFile::IsBinary(file_type) && file_type != IFile::EType::JSON)
 					continue;
 			}
 
@@ -155,7 +158,7 @@ namespace fs
 		file_path /= _file_path;
 
 		if (_file_type != IFile::EType::Directory)
-			if (!IFile::IsBinary(_file_type))
+			if (!IFile::IsBinary(_file_type) && _file_type != IFile::EType::JSON)
 				return false;
 		
 		bool os_file_operation_result = false;
@@ -166,6 +169,7 @@ namespace fs
 			case IFile::EType::Data_LevelChunk:
 			case IFile::EType::Data_Tilemaps:
 			case IFile::EType::Data_Collisions:
+			case IFile::EType::JSON:
 			{
 				std::ofstream file(file_path);
 				os_file_operation_result = file.good();

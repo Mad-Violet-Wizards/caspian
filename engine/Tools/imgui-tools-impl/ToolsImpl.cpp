@@ -116,7 +116,18 @@ void Toolbar::Render()
 					}
 					else
 					{
-						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot create new level\nwithout loading project first!");
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot open level editor\nwithout loading project first!");
+					}
+				}
+				else if (ImGui::Selectable("Animation editor..."))
+				{
+					if (bAssets_storage_initialized)
+					{
+						m_Manager->m_AnimationEditorWindow.m_Active = true;
+					}
+					else
+					{
+						m_Manager->m_NotificationManager.ShowNotification(ENotificationType::Error, "Cannot open anim editor\nwithout loading project first!");
 					}
 				}
 
@@ -291,6 +302,7 @@ Manager::Manager()
 	, m_LoadProjectWindow(this)
 	, m_NotificationManager(this)
 	, m_LevelEditorWindow(this)
+	, m_AnimationEditorWindow(this)
 	, m_ToolboxWindow(this)
 {
 
@@ -310,6 +322,7 @@ void Manager::Update(float _dt)
 	m_NotificationManager.Update(_dt);
 	m_AssetListWindow.Update(_dt);
 	m_LevelEditorWindow.Update(_dt);
+	m_AnimationEditorWindow.Update(_dt);
 	m_ToolboxWindow.Update(_dt);
 
 	//m_Toolbar.Update(_dt);
@@ -330,9 +343,9 @@ void Manager::Render()
 	m_AssetListWindow.Render();
 	m_NewProjectWindow.Render();
 	m_LoadProjectWindow.Render();
-	m_ToolboxWindow.Render();
-
 	m_LevelEditorWindow.Render();
+	m_AnimationEditorWindow.Render();
+	m_ToolboxWindow.Render();
 }
 
 void Manager::ShowNotification(ENotificationType _type, std::string_view _msg)
@@ -542,4 +555,20 @@ void Manager::AddTilesetRequest(const std::string& _tileset_key, const std::stri
 bool Manager::IsActive() const
 {
 	return m_Active;
+}
+
+void Manager::AddAnimationRequest(const std::string& _anim_name, const std::string& _anim_texture_key, EAnimationType _anim_type, const std::vector<AnimationFrame>& _anim_frames)
+{
+	auto& main_instance = ApplicationSingleton::Instance();
+
+	bool ok = main_instance.GetEngineController().GetAnimationsController()->CreateNewAnimation(_anim_name, _anim_texture_key, _anim_type, _anim_frames);
+
+	if (ok)
+	{
+		ShowNotification(ENotificationType::Success, "Animation created succesfully! :)");
+	}
+	else
+	{
+		ShowNotification(ENotificationType::Error, "Failed to create animation! :(");
+	}
 }

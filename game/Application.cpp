@@ -2,9 +2,11 @@
 
 #include "Application.hpp"
 
+#include <process.h>
 #include <imgui/imgui.h>
 #include <imgui-SFML/imgui-SFML.h>
 #include <iostream>
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /* APPLICATION */
@@ -177,6 +179,15 @@ void Application::InitializeAppEventListeners()
 	m_AppEventListeners.push_back(std::move(mouseButtonReleased));
 	m_AppEventListeners.push_back(std::move(keyReleasedListener));
 	m_AppEventListeners.push_back(std::move(keyPressedListener));
+}
+
+void Application::UpdateWindowTitle(const std::string& _title)
+{
+	const int process_id = _getpid();
+
+	const std::string final_title = std::format("{}, pid: {}", _title, process_id);
+
+	m_window.UpdateTitle(final_title);
 }
 
 sf::Vector2i Application::GetMousePosition()

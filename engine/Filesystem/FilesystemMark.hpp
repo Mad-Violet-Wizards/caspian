@@ -4,7 +4,8 @@ namespace fs
 {
 	enum class EFilesystemMark
 	{
-		Level
+		Level,
+		Animation
 	};
 
 	inline std::string EFilesystemMarkToString(EFilesystemMark _mark)

@@ -50,6 +50,9 @@ int main()
 	std::unique_ptr<GameObjectCollection> game_objects = std::make_unique<GameObjectCollection>();
 	engine_module.SetGameObjectStorage(std::move(game_objects));
 
+	std::unique_ptr<AnimationsController> anim_controller = std::make_unique<AnimationsController>();
+	engine_module.SetAnimationsController(std::move(anim_controller));
+
 	#if defined(DEBUG)
 	std::unique_ptr<Projects::Manager> projects_manager = std::make_unique<Projects::Manager>();
 	main_instance.SetProjectsManager(std::move(projects_manager));

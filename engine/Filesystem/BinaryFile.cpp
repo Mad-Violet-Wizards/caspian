@@ -3,6 +3,7 @@
 #include "BinaryFile.hpp"
 
 #include <cereal/archives/portable_binary.hpp>
+#include <cereal/archives/json.hpp>
 
 namespace fs
 {
@@ -114,6 +115,18 @@ namespace fs
 	{
 		std::filesystem::path p{ m_Path };
 		return StringExtToType(p.extension().string());
+	}
+
+	void BinaryFile::DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json)
+	{
+		cereal::JSONInputArchive archive(m_FileStream);
+		archive(_json);
+	}
+
+	void BinaryFile::SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json)
+	{
+		cereal::JSONOutputArchive archive(m_FileStream);
+		archive(_json);
 	}
 
 	void BinaryFile::DeserializeBinary(std::shared_ptr<ISerializable::Binary>& _binary)

@@ -24,7 +24,6 @@ void Camera::Update(float _dt)
 		if (camera_debug_controller->IsActive())
 			if (camera_debug_controller->ValidateMouseDelta())
 				mouse_delta = camera_debug_controller->GetMouseDelta();
-
 	}
 
 	m_Position.x += -mouse_delta.x;

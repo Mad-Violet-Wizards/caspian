@@ -9,6 +9,7 @@
 #include "NotificationWindows.hpp"
 #include "LevelWindows.hpp"
 #include "ToolboxWindow.hpp"
+#include "AnimationWindows.hpp"
 
 namespace Tools_Impl
 {
@@ -87,6 +88,8 @@ namespace Tools_Impl
 			void AddTilesetRequest(const std::string& _tileset_key, const std::string& _tileset_name, unsigned int _tile_width, unsigned int _tile_height);
 
 
+			void AddAnimationRequest(const std::string& _anim_name, const std::string& _anim_texture_key, EAnimationType _anim_type, const std::vector<AnimationFrame>& _anim_frames);
+
 		public:
 
 			ImportAssetWindow m_ImportAssetWindow;
@@ -96,6 +99,7 @@ namespace Tools_Impl
 			LoadProjectWindow m_LoadProjectWindow;
 
 			LevelEditorWindow m_LevelEditorWindow;
+			AnimationEditorWindow m_AnimationEditorWindow;
 
 			NotificationsManager m_NotificationManager;
 			ToolboxWindow m_ToolboxWindow;

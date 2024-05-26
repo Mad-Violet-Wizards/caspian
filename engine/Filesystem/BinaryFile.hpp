@@ -34,8 +34,8 @@ namespace fs
 
 		bool WriteJson_Impl(const nlohmann::json& _json, [[maybe_unused]] size_t _size) override { return false; }
 
-		void DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json) override {}
-		void SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json) override {}
+		void DeserializeJson(std::shared_ptr<ISerializable::JSON>& _json) override;
+		void SerializeJson(const std::shared_ptr<ISerializable::JSON>& _json) override;
 
 		void DeserializeBinary(std::shared_ptr<ISerializable::Binary>& _binary) override;
 		void SerializeBinary(const std::shared_ptr<ISerializable::Binary>& _binary) override;

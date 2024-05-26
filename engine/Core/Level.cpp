@@ -284,7 +284,6 @@ namespace Levels
 			m_ActiveLevelPtr->Update(_dt);
 	}
 
-	// TODO: Waste of memory & dandlding std::shared_ptr...
 	void World::PushInitialLevelData(std::shared_ptr<Serializable::JSON::LevelInfo>& _level_info)
 	{
 		m_InitialLevelsData.push_back({ _level_info->m_LevelName, _level_info->m_ChunkRootFile, _level_info->m_CollisionsInfoFile, _level_info->m_TileSize });
@@ -362,10 +361,6 @@ namespace Levels
 			m_CachedLevels.insert({ _level_name, std::move(new_level) });
 			ActivateLevel(_level_name);
 			return true;
-		}
-		else
-		{
-			return false;
 		}
 	
 		return json_created_succesfully && file_closed_successfully && json_serialized && chunk_processed;
@@ -574,8 +569,6 @@ namespace Levels
 
 	void Chunk::PerformSave()
 	{
-		bool chunk_file_closed = false; // ;_;
-
 		if (Level* level = ApplicationSingleton::Instance().GetWorld()->GetActiveLevel())
 		{
 			auto& chunk_root_chunk_info = level->GetChunksManager()->GetChunkRootInfo();

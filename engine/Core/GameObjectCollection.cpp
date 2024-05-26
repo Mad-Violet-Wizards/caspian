@@ -4,9 +4,13 @@
 
 #include "Components/C_Tags.hpp"
 #include "Components/C_Transform.hpp"
+#include "Components/C_Velocity.hpp"
 #include "Components/C_Sprite.hpp"
 #include "Components/C_KeyboardMovement.hpp"
 #include "Components/C_RectCollidable.hpp"
+#include "Components/C_Direction.hpp"
+#include "Components/C_Animatable.hpp"
+#include "Components/C_MovementAnimation.hpp"
 
 GameObjectCollection::~GameObjectCollection()
 {
@@ -89,13 +93,28 @@ void GameObjectCollection::ConstructDebugPlayer()
 
 	auto tag_component_sPtr = m_Player->AddComponent<C_Tags>(ETag::Drawable | ETag::Drawable_Entity | ETag::Physics_Dynamic);
 	auto transform_component_sPtr = m_Player->AddComponent<C_Transform>();
+	auto velocity_component_sPtr = m_Player->AddComponent<C_Velocity>();
+	auto direction_component_sPtr = m_Player->AddComponent<C_Direction>();
 	auto keyboard_movement_component_sPtr = m_Player->AddComponent<C_KeyboardMovement>();
 	auto sprite_component_sPtr = m_Player->AddComponent<C_Sprite>();
+	auto animatable_component_sPtr = m_Player->AddComponent<C_Animatable>();
+	auto movement_animation_component_sPtr = m_Player->AddComponent<C_MovementAnimation>();
 	auto collision_component_sPtr = m_Player->AddComponent<C_RectCollidable>();
-	sf::FloatRect player_colliding_rect { 0.0f, 0.0f, 32.0f, 32.0f };
+	const sf::FloatRect player_colliding_rect { 0.0f, 0.0f, 32.0f, 32.0f };
 	collision_component_sPtr->SetRect(player_colliding_rect);
 
-	sprite_component_sPtr->SetTexture(ApplicationSingleton::Instance().GetEngineController().GetAssetsStorage()->GetPlayerTempTexture());
+	
+	// Idle animations
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Idle, EDirection::Up, "witchIdleUp");
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Idle, EDirection::Down, "witchIdleDown");
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Idle, EDirection::Left, "witchIdleLeft");
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Idle, EDirection::Right, "witchIdleRight");
+
+	// Walk animations
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Walking, EDirection::Up, "witchWalkUp");
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Walking, EDirection::Down, "witchWalkDown");
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Walking, EDirection::Left, "witchWalkLeft");
+	movement_animation_component_sPtr->BindAnimation(EMovementAnimationState::Walking, EDirection::Right, "witchWalkRight");
 
 	m_GameObjects.push_back(m_Player);
 	m_CollidableGameObjects.push_back(m_Player);

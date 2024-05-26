@@ -5,6 +5,9 @@
 #include "engine/Filesystem/BinaryFilesystem.hpp"
 #include "engine/Filesystem/FilesystemMark.hpp"
 #include "engine/core/Level.hpp"
+#include "engine/Core/Serializable/LevelSerializable.hpp"
+#include "engine/Core/Serializable/AnimationsSerializable.hpp"
+
 #include <iostream>
 
 void EngineController::Update(float _dt)
@@ -219,6 +222,23 @@ void EngineController::InitializeAssets()
 			{
 				switch (file->GetType())
 				{
+					case fs::IFile::EType::JSON:
+					{
+						if (fn_contains(alias, "animations"))
+						{
+							std::shared_ptr<ISerializable::JSON> json_load_wrapper = std::make_shared<Serializable::JSON::AnimationInfo>();
+
+							file->Seek(0, fs::io::Origin::Begin);
+							file->DeserializeJson(json_load_wrapper);
+
+							auto anim_info{ std::dynamic_pointer_cast<Serializable::JSON::AnimationInfo>(json_load_wrapper) };
+							main_instance.GetEngineController().GetAnimationsController()->PushAnimationDataFromLoading(anim_info);
+							json_files.push_back(file.get());
+						}
+
+						break;
+					}
+
 					case fs::IFile::EType::Data_Tilemaps:
 					{
 						Assets::TilemapStorage* tilemap_storage = main_instance.GetEngineController().GetAssetsStorage()->GetTilemapStorage();
