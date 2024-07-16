@@ -69,6 +69,8 @@ namespace Collisions
 		void Insert(std::shared_ptr<C_RectCollidable> _collidable) override;
 		void Clear() override;
 
+		const std::vector<std::shared_ptr<C_RectCollidable>>& GetCollidables() const;
+
 #ifdef DEBUG
 		void DrawBounds(sf::RenderWindow& _window) const;
 #endif
