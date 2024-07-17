@@ -432,10 +432,10 @@ Collisions::EQuadtreeNode Collisions::QuadtreeSolver::CalculateNode(const sf::Fl
 	const float vertical_midpoint = m_Bounds.left + m_Bounds.width * 0.5f;
 	const float horizontal_midpoint = m_Bounds.top + m_Bounds.height * 0.5f;
 
-	const bool top_quadrant = (_rect.top + _rect.height) >= horizontal_midpoint;
-	const bool bottom_quadrant = (_rect.top + _rect.height) < horizontal_midpoint;
-	const bool left_quadrant = (_rect.left + _rect.width) >= vertical_midpoint;
-	const bool right_quadrant = (_rect.left + _rect.width) < vertical_midpoint;
+	const bool top_quadrant = _rect.top - _rect.height >= horizontal_midpoint;
+	const bool bottom_quadrant = _rect.top < horizontal_midpoint;
+	const bool left_quadrant = _rect.left + _rect.width <= vertical_midpoint;
+	const bool right_quadrant = _rect.left > vertical_midpoint;
 
 	if (top_quadrant)
 	{
