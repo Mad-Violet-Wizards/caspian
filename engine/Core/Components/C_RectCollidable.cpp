@@ -42,8 +42,8 @@ void C_RectCollidable::FixDistance(const IntersectionResult& _manifold)
 	const sf::FloatRect& this_rect = GetRect();
 	const sf::FloatRect* other_rect = _manifold.m_Other;
 
-	float x_overlap = (this_rect.left + this_rect.width) - (other_rect->left + other_rect->width);
-	float y_overlap = (this_rect.top + this_rect.height) - (other_rect->top + other_rect->height);
+	float x_overlap = (this_rect.left + (this_rect.width * 0.5f)) - (other_rect->left + (other_rect->width * 0.5f));
+	float y_overlap = (this_rect.top + (this_rect.height * 0.5f)) - (other_rect->top + (other_rect->height * 0.5f));
 
 	if (fabs(x_overlap) > fabs(y_overlap))
 	{

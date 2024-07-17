@@ -333,10 +333,12 @@ void Collisions::QuadtreeSolver::Search(const sf::FloatRect& _rect, std::vector<
 		}
 	}
 
-	for (std::shared_ptr<C_RectCollidable> collidable : m_Collidables)
+	for (auto& collidable : m_Collidables)
 	{
 		if (_rect.intersects(collidable->GetRect()))
+		{
 			_overlapping_objects.push_back(collidable);
+		}
 	}
 }
 
@@ -362,13 +364,17 @@ void Collisions::QuadtreeSolver::Insert(std::shared_ptr<C_RectCollidable> _colli
 			const unsigned int half_width = m_Bounds.width / 2;
 			const unsigned int half_height = m_Bounds.height / 2;
 
-			for (unsigned int i = 0; i < (unsigned int)EQuadtreeNode::COUNT; ++i)
-			{
-				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left, m_Bounds.top, half_width, half_height));
-				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left + half_width, m_Bounds.top, half_width, half_height));
-				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left, m_Bounds.top + half_height, half_width, half_height));
-				m_Children[i] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, sf::FloatRect(m_Bounds.left + half_width, m_Bounds.top + half_height, half_width, half_height));
-			}
+			const sf::FloatRect top_left(m_Bounds.left, m_Bounds.top, half_width, half_height);
+			m_Children[0] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, top_left);
+
+			const sf::FloatRect top_right(m_Bounds.left + half_width, m_Bounds.top, half_width, half_height);
+			m_Children[1] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, top_right);
+
+			const sf::FloatRect bot_left(m_Bounds.left + half_width, m_Bounds.top + half_height, half_width, half_height);
+			m_Children[2] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, bot_left);
+
+			const sf::FloatRect bot_right(m_Bounds.left + half_width, m_Bounds.top + half_height, half_width, half_height);
+			m_Children[3] = std::make_shared<QuadtreeSolver>(m_CurrentHeight + 1, bot_right);
 
 			for (std::shared_ptr<C_RectCollidable> collidable : m_Collidables)
 			{
@@ -399,6 +405,11 @@ void Collisions::QuadtreeSolver::Clear()
 		}
 }
 
+const std::vector<std::shared_ptr<C_RectCollidable>>& Collisions::QuadtreeSolver::GetCollidables() const
+{
+	return m_Collidables;
+}
+
 void Collisions::QuadtreeSolver::DrawBounds(sf::RenderWindow& _window) const
 {
 	if (m_Children[0] != nullptr)
@@ -418,12 +429,12 @@ Collisions::EQuadtreeNode Collisions::QuadtreeSolver::CalculateNode(const sf::Fl
 {
 	EQuadtreeNode index = EQuadtreeNode::INVALID;
 
-	const float vertical_midpoint = m_Bounds.left + (m_Bounds.width * 0.5f);
-	const float horizontal_midpoint = m_Bounds.top + (m_Bounds.height * 0.5f);
+	const float vertical_midpoint = m_Bounds.left + m_Bounds.width * 0.5f;
+	const float horizontal_midpoint = m_Bounds.top + m_Bounds.height * 0.5f;
 
-	const bool top_quadrant = _rect.top < horizontal_midpoint && _rect.top + _rect.height < horizontal_midpoint;
-	const bool bottom_quadrant = _rect.top > horizontal_midpoint;
-	const bool left_quadrant = _rect.left < vertical_midpoint && _rect.left + _rect.width < vertical_midpoint;
+	const bool top_quadrant = _rect.top - _rect.height >= horizontal_midpoint;
+	const bool bottom_quadrant = _rect.top < horizontal_midpoint;
+	const bool left_quadrant = _rect.left + _rect.width <= vertical_midpoint;
 	const bool right_quadrant = _rect.left > vertical_midpoint;
 
 	if (top_quadrant)
